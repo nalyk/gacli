@@ -1,75 +1,111 @@
 # Publishing gacli to npm
 
-This document covers user-side actions you must take to publish gacli. The repo is now
-publish-ready (scripts, file allowlist, prepublishOnly verify gate, CI checks), but
-publishing itself requires your credentials and decisions.
+The repo is now wired for **automated publish on tag push**. This document covers what's
+been decided, what's automated, and the one-time setup you do once.
 
-## One-time setup
+## What's already decided
 
-1. **Pick a name.** `gacli` may be taken on npm; if so, pick a scope (`@<your-org>/gacli`)
-   and update `package.json:name`.
-2. **`npm login`** (or `pnpm login`). Use a token-protected account with 2FA enabled —
-   npm requires 2FA-on-publish for new packages by default.
-3. **Add an `LICENSE` file.** I haven't picked one for you. MIT or Apache-2.0 are the
-   common choices. Add a `"license": "MIT"` field to `package.json` once decided.
-4. **Pin the version.** Bump `package.json:version` from `1.0.0` if you've shipped before.
+| Decision | Value | Where |
+|---|---|---|
+| Package name | `@nalyk/gacli` | `package.json:name` |
+| License | MIT | `LICENSE` + `package.json:license` |
+| Bin name | `gacli` (unscoped, lives at `~/.local/bin/gacli` after install) | `package.json:bin` |
+| First version to publish | `1.0.1` | `package.json:version` |
+| Publish trigger | Tag push matching `v*.*.*` | `.github/workflows/release.yml` |
+| Provenance | Enabled (`--provenance` + `id-token: write`) | release.yml |
+| dist-tag for `vX.Y.Z` | `latest` | release.yml prerelease detection |
+| dist-tag for `vX.Y.Z-pre` | `next` | release.yml prerelease detection |
 
-## Pre-publish verification
+The unscoped name `gacli` is taken on npm by an unrelated, deprecated 1.0.8 package — that's
+why we use the scope. If you'd rather use a different scope, edit `package.json:name` and the
+`scope: '@nalyk'` value in `release.yml` before tagging.
+
+## One-time user setup
+
+1. **Create an npm account** (if you don't have one) and **enable 2FA** at
+   https://www.npmjs.com/settings/<you>/2fa.
+2. **Reserve the `@nalyk` scope** by visiting https://www.npmjs.com/org/create or simply
+   publishing your first scoped package — npm auto-creates the scope on first publish.
+3. **Generate an automation token** (NOT a classic publish token):
+   - npmjs.com → Access Tokens → Generate New Token → **Granular Access Token**
+   - Permissions: **packages: read+write** scoped to `@nalyk/*` only.
+   - Expiration: 1 year (renew via this same workflow).
+4. **Add the token to GitHub** (DONE — `NPM_TOKEN` secret is set on `nalyk/gacli`).
+
+## How releases work now
 
 ```bash
-pnpm verify        # lint + type-check + test + build
-pnpm publint       # validates package.json shape against ecosystem norms
-pnpm attw          # @arethetypeswrong/cli — flags consumer-side resolution problems
-pnpm pack --dry-run   # see exactly what will be uploaded — confirm dist/ + README + help.md only
+# 1. Bump version, commit, push to main
+pnpm version patch              # or minor|major — also creates the tag locally
+git push origin main --follow-tags
+
+# 2. Tag push fires .github/workflows/release.yml, which:
+#    - lint + type-check + test + build
+#    - pnpm pack
+#    - smoke-test the local tarball via `npm install -g`
+#    - npm publish --access public --provenance --tag latest
+#    - smoke-test the published package via `npm install -g @nalyk/gacli@<version>`
+#    - generate release notes (PR/commit log since previous tag)
+#    - create GitHub Release with the .tgz attached and install instructions
+
+# 3. Consumers install:
+npm install -g @nalyk/gacli
+gacli --version
 ```
 
-`prepublishOnly` runs `pnpm verify` automatically on `npm publish`, so a failing test
-or lint will abort the upload. Don't bypass it.
-
-## Publishing
+For a **prerelease**:
 
 ```bash
-# First publish:
-npm publish --access public          # required for scoped packages
-
-# Subsequent releases:
-pnpm version patch|minor|major       # bumps version + tags + commits
-git push && git push --tags
-npm publish
+pnpm version prepatch --preid=beta   # 1.0.1 → 1.0.2-beta.0
+git push origin main --follow-tags
+# release.yml detects the `-` and publishes under dist-tag `next` instead of `latest`
+# and marks the GitHub Release as prerelease
 ```
 
-## Provenance (recommended)
+## What's verified
 
-Publish with provenance attestation so consumers can verify the package was built from
-this repo via GitHub Actions:
+- `pnpm verify` runs before publish — lint + type-check + test + build all green or no publish.
+- The local pack is `npm install -g`-tested before upload.
+- After publish, the registry version is re-installed from the public registry to verify a
+  real consumer's install path actually works.
+- npm provenance attestation is generated, so consumers can run `npm audit signatures` to
+  verify the package was built from this repo at this commit by GitHub Actions.
 
-```yaml
-# Add to .github/workflows/release.yml — left as a follow-up.
-- run: npm publish --provenance --access public
-  env:
-    NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-```
+## What is shipped (`files` allowlist)
 
-Requires `id-token: write` permission on the workflow and an `NPM_TOKEN` secret with
-publish rights.
-
-## What is shipped
-
-The `files` allowlist in `package.json` ships only:
+Only:
 
 - `dist/` — compiled JS + `.d.ts`
 - `README.md`, `help.md` — user-facing docs
-- `LICENSE` — when you add it
+- `LICENSE`
 
-NOT shipped (intentional): `src/`, `test/`, `.serena/`, `.github/`, `.claude/`, configs,
-lockfiles. If you need to ship the source for debug, add `"src"` to the `files` array.
+NOT shipped: `src/`, `test/`, `.serena/`, `.github/`, `.claude/`, configs, lockfiles.
 
-## Why I didn't publish for you
+## Manual fallback
 
-Three reasons, all blockers I cannot resolve:
+If the workflow ever fails and you need to publish from your machine:
 
-1. I don't have your npm credentials, and you should never give them to a tool.
-2. Choosing the package name (with/without scope) is a product decision.
-3. License selection is yours — committing one without your input is presumptuous.
+```bash
+pnpm verify
+pnpm publish --access public --provenance
+```
 
-Once you handle (1)–(3), the actual publish is one command.
+This requires you to be `npm login`-ed locally with a token that can write to `@nalyk/*`.
+The provenance flag will work too — npm cli inspects your environment and downgrades to a
+non-provenance publish if it can't find one (e.g., outside CI). Prefer the workflow path.
+
+## Unpublishing
+
+You have **72 hours** after publish to `npm unpublish @nalyk/gacli@<version>`. After that
+the version is permanent. If you ship a broken release: bump the patch version and publish
+the fix, don't try to unpublish.
+
+## Granting collaborators publish access (later)
+
+```bash
+npm access grant read-write @nalyk:developers @nalyk/gacli
+# or per-user:
+npm access grant read-write <username> @nalyk/gacli
+```
+
+You retain admin via your scope ownership.

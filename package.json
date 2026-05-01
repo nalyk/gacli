@@ -1,6 +1,6 @@
 {
-  "name": "gacli",
-  "version": "1.0.0",
+  "name": "@nalyk/gacli",
+  "version": "1.0.1",
   "description": "Full-featured Google Analytics 4 CLI tool — Data API + Admin API, OAuth/SA auth, multiple output formats, MCP server.",
   "type": "module",
   "license": "MIT",

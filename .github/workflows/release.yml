@@ -6,11 +6,12 @@ on:
       - 'v*.*.*'
 
 permissions:
-  contents: write
+  contents: write   # create GitHub Releases + push tags
+  id-token: write   # required for npm provenance attestation
 
 jobs:
   release:
-    name: build + release
+    name: build + publish + release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -26,6 +27,9 @@ jobs:
         with:
           node-version: '22'
           cache: pnpm
+          # registry-url + scope wires npm/pnpm to read NODE_AUTH_TOKEN for publish
+          registry-url: 'https://registry.npmjs.org'
+          scope: '@nalyk'
 
       - run: pnpm install --frozen-lockfile
 
@@ -37,7 +41,7 @@ jobs:
 
       - name: Smoke-test packed tarball (mimic real `npm install -g`)
         run: |
-          TARBALL=$(ls "$GITHUB_WORKSPACE"/gacli-*.tgz)
+          TARBALL=$(ls "$GITHUB_WORKSPACE"/*.tgz)
           echo "Installing $TARBALL globally..."
           npm install -g "$TARBALL"
           echo "Verifying gacli is on PATH and runs..."
@@ -45,8 +49,52 @@ jobs:
           gacli --help > /dev/null
           gacli mcp serve --help > /dev/null
 
+      - name: Detect prerelease
+        id: prerelease
+        run: |
+          # Pre-release tags (v1.2.3-beta.1, v2.0.0-rc.1) publish under `next`/`beta` dist-tag,
+          # not `latest`, so they don't overwrite the stable channel.
+          if [[ "${{ github.ref_name }}" =~ - ]]; then
+            echo "tag=next" >> "$GITHUB_OUTPUT"
+            echo "is_prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=latest" >> "$GITHUB_OUTPUT"
+            echo "is_prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish to npm with provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: 'true'
+        run: |
+          npm publish \
+            --access public \
+            --provenance \
+            --tag "${{ steps.prerelease.outputs.tag }}"
+
+      - name: Smoke-test the published package (real-world install)
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          # Wait briefly for npm registry CDN to propagate the new version, then install
+          # from the registry (not the local tarball) to verify a real user install works.
+          PKG_NAME=$(node -p "require('./package.json').name")
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          echo "Waiting for $PKG_NAME@$PKG_VERSION to appear on registry..."
+          for i in 1 2 3 4 5; do
+            if npm view "$PKG_NAME@$PKG_VERSION" version > /dev/null 2>&1; then
+              echo "Found on registry."
+              break
+            fi
+            echo "Not visible yet (attempt $i/5), sleeping 5s..."
+            sleep 5
+          done
+          npm uninstall -g "$PKG_NAME" 2>/dev/null || true
+          npm install -g "$PKG_NAME@$PKG_VERSION"
+          gacli --version
+          gacli --help > /dev/null
+
       - name: Generate release notes
-        id: notes
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -63,12 +111,30 @@ jobs:
               -f tag_name="${{ github.ref_name }}" \
               -q .body > release-notes.md
           fi
+          # Append npm install instructions
+          PKG_NAME=$(node -p "require('./package.json').name")
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          {
+            echo
+            echo "## Install"
+            echo
+            echo '```bash'
+            echo "npm install -g ${PKG_NAME}@${PKG_VERSION}"
+            echo '```'
+            echo
+            echo "This release is published with [npm provenance](https://docs.npmjs.com/generating-provenance-statements) — verify with \`npm audit signatures\`."
+          } >> release-notes.md
 
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          PRERELEASE_FLAG=""
+          if [[ "${{ steps.prerelease.outputs.is_prerelease }}" == "true" ]]; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
           gh release create "${{ github.ref_name }}" \
             --title "${{ github.ref_name }}" \
             --notes-file release-notes.md \
-            gacli-*.tgz
+            $PRERELEASE_FLAG \
+            *.tgz

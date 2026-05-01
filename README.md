@@ -13,6 +13,14 @@ metric/dimension catalogs.
 
 ## Setup
 
+Install from npm:
+
+```bash
+npm install -g @nalyk/gacli
+```
+
+Or build from source:
+
 ```bash
 pnpm install && pnpm build && pnpm link --global
 ```
