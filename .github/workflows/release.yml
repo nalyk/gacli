@@ -44,15 +44,25 @@ jobs:
           cache: pnpm
           registry-url: 'https://registry.npmjs.org'
 
-      # OIDC trusted publishing requires npm >= 11.5.1; Node 22 ships with npm 10.x.
-      # In-place self-upgrade can hit "MODULE_NOT_FOUND: promise-retry" because the
-      # new npm is partially installed when it tries to handle its own install. The
-      # --force flag bypasses the transitional check; this is the canonical
-      # workaround for npm self-upgrade in CI.
-      - name: Upgrade npm to >=11.5.1 (required for OIDC trusted publishing)
+      # OIDC trusted publishing requires npm >= 11.5.1. Node 22 LTS ships with
+      # npm 10.x. Self-upgrading via `npm install -g npm@latest` fails on the
+      # GitHub runner with "MODULE_NOT_FOUND: promise-retry" — the bundled
+      # npm@10 has incomplete dependencies that can't reify a self-replacement.
+      # Even --force doesn't help: it's the existing npm that breaks, not the
+      # install operation. Workaround: install the new npm to a separate
+      # prefix and prepend it to PATH, never touching the broken global npm.
+      - name: Install npm@latest to a local prefix (PATH-prepended)
         run: |
-          npm install -g --force npm@latest
-          echo "npm: $(npm --version)"
+          mkdir -p /tmp/npm-cli
+          npm install --prefix /tmp/npm-cli --no-audit --no-fund npm@latest
+          echo "/tmp/npm-cli/node_modules/.bin" >> "$GITHUB_PATH"
+
+      - name: Verify npm version is >=11.5.1
+        run: |
+          which npm
+          npm --version
+          test "$(node -p "require('/tmp/npm-cli/node_modules/npm/package.json').version.split('.').map(Number).slice(0,2).join('.') >= '11.5'")" = "true" \
+            || (echo "::error::Installed npm < 11.5 — OIDC publishing won't work"; exit 1)
 
       - run: pnpm install --frozen-lockfile
 
