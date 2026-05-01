@@ -37,8 +37,7 @@
     "format": "biome format --write src/ test/",
     "verify": "pnpm lint && pnpm type-check && pnpm test && pnpm build",
     "prepublishOnly": "pnpm verify",
-    "publint": "pnpm dlx publint",
-    "attw": "pnpm dlx @arethetypeswrong/cli --pack"
+    "publint": "pnpm dlx publint"
   },
   "dependencies": {
     "@google-analytics/admin": "^5.0.0",

@@ -5,6 +5,13 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    # @types/node MUST match the lowest supported runtime, not the newest.
+    # `engines.node` in package.json pins us to Node 22+, so we hold @types/node
+    # at the 22.x major. Re-evaluate this rule when raising the minimum runtime.
+    ignore:
+      - dependency-name: '@types/node'
+        update-types:
+          - version-update:semver-major
     groups:
       types:
         patterns:
@@ -24,3 +31,8 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      actions:
+        patterns:
+          - '*'

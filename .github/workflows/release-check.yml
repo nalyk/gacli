@@ -29,7 +29,12 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+
+      # publint validates package.json shape against ecosystem norms.
       - name: Run publint
         run: pnpm dlx publint
-      - name: Run @arethetypeswrong/cli
-        run: pnpm dlx @arethetypeswrong/cli --pack
+
+      # Note: arethetypeswrong (attw) is intentionally NOT run here.
+      # gacli ships a `bin` only — no library types are exported, and attw
+      # treats "no types" as a failure. Bringing it back would require
+      # exposing a public library API, which is not the package's purpose.
