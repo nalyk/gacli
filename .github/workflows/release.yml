@@ -1,0 +1,70 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: build + release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # full history so release-notes generation works
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10
+          run_install: false
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Verify (lint + type-check + test + build)
+        run: pnpm verify
+
+      - name: Pack tarball
+        run: pnpm pack
+
+      - name: Verify packed tarball boots
+        run: |
+          mkdir -p /tmp/gacli-smoke && cd /tmp/gacli-smoke
+          tar xzf "$GITHUB_WORKSPACE"/gacli-*.tgz
+          cd package && node dist/index.js --version
+
+      - name: Generate release notes
+        id: notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Use GitHub's auto-generated changelog from PRs/commits since the last tag.
+          # If this is the first tag, GitHub falls back to all commits.
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [[ -n "$PREV_TAG" ]]; then
+            gh api -X POST /repos/${{ github.repository }}/releases/generate-notes \
+              -f tag_name="${{ github.ref_name }}" \
+              -f previous_tag_name="$PREV_TAG" \
+              -q .body > release-notes.md
+          else
+            gh api -X POST /repos/${{ github.repository }}/releases/generate-notes \
+              -f tag_name="${{ github.ref_name }}" \
+              -q .body > release-notes.md
+          fi
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            --title "${{ github.ref_name }}" \
+            --notes-file release-notes.md \
+            gacli-*.tgz

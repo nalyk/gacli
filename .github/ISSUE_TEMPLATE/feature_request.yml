@@ -1,0 +1,50 @@
+name: Feature request
+description: Propose a new command, flag, format, or behavior.
+title: 'feat: '
+labels: ['enhancement']
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: |
+        Describe the use case. "I want to do X but currently I have to do Y."
+        Concrete pain beats abstract wishlist items.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed
+    attributes:
+      label: Proposed solution
+      description: |
+        Sketch the surface area. Command/flag names, expected output, where it
+        fits in the existing CLI structure.
+      placeholder: |
+        New command: `gacli ...`
+        Flags: `--foo <value>`
+        Output: ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What other approaches did you think about? Why is the proposed one better?
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Scope
+      options:
+        - Data API (reports, realtime, funnel, cohort, etc.)
+        - Admin API (properties, audiences, etc.)
+        - Output formats
+        - Authentication
+        - MCP server
+        - explore REPL
+        - Configuration / env vars
+        - Other
+    validations:
+      required: true

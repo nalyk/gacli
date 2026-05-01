@@ -1,0 +1,71 @@
+name: Bug report
+description: Report a reproducible bug in gacli.
+title: 'bug: '
+labels: ['bug']
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: A clear and concise description of the bug.
+      placeholder: When I run `gacli ...`, I expect X but get Y.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: |
+        The exact `gacli` invocation that triggers the bug. Run with `-v` (verbose)
+        and paste the full output. **Redact any OAuth tokens or service-account JSON.**
+      render: shell
+      placeholder: |
+        $ gacli -v report run -m sessions -d country
+        ... output ...
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: gacli version
+      description: Output of `gacli --version`.
+      placeholder: '1.0.0'
+    validations:
+      required: true
+
+  - type: input
+    id: node-version
+    attributes:
+      label: Node.js version
+      description: Output of `node --version`.
+      placeholder: 'v22.x'
+    validations:
+      required: true
+
+  - type: dropdown
+    id: auth-mode
+    attributes:
+      label: Authentication mode
+      options:
+        - OAuth (gacli auth login)
+        - Service account (config)
+        - Service account (GOOGLE_APPLICATION_CREDENTIALS env var)
+        - Not sure / not applicable
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: OS
+      placeholder: 'Linux 6.x / macOS 14 / Windows 11 (WSL2)'
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      description: Logs, screenshots, related context, what you've already tried.

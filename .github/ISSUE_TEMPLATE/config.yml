@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/nalyk/gacli/security/policy
+    about: Please email dev.ungheni@gmail.com directly — do not open a public issue.
+  - name: Question or discussion
+    url: https://github.com/nalyk/gacli/discussions
+    about: Use Discussions for usage questions and ideas. Issues are for bugs and concrete feature requests.

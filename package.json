@@ -3,6 +3,16 @@
   "version": "1.0.0",
   "description": "Full-featured Google Analytics 4 CLI tool — Data API + Admin API, OAuth/SA auth, multiple output formats, MCP server.",
   "type": "module",
+  "license": "MIT",
+  "author": "Ion (Nalyk) Calmîș",
+  "homepage": "https://github.com/nalyk/gacli#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nalyk/gacli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nalyk/gacli/issues"
+  },
   "main": "dist/index.js",
   "bin": {
     "gacli": "dist/index.js"
