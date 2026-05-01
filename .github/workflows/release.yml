@@ -61,8 +61,11 @@ jobs:
         run: |
           which npm
           npm --version
-          test "$(node -p "require('/tmp/npm-cli/node_modules/npm/package.json').version.split('.').map(Number).slice(0,2).join('.') >= '11.5'")" = "true" \
-            || (echo "::error::Installed npm < 11.5 — OIDC publishing won't work"; exit 1)
+          MAJOR=$(node -p "require('/tmp/npm-cli/node_modules/npm/package.json').version.split('.')[0] | 0")
+          if [ "$MAJOR" -lt 11 ]; then
+            echo "::error::npm major < 11; OIDC publishing requires >= 11.5.1"
+            exit 1
+          fi
 
       - run: pnpm install --frozen-lockfile
 
