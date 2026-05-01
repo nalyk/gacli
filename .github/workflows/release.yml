@@ -35,11 +35,15 @@ jobs:
       - name: Pack tarball
         run: pnpm pack
 
-      - name: Verify packed tarball boots
+      - name: Smoke-test packed tarball (mimic real `npm install -g`)
         run: |
-          mkdir -p /tmp/gacli-smoke && cd /tmp/gacli-smoke
-          tar xzf "$GITHUB_WORKSPACE"/gacli-*.tgz
-          cd package && node dist/index.js --version
+          TARBALL=$(ls "$GITHUB_WORKSPACE"/gacli-*.tgz)
+          echo "Installing $TARBALL globally..."
+          npm install -g "$TARBALL"
+          echo "Verifying gacli is on PATH and runs..."
+          gacli --version
+          gacli --help > /dev/null
+          gacli mcp serve --help > /dev/null
 
       - name: Generate release notes
         id: notes
