@@ -41,8 +41,10 @@ type ReportLike = {
   metadata?: unknown;
 };
 
-// SDK ClientOptions don't include OAuth2Client in JSONClient union (upstream type narrowness),
-// but at runtime it's fine — auth chain returns either { authClient } or { auth }, both supported.
+// SDK ClientOptions narrowed in @google-analytics/data 5.x: `auth` is now typed as
+// GoogleAuth<AuthClient>, not GoogleAuth<JSONClient>, and OAuth2Client is excluded
+// from the JSONClient union. At runtime the SDK accepts both shapes — this is a
+// well-known upstream type-narrowness gap. Cast through unknown at the boundary.
 type ClientCtor = ConstructorParameters<typeof BetaAnalyticsDataClient>[0];
 type AlphaClientCtor = ConstructorParameters<typeof v1alpha.AlphaAnalyticsDataClient>[0];
 
@@ -51,14 +53,14 @@ let alphaClient: v1alpha.AlphaAnalyticsDataClient | null = null;
 
 function getClient(): BetaAnalyticsDataClient {
   if (!betaClient) {
-    betaClient = new BetaAnalyticsDataClient(getAuthClientOptions() as ClientCtor);
+    betaClient = new BetaAnalyticsDataClient(getAuthClientOptions() as unknown as ClientCtor);
   }
   return betaClient;
 }
 
 function getAlphaClient(): v1alpha.AlphaAnalyticsDataClient {
   if (!alphaClient) {
-    alphaClient = new v1alpha.AlphaAnalyticsDataClient(getAuthClientOptions() as AlphaClientCtor);
+    alphaClient = new v1alpha.AlphaAnalyticsDataClient(getAuthClientOptions() as unknown as AlphaClientCtor);
   }
   return alphaClient;
 }
