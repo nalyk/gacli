@@ -1,8 +1,9 @@
 # gacli
 
 [![CI](https://github.com/nalyk/gacli/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/nalyk/gacli/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/@nalyk/gacli?color=cb3837&logo=npm)](https://www.npmjs.com/package/@nalyk/gacli)
+[![License: MIT](https://img.shields.io/github/license/nalyk/gacli?color=blue)](./LICENSE)
 ![Node](https://img.shields.io/badge/node-%E2%89%A522-brightgreen)
-![ESM](https://img.shields.io/badge/ESM-only-blue)
 
 Full-featured CLI for Google Analytics 4 — Data API + Admin API. Reports, realtime, funnels,
 cohorts, audience exports, property management, streams, custom dimensions/metrics, key events,
@@ -17,6 +18,14 @@ Install from npm:
 
 ```bash
 npm install -g @nalyk/gacli
+```
+
+Verify the install was built from this exact GitHub repo at the published commit
+(via [npm provenance](https://docs.npmjs.com/generating-provenance-statements) /
+Sigstore attestation):
+
+```bash
+npm audit signatures
 ```
 
 Or build from source:
@@ -250,8 +259,11 @@ workflow runs `pnpm verify` on Node 22 and Node 24 for every push and PR.
 | [`README.md`](./README.md) | This file — user setup and quick reference |
 | [`help.md`](./help.md) | Verbose human-readable command reference (every flag, every example) |
 | [`MCP.md`](./MCP.md) | MCP server setup for Claude Desktop, Cursor, Cline, Zed |
-| [`PUBLISHING.md`](./PUBLISHING.md) | npm publish workflow (user-side steps for releasing this) |
+| [`PUBLISHING.md`](./PUBLISHING.md) | npm release process — OIDC trusted publishing, bootstrap, ongoing flow |
 | [`DISTRIBUTION.md`](./DISTRIBUTION.md) | Single-binary (Node SEA) build notes; multi-platform release tradeoffs |
+| [`CONTRIBUTING.md`](./CONTRIBUTING.md) | How to contribute, the verify gate, architectural rules |
+| [`SECURITY.md`](./SECURITY.md) | Security policy, vulnerability disclosure, hardening notes |
+| [`LICENSE`](./LICENSE) | MIT |
 | [`CLAUDE.md`](./CLAUDE.md) | Conventions Claude follows when working in this repo |
 
 ## Tech stack
