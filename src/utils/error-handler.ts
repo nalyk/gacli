@@ -25,7 +25,9 @@ export function handleError(error: unknown): never {
           process.exit(8);
           break;
         case 16:
-          logger.error(`Unauthenticated: ${message}. Check your credentials or run \`gacli auth login\` to re-authenticate.`);
+          logger.error(
+            `Unauthenticated: ${message}. Check your credentials or run \`gacli auth login\` to re-authenticate.`,
+          );
           process.exit(16);
           break;
         default:

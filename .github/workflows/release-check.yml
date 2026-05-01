@@ -1,0 +1,35 @@
+name: release-check
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'package.json'
+      - 'src/**'
+      - 'tsconfig.json'
+
+permissions:
+  contents: read
+
+jobs:
+  publint:
+    name: publint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - name: Run publint
+        run: pnpm dlx publint
+      - name: Run @arethetypeswrong/cli
+        run: pnpm dlx @arethetypeswrong/cli --pack

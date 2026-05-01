@@ -45,7 +45,7 @@ or a path-scoped `.claude/rules/*.md` instead.
 
 **ASK FIRST** when ANY true:
 - irreversible op (force-push, history rewrite, file deletion outside the changed feature)
-- touches `.git/`, `package.json` deps, `tsconfig.json`, `jest.config.js`
+- touches `.git/`, `package.json` deps, `tsconfig.json`, `vitest.config.ts`, `biome.json`
 - introduces a new dependency
 - changes the public CLI surface (renamed command, new flag semantics, removed option)
 - touches credentials, tokens, `.env*`, `~/.gacli/`

@@ -1,15 +1,15 @@
 import { Command } from 'commander';
+import { createAccessBindingsCommand } from './access-bindings.js';
 import { createAccountsCommand } from './accounts.js';
-import { createPropertiesCommand } from './properties.js';
-import { createDataStreamsCommand } from './datastreams.js';
+import { createAudiencesCommand } from './audiences.js';
+import { createBigQueryLinksCommand } from './bigquery-links.js';
 import { createCustomDimensionsCommand } from './custom-dimensions.js';
 import { createCustomMetricsCommand } from './custom-metrics.js';
-import { createKeyEventsCommand } from './key-events.js';
-import { createAudiencesCommand } from './audiences.js';
-import { createAccessBindingsCommand } from './access-bindings.js';
+import { createDataStreamsCommand } from './datastreams.js';
 import { createFirebaseLinksCommand } from './firebase-links.js';
 import { createGoogleAdsLinksCommand } from './google-ads-links.js';
-import { createBigQueryLinksCommand } from './bigquery-links.js';
+import { createKeyEventsCommand } from './key-events.js';
+import { createPropertiesCommand } from './properties.js';
 
 export function createAdminCommand(): Command {
   const cmd = new Command('admin').description('GA4 Admin API operations');

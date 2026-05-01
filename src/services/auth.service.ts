@@ -54,7 +54,7 @@ export function getAuthClientOptions(): { authClient: OAuth2Client } | { auth: G
   if (!keyFile) {
     throw new Error(
       'No credentials configured. Run `gacli auth login` for OAuth or set a service account via:\n' +
-      '  gacli config set credentials /path/to/service-account.json',
+        '  gacli config set credentials /path/to/service-account.json',
     );
   }
   const auth = new GoogleAuth({ keyFile, scopes: GA4_SCOPES });

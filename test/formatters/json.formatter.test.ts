@@ -1,9 +1,10 @@
+import { describe, expect, it } from 'vitest';
 import { formatJson } from '../../src/formatters/json.formatter.js';
 import type { ReportData } from '../../src/types/common.js';
 
 describe('formatJson', () => {
   const mockData: ReportData = {
-    headers: ['Metric', 'Value', 'Dimension'],
+    headers: ['metric', 'value', 'dimension'],
     rows: [
       ['sessions', '1000', 'web'],
       ['users', '850', 'web'],
@@ -12,193 +13,110 @@ describe('formatJson', () => {
     rowCount: 3,
   };
 
-  describe('basic formatting', () => {
-    it('should format data as valid JSON', () => {
-      const result = formatJson(mockData);
-      const parsed = JSON.parse(result);
-      
-      expect(parsed).toHaveProperty('headers');
-      expect(parsed).toHaveProperty('rows');
-      expect(parsed).toHaveProperty('rowCount');
-      expect(parsed.headers).toEqual(['Metric', 'Value', 'Dimension']);
-      expect(parsed.rows).toHaveLength(3);
-      expect(parsed.rowCount).toBe(3);
-    });
-
-    it('should preserve data integrity', () => {
-      const result = formatJson(mockData);
-      const parsed = JSON.parse(result);
-      
-      expect(parsed.rows[0]).toEqual(['sessions', '1000', 'web']);
-      expect(parsed.rows[1]).toEqual(['users', '850', 'web']);
-      expect(parsed.rows[2]).toEqual(['conversions', '120', 'web']);
-    });
-
-    it('should be valid JSON', () => {
-      const result = formatJson(mockData);
-      expect(() => JSON.parse(result)).not.toThrow();
+  it('emits {rowCount, data:[{...}]} shape', () => {
+    const parsed = JSON.parse(formatJson(mockData));
+    expect(parsed).toEqual({
+      rowCount: 3,
+      data: [
+        { metric: 'sessions', value: '1000', dimension: 'web' },
+        { metric: 'users', value: '850', dimension: 'web' },
+        { metric: 'conversions', value: '120', dimension: 'web' },
+      ],
     });
   });
 
-  describe('empty data', () => {
-    it('should format empty data correctly', () => {
-      const emptyData: ReportData = {
-        headers: ['Metric'],
-        rows: [],
-        rowCount: 0,
-      };
-
-      const result = formatJson(emptyData);
-      const parsed = JSON.parse(result);
-      
-      expect(parsed.headers).toEqual(['Metric']);
-      expect(parsed.rows).toEqual([]);
-      expect(parsed.rowCount).toBe(0);
-    });
+  it('round-trips through JSON.parse without throwing', () => {
+    expect(() => JSON.parse(formatJson(mockData))).not.toThrow();
   });
 
-  describe('special characters', () => {
-    it('should handle special characters', () => {
-      const specialData: ReportData = {
-        headers: ['Metric', 'Description'],
+  it('handles empty rows', () => {
+    const parsed = JSON.parse(formatJson({ headers: ['x'], rows: [], rowCount: 0 }));
+    expect(parsed).toEqual({ rowCount: 0, data: [] });
+  });
+
+  it('handles empty headers and empty rows', () => {
+    const parsed = JSON.parse(formatJson({ headers: [], rows: [], rowCount: 0 }));
+    expect(parsed).toEqual({ rowCount: 0, data: [] });
+  });
+
+  it('preserves special characters', () => {
+    const parsed = JSON.parse(
+      formatJson({
+        headers: ['metric', 'description'],
         rows: [
           ['sessions', 'Sessions with @#$%^&*'],
           ['users', 'Users with "quotes"'],
         ],
         rowCount: 2,
-      };
-
-      const result = formatJson(specialData);
-      const parsed = JSON.parse(result);
-      
-      expect(parsed.rows[0][1]).toBe('Sessions with @#$%^&*');
-      expect(parsed.rows[1][1]).toBe('Users with "quotes"');
-    });
+      }),
+    );
+    expect(parsed.data[0].description).toBe('Sessions with @#$%^&*');
+    expect(parsed.data[1].description).toBe('Users with "quotes"');
   });
 
-  describe('unicode characters', () => {
-    it('should handle unicode characters', () => {
-      const unicodeData: ReportData = {
-        headers: ['Metric', 'Country'],
+  it('preserves unicode', () => {
+    const parsed = JSON.parse(
+      formatJson({
+        headers: ['metric', 'country'],
         rows: [
           ['sessions', '🇺🇸'],
           ['users', '🇬🇧'],
         ],
         rowCount: 2,
-      };
-
-      const result = formatJson(unicodeData);
-      const parsed = JSON.parse(result);
-      
-      expect(parsed.rows[0][1]).toBe('🇺🇸');
-      expect(parsed.rows[1][1]).toBe('🇬🇧');
-    });
+      }),
+    );
+    expect(parsed.data[0].country).toBe('🇺🇸');
+    expect(parsed.data[1].country).toBe('🇬🇧');
   });
 
-  describe('numeric data', () => {
-    it('should preserve numeric values as strings', () => {
-      const numericData: ReportData = {
-        headers: ['ID', 'Value', 'Score'],
+  it('preserves numeric values as strings (GA4 returns strings)', () => {
+    const parsed = JSON.parse(
+      formatJson({
+        headers: ['id', 'value', 'score'],
         rows: [
           ['1', '100', '95.5'],
           ['2', '200', '88'],
         ],
         rowCount: 2,
-      };
-
-      const result = formatJson(numericData);
-      const parsed = JSON.parse(result);
-      
-      expect(parsed.rows[0]).toEqual(['1', '100', '95.5']);
-      expect(parsed.rows[1]).toEqual(['2', '200', '88']);
-    });
+      }),
+    );
+    expect(parsed.data[0]).toEqual({ id: '1', value: '100', score: '95.5' });
+    expect(parsed.data[1]).toEqual({ id: '2', value: '200', score: '88' });
   });
 
-  describe('empty headers', () => {
-    it('should handle empty headers', () => {
-      const emptyHeadersData: ReportData = {
-        headers: [],
-        rows: [],
-        rowCount: 0,
-      };
-
-      const result = formatJson(emptyHeadersData);
-      const parsed = JSON.parse(result);
-      
-      expect(parsed.headers).toEqual([]);
-      expect(parsed.rows).toEqual([]);
-      expect(parsed.rowCount).toBe(0);
-    });
-  });
-
-  describe('large dataset', () => {
-    it('should handle large datasets', () => {
-      const largeData: ReportData = {
-        headers: ['Metric', 'Dimension'],
-        rows: Array.from({ length: 1000 }, (_, i) => [`value_${i}`, `dim_${i}`]),
-        rowCount: 1000,
-      };
-
-      const result = formatJson(largeData);
-      const parsed = JSON.parse(result);
-      
-      expect(parsed.rows).toHaveLength(1000);
-      expect(parsed.rowCount).toBe(1000);
-      expect(parsed.headers).toEqual(['Metric', 'Dimension']);
-    });
-  });
-
-  describe('single row', () => {
-    it('should format single row correctly', () => {
-      const singleRowData: ReportData = {
-        headers: ['Metric'],
-        rows: [['value']],
+  it('coerces missing cells to empty string', () => {
+    const parsed = JSON.parse(
+      formatJson({
+        headers: ['a', 'b', 'c'],
+        rows: [['x', 'y']],
         rowCount: 1,
-      };
-
-      const result = formatJson(singleRowData);
-      const parsed = JSON.parse(result);
-      
-      expect(parsed.rows).toEqual([['value']]);
-      expect(parsed.rowCount).toBe(1);
-    });
+      }),
+    );
+    expect(parsed.data[0]).toEqual({ a: 'x', b: 'y', c: '' });
   });
 
-  describe('empty string values', () => {
-    it('should handle empty string values', () => {
-      const emptyValuesData: ReportData = {
-        headers: ['Metric', 'Value'],
-        rows: [
-          ['sessions', ''],
-          ['users', ''],
-        ],
-        rowCount: 2,
-      };
-
-      const result = formatJson(emptyValuesData);
-      const parsed = JSON.parse(result);
-      
-      expect(parsed.rows[0]).toEqual(['sessions', '']);
-      expect(parsed.rows[1]).toEqual(['users', '']);
-    });
+  it('emits metadata when present and non-empty', () => {
+    const parsed = JSON.parse(
+      formatJson({
+        headers: ['x'],
+        rows: [['1']],
+        rowCount: 1,
+        metadata: { samplingMetadata: { samplesReadCount: '100' } },
+      }),
+    );
+    expect(parsed.metadata).toEqual({ samplingMetadata: { samplesReadCount: '100' } });
   });
 
-  describe('boolean string values', () => {
-    it('should handle boolean string values', () => {
-      const boolData: ReportData = {
-        headers: ['Metric', 'Active'],
-        rows: [
-          ['sessions', 'true'],
-          ['users', 'false'],
-        ],
-        rowCount: 2,
-      };
+  it('omits metadata when empty', () => {
+    const parsed = JSON.parse(formatJson({ headers: ['x'], rows: [['1']], rowCount: 1, metadata: {} }));
+    expect(parsed).not.toHaveProperty('metadata');
+  });
 
-      const result = formatJson(boolData);
-      const parsed = JSON.parse(result);
-      
-      expect(parsed.rows[0]).toEqual(['sessions', 'true']);
-      expect(parsed.rows[1]).toEqual(['users', 'false']);
-    });
+  it('handles large datasets', () => {
+    const rows: string[][] = Array.from({ length: 1000 }, (_, i) => [`v${i}`, `d${i}`]);
+    const parsed = JSON.parse(formatJson({ headers: ['metric', 'dimension'], rows, rowCount: 1000 }));
+    expect(parsed.data).toHaveLength(1000);
+    expect(parsed.rowCount).toBe(1000);
+    expect(parsed.data[999]).toEqual({ metric: 'v999', dimension: 'd999' });
   });
 });

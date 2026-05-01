@@ -1,21 +1,23 @@
 import { Command } from 'commander';
-import { resolveGlobalOptions, writeOutput } from '../../types/common.js';
 import { formatOutput } from '../../formatters/index.js';
-import { createSpinner } from '../../utils/spinner.js';
-import { handleError } from '../../utils/error-handler.js';
-import { validatePropertyId } from '../../validation/validators.js';
-import { validate } from '../../validation/validators.js';
-import { realtimeReportOptsSchema } from '../../validation/schemas.js';
-import { buildFilterExpression } from '../../utils/filter-builder.js';
 import { runRealtimeReport } from '../../services/data-api.service.js';
-import type { RunRealtimeReportParams, Dimension, Metric, MinuteRange } from '../../types/data-api.js';
+import { resolveGlobalOptions, writeOutput } from '../../types/common.js';
+import type { Dimension, Metric, MinuteRange, RunRealtimeReportParams } from '../../types/data-api.js';
+import { handleError } from '../../utils/error-handler.js';
+import { buildFilterExpression } from '../../utils/filter-builder.js';
+import { createSpinner } from '../../utils/spinner.js';
+import { realtimeReportOptsSchema } from '../../validation/schemas.js';
+import { validate, validatePropertyId } from '../../validation/validators.js';
 
 export function createRealtimeCommand(): Command {
   const cmd = new Command('realtime')
     .description('Run a GA4 realtime report')
     .requiredOption('-m, --metrics <metrics...>', 'Metrics to include in the report')
     .option('-d, --dimensions <dimensions...>', 'Dimensions to include in the report')
-    .option('--minute-ranges <json>', 'Minute ranges as a JSON string (e.g. \'[{"startMinutesAgo":10,"endMinutesAgo":0}]\')')
+    .option(
+      '--minute-ranges <json>',
+      'Minute ranges as a JSON string (e.g. \'[{"startMinutesAgo":10,"endMinutesAgo":0}]\')',
+    )
     .option('--dimension-filter <filters...>', 'Dimension filters')
     .option('--metric-filter <filters...>', 'Metric filters')
     .option('--limit <number>', 'Maximum number of rows to return')
@@ -43,9 +45,7 @@ export function createRealtimeCommand(): Command {
           ? buildFilterExpression(opts.dimensionFilter)
           : undefined;
 
-        const metricFilter = opts.metricFilter
-          ? buildFilterExpression(opts.metricFilter)
-          : undefined;
+        const metricFilter = opts.metricFilter ? buildFilterExpression(opts.metricFilter) : undefined;
 
         const params: RunRealtimeReportParams = {
           property: `properties/${propertyId}`,

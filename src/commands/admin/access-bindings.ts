@@ -1,9 +1,9 @@
 import { Command } from 'commander';
-import { resolveGlobalOptions, writeOutput, type ReportData } from '../../types/common.js';
 import { formatOutput } from '../../formatters/index.js';
-import { createSpinner } from '../../utils/spinner.js';
-import { handleError } from '../../utils/error-handler.js';
 import * as adminApi from '../../services/admin-api.service.js';
+import { type ReportData, resolveGlobalOptions, writeOutput } from '../../types/common.js';
+import { handleError } from '../../utils/error-handler.js';
+import { createSpinner } from '../../utils/spinner.js';
 
 export function createAccessBindingsCommand(): Command {
   const cmd = new Command('access-bindings').description('Manage GA4 access bindings');
@@ -11,7 +11,10 @@ export function createAccessBindingsCommand(): Command {
   cmd
     .command('list')
     .description('List access bindings for an account or property')
-    .requiredOption('--parent <parent>', 'Account or property resource name (e.g., accounts/123 or properties/456)')
+    .requiredOption(
+      '--parent <parent>',
+      'Account or property resource name (e.g., accounts/123 or properties/456)',
+    )
     .action(async (opts: { parent: string }, command: Command) => {
       try {
         const globalOpts = resolveGlobalOptions(command);

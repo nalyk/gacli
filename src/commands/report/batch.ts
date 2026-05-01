@@ -1,11 +1,11 @@
 import { readFileSync } from 'node:fs';
 import { Command } from 'commander';
-import { resolveGlobalOptions, writeOutput } from '../../types/common.js';
 import { formatOutput } from '../../formatters/index.js';
-import { createSpinner } from '../../utils/spinner.js';
-import { handleError } from '../../utils/error-handler.js';
-import { validatePropertyId } from '../../validation/validators.js';
 import { batchRunReports } from '../../services/data-api.service.js';
+import { resolveGlobalOptions, writeOutput } from '../../types/common.js';
+import { handleError } from '../../utils/error-handler.js';
+import { createSpinner } from '../../utils/spinner.js';
+import { validatePropertyId } from '../../validation/validators.js';
 
 export function createBatchCommand(): Command {
   const cmd = new Command('batch')

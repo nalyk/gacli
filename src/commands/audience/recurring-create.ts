@@ -1,10 +1,10 @@
 import { Command } from 'commander';
-import { resolveGlobalOptions, writeOutput, type ReportData } from '../../types/common.js';
 import { formatOutput } from '../../formatters/index.js';
-import { createSpinner } from '../../utils/spinner.js';
-import { handleError } from '../../utils/error-handler.js';
-import { validatePropertyId } from '../../validation/validators.js';
 import { createRecurringAudienceList } from '../../services/data-api.service.js';
+import { type ReportData, resolveGlobalOptions, writeOutput } from '../../types/common.js';
+import { handleError } from '../../utils/error-handler.js';
+import { createSpinner } from '../../utils/spinner.js';
+import { validatePropertyId } from '../../validation/validators.js';
 
 export function createRecurringCreateCommand(): Command {
   const cmd = new Command('create')
@@ -24,10 +24,10 @@ export function createRecurringCreateCommand(): Command {
         spinner.stop();
 
         const data: ReportData = {
-          headers: ['Name', 'Audience', 'State'],
-          rows: [[result.name ?? '', result.audience ?? '', result.state ?? '']],
+          headers: ['Name', 'Audience', 'Active Days Remaining'],
+          rows: [[result.name ?? '', result.audience ?? '', String(result.activeDaysRemaining ?? '')]],
           rowCount: 1,
-          metadata: { raw: result },
+          metadata: { raw: result as unknown as Record<string, unknown> },
         };
 
         const output = formatOutput(data, globalOpts.format);

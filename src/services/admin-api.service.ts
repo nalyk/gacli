@@ -1,17 +1,25 @@
 import { AnalyticsAdminServiceClient } from '@google-analytics/admin';
-import { getAuthClientOptions } from './auth.service.js';
 import type {
-  CreatePropertyParams, UpdatePropertyParams,
-  CreateDataStreamParams, UpdateDataStreamParams,
-  CreateCustomDimensionParams, UpdateCustomDimensionParams,
-  CreateCustomMetricParams, UpdateCustomMetricParams,
-  CreateKeyEventParams, UpdateKeyEventParams,
-  CreateAudienceParams, UpdateAudienceParams,
-  CreateAccessBindingParams, UpdateAccessBindingParams,
-  CreateFirebaseLinkParams,
-  CreateGoogleAdsLinkParams, UpdateGoogleAdsLinkParams,
+  CreateAccessBindingParams,
+  CreateAudienceParams,
   CreateBigQueryLinkParams,
+  CreateCustomDimensionParams,
+  CreateCustomMetricParams,
+  CreateDataStreamParams,
+  CreateFirebaseLinkParams,
+  CreateGoogleAdsLinkParams,
+  CreateKeyEventParams,
+  CreatePropertyParams,
+  UpdateAccessBindingParams,
+  UpdateAudienceParams,
+  UpdateCustomDimensionParams,
+  UpdateCustomMetricParams,
+  UpdateDataStreamParams,
+  UpdateGoogleAdsLinkParams,
+  UpdateKeyEventParams,
+  UpdatePropertyParams,
 } from '../types/admin-api.js';
+import { getAuthClientOptions } from './auth.service.js';
 
 let adminClient: AnalyticsAdminServiceClient | null = null;
 
@@ -63,10 +71,22 @@ export async function updateProperty(params: UpdatePropertyParams): Promise<any>
   const updateMask: string[] = [];
   const property: any = { name: params.name };
 
-  if (params.displayName) { property.displayName = params.displayName; updateMask.push('display_name'); }
-  if (params.timeZone) { property.timeZone = params.timeZone; updateMask.push('time_zone'); }
-  if (params.currencyCode) { property.currencyCode = params.currencyCode; updateMask.push('currency_code'); }
-  if (params.industryCategory) { property.industryCategory = params.industryCategory; updateMask.push('industry_category'); }
+  if (params.displayName) {
+    property.displayName = params.displayName;
+    updateMask.push('display_name');
+  }
+  if (params.timeZone) {
+    property.timeZone = params.timeZone;
+    updateMask.push('time_zone');
+  }
+  if (params.currencyCode) {
+    property.currencyCode = params.currencyCode;
+    updateMask.push('currency_code');
+  }
+  if (params.industryCategory) {
+    property.industryCategory = params.industryCategory;
+    updateMask.push('industry_category');
+  }
 
   const [result] = await c.updateProperty({
     property,
@@ -154,8 +174,14 @@ export async function updateCustomDimension(params: UpdateCustomDimensionParams)
   const c = getClient();
   const updateMask: string[] = [];
   const cd: any = { name: params.name };
-  if (params.displayName) { cd.displayName = params.displayName; updateMask.push('display_name'); }
-  if (params.description !== undefined) { cd.description = params.description; updateMask.push('description'); }
+  if (params.displayName) {
+    cd.displayName = params.displayName;
+    updateMask.push('display_name');
+  }
+  if (params.description !== undefined) {
+    cd.description = params.description;
+    updateMask.push('description');
+  }
   if (params.disallowAdsPersonalization !== undefined) {
     cd.disallowAdsPersonalization = params.disallowAdsPersonalization;
     updateMask.push('disallow_ads_personalization');
@@ -205,9 +231,18 @@ export async function updateCustomMetric(params: UpdateCustomMetricParams): Prom
   const c = getClient();
   const updateMask: string[] = [];
   const cm: any = { name: params.name };
-  if (params.displayName) { cm.displayName = params.displayName; updateMask.push('display_name'); }
-  if (params.description !== undefined) { cm.description = params.description; updateMask.push('description'); }
-  if (params.measurementUnit) { cm.measurementUnit = params.measurementUnit; updateMask.push('measurement_unit'); }
+  if (params.displayName) {
+    cm.displayName = params.displayName;
+    updateMask.push('display_name');
+  }
+  if (params.description !== undefined) {
+    cm.description = params.description;
+    updateMask.push('description');
+  }
+  if (params.measurementUnit) {
+    cm.measurementUnit = params.measurementUnit;
+    updateMask.push('measurement_unit');
+  }
   const [metric] = await c.updateCustomMetric({
     customMetric: cm,
     updateMask: { paths: updateMask },
@@ -250,8 +285,14 @@ export async function updateKeyEvent(params: UpdateKeyEventParams): Promise<any>
   const c = getClient();
   const updateMask: string[] = [];
   const ke: any = { name: params.name };
-  if (params.countingMethod) { ke.countingMethod = params.countingMethod; updateMask.push('counting_method'); }
-  if (params.defaultValue) { ke.defaultValue = params.defaultValue; updateMask.push('default_value'); }
+  if (params.countingMethod) {
+    ke.countingMethod = params.countingMethod;
+    updateMask.push('counting_method');
+  }
+  if (params.defaultValue) {
+    ke.defaultValue = params.defaultValue;
+    updateMask.push('default_value');
+  }
   const [event] = await (c as any).updateKeyEvent({
     keyEvent: ke,
     updateMask: { paths: updateMask },
@@ -296,8 +337,14 @@ export async function updateAudience(params: UpdateAudienceParams): Promise<any>
   const c = getClient();
   const updateMask: string[] = [];
   const aud: any = { name: params.name };
-  if (params.displayName) { aud.displayName = params.displayName; updateMask.push('display_name'); }
-  if (params.description !== undefined) { aud.description = params.description; updateMask.push('description'); }
+  if (params.displayName) {
+    aud.displayName = params.displayName;
+    updateMask.push('display_name');
+  }
+  if (params.description !== undefined) {
+    aud.description = params.description;
+    updateMask.push('description');
+  }
   if (params.adsPersonalizationEnabled !== undefined) {
     aud.adsPersonalizationEnabled = params.adsPersonalizationEnabled;
     updateMask.push('ads_personalization_enabled');

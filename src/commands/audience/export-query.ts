@@ -1,9 +1,9 @@
 import { Command } from 'commander';
-import { resolveGlobalOptions, writeOutput } from '../../types/common.js';
 import { formatOutput } from '../../formatters/index.js';
-import { createSpinner } from '../../utils/spinner.js';
-import { handleError } from '../../utils/error-handler.js';
 import { queryAudienceExport } from '../../services/data-api.service.js';
+import { resolveGlobalOptions, writeOutput } from '../../types/common.js';
+import { handleError } from '../../utils/error-handler.js';
+import { createSpinner } from '../../utils/spinner.js';
 
 export function createExportQueryCommand(): Command {
   const cmd = new Command('query')

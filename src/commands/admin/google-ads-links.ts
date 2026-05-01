@@ -1,10 +1,10 @@
 import { Command } from 'commander';
-import { resolveGlobalOptions, writeOutput, type ReportData } from '../../types/common.js';
 import { formatOutput } from '../../formatters/index.js';
-import { createSpinner } from '../../utils/spinner.js';
-import { handleError } from '../../utils/error-handler.js';
-import { validatePropertyId } from '../../validation/validators.js';
 import * as adminApi from '../../services/admin-api.service.js';
+import { type ReportData, resolveGlobalOptions, writeOutput } from '../../types/common.js';
+import { handleError } from '../../utils/error-handler.js';
+import { createSpinner } from '../../utils/spinner.js';
+import { validatePropertyId } from '../../validation/validators.js';
 
 export function createGoogleAdsLinksCommand(): Command {
   const cmd = new Command('google-ads-links').description('Manage GA4 Google Ads links');
@@ -24,7 +24,14 @@ export function createGoogleAdsLinksCommand(): Command {
         spinner.stop();
 
         const data: ReportData = {
-          headers: ['Name', 'Customer ID', 'Can Manage Clients', 'Ads Personalization Enabled', 'Create Time', 'Update Time'],
+          headers: [
+            'Name',
+            'Customer ID',
+            'Can Manage Clients',
+            'Ads Personalization Enabled',
+            'Create Time',
+            'Update Time',
+          ],
           rows: links.map((link) => [
             link.name ?? '',
             link.customerId ?? '',
@@ -58,7 +65,14 @@ export function createGoogleAdsLinksCommand(): Command {
         spinner.stop();
 
         const data: ReportData = {
-          headers: ['Name', 'Customer ID', 'Can Manage Clients', 'Ads Personalization Enabled', 'Create Time', 'Update Time'],
+          headers: [
+            'Name',
+            'Customer ID',
+            'Can Manage Clients',
+            'Ads Personalization Enabled',
+            'Create Time',
+            'Update Time',
+          ],
           rows: [
             [
               link.name ?? '',

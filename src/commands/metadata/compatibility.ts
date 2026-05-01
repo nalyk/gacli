@@ -1,10 +1,10 @@
 import { Command } from 'commander';
-import { resolveGlobalOptions, writeOutput, type ReportData } from '../../types/common.js';
 import { formatOutput } from '../../formatters/index.js';
-import { createSpinner } from '../../utils/spinner.js';
-import { handleError } from '../../utils/error-handler.js';
-import { validatePropertyId } from '../../validation/validators.js';
 import { checkCompatibility } from '../../services/data-api.service.js';
+import { type ReportData, resolveGlobalOptions, writeOutput } from '../../types/common.js';
+import { handleError } from '../../utils/error-handler.js';
+import { createSpinner } from '../../utils/spinner.js';
+import { validatePropertyId } from '../../validation/validators.js';
 
 export function createCheckCompatibilityCommand(): Command {
   const cmd = new Command('check-compatibility')

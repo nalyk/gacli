@@ -1,13 +1,12 @@
 import { Command } from 'commander';
-import { resolveGlobalOptions, writeOutput } from '../../types/common.js';
 import { formatOutput } from '../../formatters/index.js';
-import { createSpinner } from '../../utils/spinner.js';
-import { handleError } from '../../utils/error-handler.js';
-import { validatePropertyId } from '../../validation/validators.js';
-import { validate } from '../../validation/validators.js';
-import { cohortReportOptsSchema } from '../../validation/schemas.js';
 import { runCohortReport } from '../../services/data-api.service.js';
-import type { RunCohortReportParams, Dimension, Metric } from '../../types/data-api.js';
+import { resolveGlobalOptions, writeOutput } from '../../types/common.js';
+import type { Dimension, Metric, RunCohortReportParams } from '../../types/data-api.js';
+import { handleError } from '../../utils/error-handler.js';
+import { createSpinner } from '../../utils/spinner.js';
+import { cohortReportOptsSchema } from '../../validation/schemas.js';
+import { validate, validatePropertyId } from '../../validation/validators.js';
 
 export function createCohortCommand(): Command {
   const cmd = new Command('cohort')

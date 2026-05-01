@@ -1,9 +1,9 @@
 import { writeFileSync } from 'node:fs';
-import { Command } from 'commander';
+import type { Command } from 'commander';
 import { getConfig } from '../services/config.service.js';
 import { logger } from '../utils/logger.js';
 
-export type OutputFormat = 'table' | 'json' | 'csv' | 'chart';
+export type OutputFormat = 'table' | 'json' | 'ndjson' | 'csv' | 'chart';
 
 export interface GlobalOptions {
   property: string;

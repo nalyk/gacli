@@ -1,10 +1,10 @@
 import { Command } from 'commander';
-import { resolveGlobalOptions, writeOutput, type ReportData } from '../../types/common.js';
 import { formatOutput } from '../../formatters/index.js';
-import { createSpinner } from '../../utils/spinner.js';
-import { handleError } from '../../utils/error-handler.js';
-import { validatePropertyId } from '../../validation/validators.js';
 import * as adminApi from '../../services/admin-api.service.js';
+import { type ReportData, resolveGlobalOptions, writeOutput } from '../../types/common.js';
+import { handleError } from '../../utils/error-handler.js';
+import { createSpinner } from '../../utils/spinner.js';
+import { validatePropertyId } from '../../validation/validators.js';
 
 export function createFirebaseLinksCommand(): Command {
   const cmd = new Command('firebase-links').description('Manage GA4 Firebase links');
@@ -25,11 +25,7 @@ export function createFirebaseLinksCommand(): Command {
 
         const data: ReportData = {
           headers: ['Name', 'Project', 'Create Time'],
-          rows: links.map((link) => [
-            link.name ?? '',
-            link.project ?? '',
-            link.createTime ?? '',
-          ]),
+          rows: links.map((link) => [link.name ?? '', link.project ?? '', link.createTime ?? '']),
           rowCount: links.length,
         };
 
@@ -56,13 +52,7 @@ export function createFirebaseLinksCommand(): Command {
 
         const data: ReportData = {
           headers: ['Name', 'Project', 'Create Time'],
-          rows: [
-            [
-              link.name ?? '',
-              link.project ?? '',
-              link.createTime ?? '',
-            ],
-          ],
+          rows: [[link.name ?? '', link.project ?? '', link.createTime ?? '']],
           rowCount: 1,
         };
 
@@ -93,13 +83,7 @@ export function createFirebaseLinksCommand(): Command {
 
         const data: ReportData = {
           headers: ['Name', 'Project', 'Create Time'],
-          rows: [
-            [
-              link.name ?? '',
-              link.project ?? '',
-              link.createTime ?? '',
-            ],
-          ],
+          rows: [[link.name ?? '', link.project ?? '', link.createTime ?? '']],
           rowCount: 1,
         };
 

@@ -100,7 +100,17 @@ export interface GA4CustomMetric {
   displayName: string;
   description?: string;
   scope: 'EVENT';
-  measurementUnit: 'STANDARD' | 'CURRENCY' | 'FEET' | 'METERS' | 'KILOMETERS' | 'MILES' | 'MILLISECONDS' | 'SECONDS' | 'MINUTES' | 'HOURS';
+  measurementUnit:
+    | 'STANDARD'
+    | 'CURRENCY'
+    | 'FEET'
+    | 'METERS'
+    | 'KILOMETERS'
+    | 'MILES'
+    | 'MILLISECONDS'
+    | 'SECONDS'
+    | 'MINUTES'
+    | 'HOURS';
   restrictedMetricType?: string[];
 }
 

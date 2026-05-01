@@ -1,10 +1,10 @@
 import { Command } from 'commander';
-import { resolveGlobalOptions, writeOutput, type ReportData } from '../../types/common.js';
 import { formatOutput } from '../../formatters/index.js';
-import { createSpinner } from '../../utils/spinner.js';
-import { handleError } from '../../utils/error-handler.js';
-import { validatePropertyId } from '../../validation/validators.js';
 import * as adminApi from '../../services/admin-api.service.js';
+import { type ReportData, resolveGlobalOptions, writeOutput } from '../../types/common.js';
+import { handleError } from '../../utils/error-handler.js';
+import { createSpinner } from '../../utils/spinner.js';
+import { validatePropertyId } from '../../validation/validators.js';
 
 export function createDataStreamsCommand(): Command {
   const cmd = new Command('datastreams').description('Manage GA4 data streams');
@@ -118,14 +118,7 @@ export function createDataStreamsCommand(): Command {
 
           const data: ReportData = {
             headers: ['Name', 'Type', 'Display Name', 'Create Time'],
-            rows: [
-              [
-                stream.name ?? '',
-                stream.type ?? '',
-                stream.displayName ?? '',
-                stream.createTime ?? '',
-              ],
-            ],
+            rows: [[stream.name ?? '', stream.type ?? '', stream.displayName ?? '', stream.createTime ?? '']],
             rowCount: 1,
           };
 
@@ -157,14 +150,7 @@ export function createDataStreamsCommand(): Command {
 
         const data: ReportData = {
           headers: ['Name', 'Type', 'Display Name', 'Update Time'],
-          rows: [
-            [
-              stream.name ?? '',
-              stream.type ?? '',
-              stream.displayName ?? '',
-              stream.updateTime ?? '',
-            ],
-          ],
+          rows: [[stream.name ?? '', stream.type ?? '', stream.displayName ?? '', stream.updateTime ?? '']],
           rowCount: 1,
         };
 

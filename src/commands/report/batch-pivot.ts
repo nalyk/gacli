@@ -1,16 +1,19 @@
 import { readFileSync } from 'node:fs';
 import { Command } from 'commander';
-import { resolveGlobalOptions, writeOutput } from '../../types/common.js';
 import { formatOutput } from '../../formatters/index.js';
-import { createSpinner } from '../../utils/spinner.js';
-import { handleError } from '../../utils/error-handler.js';
-import { validatePropertyId } from '../../validation/validators.js';
 import { batchRunPivotReports } from '../../services/data-api.service.js';
+import { resolveGlobalOptions, writeOutput } from '../../types/common.js';
+import { handleError } from '../../utils/error-handler.js';
+import { createSpinner } from '../../utils/spinner.js';
+import { validatePropertyId } from '../../validation/validators.js';
 
 export function createBatchPivotCommand(): Command {
   const cmd = new Command('batch-pivot')
     .description('Run multiple GA4 pivot reports in a single batch request')
-    .requiredOption('--requests <path>', 'Path to JSON file containing an array of pivot report request objects')
+    .requiredOption(
+      '--requests <path>',
+      'Path to JSON file containing an array of pivot report request objects',
+    )
     .action(async (opts, command) => {
       try {
         const globalOpts = resolveGlobalOptions(command);

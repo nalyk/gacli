@@ -1,10 +1,10 @@
 import { Command } from 'commander';
-import { resolveGlobalOptions, writeOutput, type ReportData } from '../../types/common.js';
 import { formatOutput } from '../../formatters/index.js';
-import { createSpinner } from '../../utils/spinner.js';
-import { handleError } from '../../utils/error-handler.js';
-import { validatePropertyId } from '../../validation/validators.js';
 import * as adminApi from '../../services/admin-api.service.js';
+import { type ReportData, resolveGlobalOptions, writeOutput } from '../../types/common.js';
+import { handleError } from '../../utils/error-handler.js';
+import { createSpinner } from '../../utils/spinner.js';
+import { validatePropertyId } from '../../validation/validators.js';
 
 export function createKeyEventsCommand(): Command {
   const cmd = new Command('key-events').description('Manage GA4 key events');
@@ -83,7 +83,11 @@ export function createKeyEventsCommand(): Command {
     .command('create')
     .description('Create a key event')
     .requiredOption('--event-name <eventName>', 'Event name')
-    .option('--counting-method <method>', 'Counting method (ONCE_PER_EVENT, ONCE_PER_SESSION)', 'ONCE_PER_EVENT')
+    .option(
+      '--counting-method <method>',
+      'Counting method (ONCE_PER_EVENT, ONCE_PER_SESSION)',
+      'ONCE_PER_EVENT',
+    )
     .option('--default-value <value>', 'Default value for the key event')
     .option('--currency-code <code>', 'Currency code for the default value')
     .action(
@@ -119,12 +123,7 @@ export function createKeyEventsCommand(): Command {
           const data: ReportData = {
             headers: ['Name', 'Event Name', 'Counting Method', 'Create Time'],
             rows: [
-              [
-                event.name ?? '',
-                event.eventName ?? '',
-                event.countingMethod ?? '',
-                event.createTime ?? '',
-              ],
+              [event.name ?? '', event.eventName ?? '', event.countingMethod ?? '', event.createTime ?? ''],
             ],
             rowCount: 1,
           };
@@ -174,13 +173,7 @@ export function createKeyEventsCommand(): Command {
 
           const data: ReportData = {
             headers: ['Name', 'Event Name', 'Counting Method'],
-            rows: [
-              [
-                event.name ?? '',
-                event.eventName ?? '',
-                event.countingMethod ?? '',
-              ],
-            ],
+            rows: [[event.name ?? '', event.eventName ?? '', event.countingMethod ?? '']],
             rowCount: 1,
           };
 

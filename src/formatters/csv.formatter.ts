@@ -1,4 +1,4 @@
-import { type ReportData } from '../types/common.js';
+import type { ReportData } from '../types/common.js';
 
 /**
  * Escape a single CSV field according to RFC 4180.

@@ -2,7 +2,8 @@ import type { FilterExpression } from '../types/data-api.js';
 
 export function parseFilterString(filterStr: string): FilterExpression {
   // Shorthand format: "dimension==value" or "metric>100"
-  const match = filterStr.match(/^(\w+)(==|!=|=~|!~|>|<|>=|<=)(.+)$/);
+  // 2-char operators must precede 1-char ones in alternation, else `>=` matches as `>` + `=val`.
+  const match = filterStr.match(/^(\w+)(==|!=|=~|!~|>=|<=|>|<)(.+)$/);
   if (!match) {
     throw new Error(
       `Invalid filter format: "${filterStr}". Use format: fieldName==value, fieldName>100, fieldName=~regex`,

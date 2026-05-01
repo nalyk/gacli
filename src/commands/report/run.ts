@@ -1,15 +1,14 @@
 import { Command } from 'commander';
-import { resolveGlobalOptions, writeOutput } from '../../types/common.js';
 import { formatOutput } from '../../formatters/index.js';
-import { createSpinner } from '../../utils/spinner.js';
-import { handleError } from '../../utils/error-handler.js';
-import { validatePropertyId } from '../../validation/validators.js';
-import { validate } from '../../validation/validators.js';
-import { runReportOptsSchema } from '../../validation/schemas.js';
-import { buildFilterExpression } from '../../utils/filter-builder.js';
-import { resolveDate } from '../../utils/date-helpers.js';
 import { runReport } from '../../services/data-api.service.js';
-import type { RunReportParams, Dimension, Metric, OrderBy, DateRange } from '../../types/data-api.js';
+import { resolveGlobalOptions, writeOutput } from '../../types/common.js';
+import type { DateRange, Dimension, Metric, OrderBy, RunReportParams } from '../../types/data-api.js';
+import { resolveDate } from '../../utils/date-helpers.js';
+import { handleError } from '../../utils/error-handler.js';
+import { buildFilterExpression } from '../../utils/filter-builder.js';
+import { createSpinner } from '../../utils/spinner.js';
+import { runReportOptsSchema } from '../../validation/schemas.js';
+import { validate, validatePropertyId } from '../../validation/validators.js';
 
 export function createRunCommand(): Command {
   const cmd = new Command('run')
@@ -51,9 +50,7 @@ export function createRunCommand(): Command {
           ? buildFilterExpression(opts.dimensionFilter)
           : undefined;
 
-        const metricFilter = opts.metricFilter
-          ? buildFilterExpression(opts.metricFilter)
-          : undefined;
+        const metricFilter = opts.metricFilter ? buildFilterExpression(opts.metricFilter) : undefined;
 
         const orderBys: OrderBy[] | undefined = opts.orderBy
           ? opts.orderBy.map((o: string) => {

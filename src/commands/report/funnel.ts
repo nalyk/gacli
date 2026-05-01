@@ -1,14 +1,13 @@
 import { Command } from 'commander';
-import { resolveGlobalOptions, writeOutput } from '../../types/common.js';
 import { formatOutput } from '../../formatters/index.js';
-import { createSpinner } from '../../utils/spinner.js';
-import { handleError } from '../../utils/error-handler.js';
-import { validatePropertyId } from '../../validation/validators.js';
-import { validate } from '../../validation/validators.js';
-import { funnelReportOptsSchema } from '../../validation/schemas.js';
-import { resolveDate } from '../../utils/date-helpers.js';
 import { runFunnelReport } from '../../services/data-api.service.js';
-import type { RunFunnelReportParams, FunnelStep, DateRange } from '../../types/data-api.js';
+import { resolveGlobalOptions, writeOutput } from '../../types/common.js';
+import type { DateRange, FunnelStep, RunFunnelReportParams } from '../../types/data-api.js';
+import { resolveDate } from '../../utils/date-helpers.js';
+import { handleError } from '../../utils/error-handler.js';
+import { createSpinner } from '../../utils/spinner.js';
+import { funnelReportOptsSchema } from '../../validation/schemas.js';
+import { validate, validatePropertyId } from '../../validation/validators.js';
 
 export function createFunnelCommand(): Command {
   const cmd = new Command('funnel')

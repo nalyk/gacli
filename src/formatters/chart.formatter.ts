@@ -1,18 +1,11 @@
-import chalk from 'chalk';
 import boxen from 'boxen';
-import { type ReportData } from '../types/common.js';
+import chalk from 'chalk';
+import type { ReportData } from '../types/common.js';
 
 const MAX_BAR_WIDTH = 40;
 const BAR_CHAR = '\u2588'; // Full block character
 
-const BAR_COLORS = [
-  chalk.green,
-  chalk.blue,
-  chalk.magenta,
-  chalk.cyan,
-  chalk.yellow,
-  chalk.red,
-];
+const BAR_COLORS = [chalk.green, chalk.blue, chalk.magenta, chalk.cyan, chalk.yellow, chalk.red];
 
 /**
  * Format ReportData as a horizontal ASCII bar chart.
@@ -52,9 +45,7 @@ export function formatChart(data: ReportData): string {
   const lines: string[] = [];
 
   // Title
-  const title = chalk.bold.white(
-    `${metricHeader} by ${dimensionHeaders.join(', ')}`,
-  );
+  const title = chalk.bold.white(`${metricHeader} by ${dimensionHeaders.join(', ')}`);
   lines.push(title);
   lines.push('');
 

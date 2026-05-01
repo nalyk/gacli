@@ -1,8 +1,8 @@
 import { Command } from 'commander';
 import { setConfigValue } from '../../services/config.service.js';
 import { CONFIG_KEYS } from '../../types/config.js';
-import { logger } from '../../utils/logger.js';
 import { handleError } from '../../utils/error-handler.js';
+import { logger } from '../../utils/logger.js';
 
 export function createSetCommand(): Command {
   const cmd = new Command('set')
@@ -12,9 +12,7 @@ export function createSetCommand(): Command {
     .action((key: string, value: string) => {
       try {
         if (!(key in CONFIG_KEYS)) {
-          logger.error(
-            `Unknown config key: ${key}\nValid keys: ${Object.keys(CONFIG_KEYS).join(', ')}`,
-          );
+          logger.error(`Unknown config key: ${key}\nValid keys: ${Object.keys(CONFIG_KEYS).join(', ')}`);
           process.exit(1);
         }
 

@@ -1,8 +1,8 @@
 import { Command } from 'commander';
 import { getConfigValue } from '../../services/config.service.js';
 import { CONFIG_KEYS } from '../../types/config.js';
-import { logger } from '../../utils/logger.js';
 import { handleError } from '../../utils/error-handler.js';
+import { logger } from '../../utils/logger.js';
 
 export function createGetCommand(): Command {
   const cmd = new Command('get')
@@ -11,9 +11,7 @@ export function createGetCommand(): Command {
     .action((key: string) => {
       try {
         if (!(key in CONFIG_KEYS)) {
-          logger.error(
-            `Unknown config key: ${key}\nValid keys: ${Object.keys(CONFIG_KEYS).join(', ')}`,
-          );
+          logger.error(`Unknown config key: ${key}\nValid keys: ${Object.keys(CONFIG_KEYS).join(', ')}`);
           process.exit(1);
         }
 

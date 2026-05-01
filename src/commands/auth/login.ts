@@ -1,13 +1,13 @@
-import { Command } from 'commander';
-import { createServer } from 'node:http';
 import { randomBytes } from 'node:crypto';
+import { createServer } from 'node:http';
 import { URL } from 'node:url';
+import { Command } from 'commander';
 import { CodeChallengeMethod, OAuth2Client } from 'google-auth-library';
-import { logger } from '../../utils/logger.js';
-import { handleError } from '../../utils/error-handler.js';
+import { GA4_SCOPES, resetAuth } from '../../services/auth.service.js';
 import { getConfig } from '../../services/config.service.js';
 import { loadClientSecrets, saveOAuthTokens } from '../../services/oauth.service.js';
-import { GA4_SCOPES, resetAuth } from '../../services/auth.service.js';
+import { handleError } from '../../utils/error-handler.js';
+import { logger } from '../../utils/logger.js';
 
 export function createLoginCommand(): Command {
   return new Command('login')
@@ -27,7 +27,7 @@ async function runLogin(clientSecretFilePath?: string): Promise<void> {
   if (!secretPath) {
     logger.error(
       'No client secret file provided. Use --client-secret-file <path> or set it via:\n' +
-      '  gacli config set oauthClientSecretFile /path/to/client_secret.json',
+        '  gacli config set oauthClientSecretFile /path/to/client_secret.json',
     );
     process.exit(1);
   }
@@ -94,8 +94,8 @@ interface LoopbackServer {
 
 function startLoopbackServer(
   expectedState: string,
-  clientId: string,
-  clientSecret: string,
+  _clientId: string,
+  _clientSecret: string,
 ): Promise<LoopbackServer> {
   return new Promise((resolveStart, rejectStart) => {
     let resolveCode: (code: string) => void;
@@ -121,15 +121,17 @@ function startLoopbackServer(
       if (error) {
         res.writeHead(200, { 'Content-Type': 'text/html' });
         res.end('<html><body><h1>Authentication failed</h1><p>You can close this tab.</p></body></html>');
-        rejectCode!(new Error(`OAuth error: ${error}`));
+        rejectCode?.(new Error(`OAuth error: ${error}`));
         server.close();
         return;
       }
 
       if (state !== expectedState) {
         res.writeHead(400, { 'Content-Type': 'text/html' });
-        res.end('<html><body><h1>Invalid state</h1><p>Authentication failed. Please try again.</p></body></html>');
-        rejectCode!(new Error('State mismatch — possible CSRF attack'));
+        res.end(
+          '<html><body><h1>Invalid state</h1><p>Authentication failed. Please try again.</p></body></html>',
+        );
+        rejectCode?.(new Error('State mismatch — possible CSRF attack'));
         server.close();
         return;
       }
@@ -137,14 +139,16 @@ function startLoopbackServer(
       if (!code) {
         res.writeHead(400, { 'Content-Type': 'text/html' });
         res.end('<html><body><h1>No code received</h1><p>Authentication failed.</p></body></html>');
-        rejectCode!(new Error('No authorization code received'));
+        rejectCode?.(new Error('No authorization code received'));
         server.close();
         return;
       }
 
       res.writeHead(200, { 'Content-Type': 'text/html' });
-      res.end('<html><body><h1>Authentication successful!</h1><p>You can close this tab and return to the terminal.</p></body></html>');
-      resolveCode!(code);
+      res.end(
+        '<html><body><h1>Authentication successful!</h1><p>You can close this tab and return to the terminal.</p></body></html>',
+      );
+      resolveCode?.(code);
       server.close();
     });
 
@@ -167,10 +171,7 @@ function startLoopbackServer(
   });
 }
 
-function waitForCallback(
-  closeServer: LoopbackServer['closeServer'],
-  timeoutMs: number,
-): Promise<string> {
+function waitForCallback(closeServer: LoopbackServer['closeServer'], timeoutMs: number): Promise<string> {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
       closeServer.server.close();

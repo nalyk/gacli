@@ -1,15 +1,14 @@
 import { Command } from 'commander';
-import { createRunCommand } from './run.js';
 import { createBatchCommand } from './batch.js';
-import { createPivotCommand } from './pivot.js';
 import { createBatchPivotCommand } from './batch-pivot.js';
-import { createRealtimeCommand } from './realtime.js';
-import { createFunnelCommand } from './funnel.js';
 import { createCohortCommand } from './cohort.js';
+import { createFunnelCommand } from './funnel.js';
+import { createPivotCommand } from './pivot.js';
+import { createRealtimeCommand } from './realtime.js';
+import { createRunCommand } from './run.js';
 
 export function createReportCommand(): Command {
-  const cmd = new Command('report')
-    .description('Google Analytics 4 Data API reporting commands');
+  const cmd = new Command('report').description('Google Analytics 4 Data API reporting commands');
 
   cmd.addCommand(createRunCommand());
   cmd.addCommand(createBatchCommand());

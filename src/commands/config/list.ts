@@ -1,8 +1,8 @@
 import { Command } from 'commander';
-import { listConfig } from '../../services/config.service.js';
-import { CONFIG_KEYS } from '../../types/config.js';
-import { resolveGlobalOptions, writeOutput, type ReportData } from '../../types/common.js';
 import { formatOutput } from '../../formatters/index.js';
+import { listConfig } from '../../services/config.service.js';
+import { type ReportData, resolveGlobalOptions, writeOutput } from '../../types/common.js';
+import { CONFIG_KEYS } from '../../types/config.js';
 import { handleError } from '../../utils/error-handler.js';
 
 export function createListCommand(): Command {

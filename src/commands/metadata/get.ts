@@ -1,17 +1,17 @@
 import { Command } from 'commander';
-import { resolveGlobalOptions, writeOutput, type ReportData } from '../../types/common.js';
 import { formatOutput } from '../../formatters/index.js';
-import { createSpinner } from '../../utils/spinner.js';
-import { handleError } from '../../utils/error-handler.js';
-import { validatePropertyId } from '../../validation/validators.js';
 import { getMetadata } from '../../services/data-api.service.js';
+import { type ReportData, resolveGlobalOptions, writeOutput } from '../../types/common.js';
+import { handleError } from '../../utils/error-handler.js';
+import { createSpinner } from '../../utils/spinner.js';
+import { validatePropertyId } from '../../validation/validators.js';
 
 interface MetadataItem {
-  apiName: string;
-  uiName: string;
-  description: string;
-  category: string;
-  customDefinition: boolean;
+  apiName?: string | null;
+  uiName?: string | null;
+  description?: string | null;
+  category?: string | null;
+  customDefinition?: boolean | null;
 }
 
 export function createGetCommand(): Command {
@@ -51,18 +51,12 @@ export function createGetCommand(): Command {
         // Filter by search term
         if (opts.search) {
           const term = opts.search.toLowerCase();
-          dimensions = dimensions.filter(
-            (d: MetadataItem) =>
-              d.apiName.toLowerCase().includes(term) ||
-              d.uiName.toLowerCase().includes(term) ||
-              d.description.toLowerCase().includes(term),
-          );
-          metrics = metrics.filter(
-            (m: MetadataItem) =>
-              m.apiName.toLowerCase().includes(term) ||
-              m.uiName.toLowerCase().includes(term) ||
-              m.description.toLowerCase().includes(term),
-          );
+          const matchesTerm = (m: MetadataItem) =>
+            (m.apiName ?? '').toLowerCase().includes(term) ||
+            (m.uiName ?? '').toLowerCase().includes(term) ||
+            (m.description ?? '').toLowerCase().includes(term);
+          dimensions = dimensions.filter(matchesTerm);
+          metrics = metrics.filter(matchesTerm);
         }
 
         const items: MetadataItem[] = [...dimensions, ...metrics];
@@ -70,10 +64,10 @@ export function createGetCommand(): Command {
         const data: ReportData = {
           headers: ['API Name', 'UI Name', 'Description', 'Category', 'Custom'],
           rows: items.map((item) => [
-            item.apiName,
-            item.uiName,
-            item.description,
-            item.category,
+            item.apiName ?? '',
+            item.uiName ?? '',
+            item.description ?? '',
+            item.category ?? '',
             item.customDefinition ? 'Yes' : 'No',
           ]),
           rowCount: items.length,

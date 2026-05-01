@@ -1,9 +1,9 @@
 import { Command } from 'commander';
-import { resolveGlobalOptions, writeOutput, type ReportData } from '../../types/common.js';
 import { formatOutput } from '../../formatters/index.js';
-import { createSpinner } from '../../utils/spinner.js';
-import { handleError } from '../../utils/error-handler.js';
 import { getRecurringAudienceList } from '../../services/data-api.service.js';
+import { type ReportData, resolveGlobalOptions, writeOutput } from '../../types/common.js';
+import { handleError } from '../../utils/error-handler.js';
+import { createSpinner } from '../../utils/spinner.js';
 
 export function createRecurringGetCommand(): Command {
   const cmd = new Command('get')
@@ -25,10 +25,11 @@ export function createRecurringGetCommand(): Command {
           rows: [
             ['Name', result.name ?? ''],
             ['Audience', result.audience ?? ''],
-            ['State', result.state ?? ''],
+            ['Audience Display Name', result.audienceDisplayName ?? ''],
+            ['Active Days Remaining', String(result.activeDaysRemaining ?? '')],
           ],
-          rowCount: 3,
-          metadata: { raw: result },
+          rowCount: 4,
+          metadata: { raw: result as unknown as Record<string, unknown> },
         };
 
         const output = formatOutput(data, globalOpts.format);

@@ -1,10 +1,10 @@
 import { Command } from 'commander';
-import { resolveGlobalOptions, writeOutput, type ReportData } from '../../types/common.js';
 import { formatOutput } from '../../formatters/index.js';
-import { createSpinner } from '../../utils/spinner.js';
-import { handleError } from '../../utils/error-handler.js';
-import { validatePropertyId } from '../../validation/validators.js';
 import * as adminApi from '../../services/admin-api.service.js';
+import { type ReportData, resolveGlobalOptions, writeOutput } from '../../types/common.js';
+import { handleError } from '../../utils/error-handler.js';
+import { createSpinner } from '../../utils/spinner.js';
+import { validatePropertyId } from '../../validation/validators.js';
 
 export function createCustomMetricsCommand(): Command {
   const cmd = new Command('custom-metrics').description('Manage GA4 custom metrics');
@@ -86,7 +86,10 @@ export function createCustomMetricsCommand(): Command {
     .requiredOption('--display-name <displayName>', 'Display name')
     .option('--description <description>', 'Description of the custom metric')
     .requiredOption('--scope <scope>', 'Metric scope (EVENT)')
-    .requiredOption('--measurement-unit <unit>', 'Measurement unit (STANDARD, CURRENCY, FEET, METERS, KILOMETERS, MILES, MILLISECONDS, SECONDS, MINUTES, HOURS)')
+    .requiredOption(
+      '--measurement-unit <unit>',
+      'Measurement unit (STANDARD, CURRENCY, FEET, METERS, KILOMETERS, MILES, MILLISECONDS, SECONDS, MINUTES, HOURS)',
+    )
     .action(
       async (
         opts: {

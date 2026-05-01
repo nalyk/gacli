@@ -1,5 +1,5 @@
-import { existsSync, readFileSync, writeFileSync, unlinkSync } from 'node:fs';
-import type { StoredOAuthTokens, OAuthClientSecrets } from '../types/oauth.js';
+import { existsSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
+import type { OAuthClientSecrets, StoredOAuthTokens } from '../types/oauth.js';
 import { OAUTH_TOKENS_FILE } from '../types/oauth.js';
 import { ensureConfigDir } from './config.service.js';
 
@@ -41,7 +41,9 @@ export function loadClientSecrets(filePath: string): OAuthClientSecrets {
   const raw = readFileSync(filePath, 'utf-8');
   const parsed = JSON.parse(raw);
   if (!parsed.installed?.client_id || !parsed.installed?.client_secret) {
-    throw new Error('Invalid client secret file. Expected "installed" application type with client_id and client_secret.');
+    throw new Error(
+      'Invalid client secret file. Expected "installed" application type with client_id and client_secret.',
+    );
   }
   return parsed as OAuthClientSecrets;
 }

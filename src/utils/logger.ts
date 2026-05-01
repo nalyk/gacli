@@ -17,24 +17,24 @@ class Logger {
   }
 
   info(msg: string): void {
-    console.error(this.c(chalk.blue, 'ℹ') + ' ' + msg);
+    console.error(`${this.c(chalk.blue, 'ℹ')} ${msg}`);
   }
 
   success(msg: string): void {
-    console.error(this.c(chalk.green, '✔') + ' ' + msg);
+    console.error(`${this.c(chalk.green, '✔')} ${msg}`);
   }
 
   warn(msg: string): void {
-    console.error(this.c(chalk.yellow, '⚠') + ' ' + msg);
+    console.error(`${this.c(chalk.yellow, '⚠')} ${msg}`);
   }
 
   error(msg: string): void {
-    console.error(this.c(chalk.red, '✖') + ' ' + msg);
+    console.error(`${this.c(chalk.red, '✖')} ${msg}`);
   }
 
   debug(msg: string): void {
     if (this.verbose) {
-      console.error(this.c(chalk.gray, '⬡') + ' ' + msg);
+      console.error(`${this.c(chalk.gray, '⬡')} ${msg}`);
     }
   }
 }

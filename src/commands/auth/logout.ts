@@ -1,9 +1,9 @@
 import { Command } from 'commander';
 import { OAuth2Client } from 'google-auth-library';
-import { logger } from '../../utils/logger.js';
-import { handleError } from '../../utils/error-handler.js';
-import { loadOAuthTokens, deleteOAuthTokens } from '../../services/oauth.service.js';
 import { resetAuth } from '../../services/auth.service.js';
+import { deleteOAuthTokens, loadOAuthTokens } from '../../services/oauth.service.js';
+import { handleError } from '../../utils/error-handler.js';
+import { logger } from '../../utils/logger.js';
 
 export function createLogoutCommand(): Command {
   return new Command('logout')

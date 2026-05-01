@@ -1,6 +1,6 @@
-import Table from 'cli-table3';
 import chalk from 'chalk';
-import { type ReportData } from '../types/common.js';
+import Table from 'cli-table3';
+import type { ReportData } from '../types/common.js';
 
 export function formatTable(data: ReportData): string {
   if (data.rows.length === 0) {
@@ -16,5 +16,5 @@ export function formatTable(data: ReportData): string {
     table.push(row);
   }
 
-  return table.toString() + `\n${chalk.gray(`${data.rowCount} row(s)`)}`;
+  return `${table.toString()}\n${chalk.gray(`${data.rowCount} row(s)`)}`;
 }

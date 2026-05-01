@@ -1,7 +1,7 @@
 import { Command } from 'commander';
-import { createSetCommand } from './set.js';
 import { createGetCommand } from './get.js';
 import { createListCommand } from './list.js';
+import { createSetCommand } from './set.js';
 
 export function createConfigCommand(): Command {
   const cmd = new Command('config').description('Manage CLI configuration');

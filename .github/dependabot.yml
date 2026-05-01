@@ -1,0 +1,26 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      types:
+        patterns:
+          - '@types/*'
+      google-analytics:
+        patterns:
+          - '@google-analytics/*'
+      tooling:
+        patterns:
+          - '@biomejs/*'
+          - 'vitest'
+          - '@vitest/*'
+          - 'tsx'
+          - 'typescript'
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

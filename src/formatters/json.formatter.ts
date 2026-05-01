@@ -1,4 +1,4 @@
-import { type ReportData } from '../types/common.js';
+import type { ReportData } from '../types/common.js';
 
 export function formatJson(data: ReportData): string {
   const objects = data.rows.map((row) => {

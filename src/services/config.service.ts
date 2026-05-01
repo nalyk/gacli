@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { CLIConfig, CONFIG_DIR, CONFIG_FILE, CONFIG_KEYS } from '../types/config.js';
+import { type CLIConfig, CONFIG_DIR, CONFIG_FILE, CONFIG_KEYS } from '../types/config.js';
 
 export function ensureConfigDir(): void {
   if (!existsSync(CONFIG_DIR)) {

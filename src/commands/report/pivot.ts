@@ -1,15 +1,20 @@
 import { Command } from 'commander';
-import { resolveGlobalOptions, writeOutput } from '../../types/common.js';
 import { formatOutput } from '../../formatters/index.js';
-import { createSpinner } from '../../utils/spinner.js';
-import { handleError } from '../../utils/error-handler.js';
-import { validatePropertyId } from '../../validation/validators.js';
-import { validate } from '../../validation/validators.js';
-import { pivotSchema } from '../../validation/schemas.js';
-import { buildFilterExpression } from '../../utils/filter-builder.js';
-import { resolveDate } from '../../utils/date-helpers.js';
 import { runPivotReport } from '../../services/data-api.service.js';
-import type { RunPivotReportParams, Dimension, Metric, DateRange, PivotDefinition } from '../../types/data-api.js';
+import { resolveGlobalOptions, writeOutput } from '../../types/common.js';
+import type {
+  DateRange,
+  Dimension,
+  Metric,
+  PivotDefinition,
+  RunPivotReportParams,
+} from '../../types/data-api.js';
+import { resolveDate } from '../../utils/date-helpers.js';
+import { handleError } from '../../utils/error-handler.js';
+import { buildFilterExpression } from '../../utils/filter-builder.js';
+import { createSpinner } from '../../utils/spinner.js';
+import { pivotSchema } from '../../validation/schemas.js';
+import { validate, validatePropertyId } from '../../validation/validators.js';
 
 export function createPivotCommand(): Command {
   const cmd = new Command('pivot')
@@ -46,9 +51,7 @@ export function createPivotCommand(): Command {
           ? buildFilterExpression(opts.dimensionFilter)
           : undefined;
 
-        const metricFilter = opts.metricFilter
-          ? buildFilterExpression(opts.metricFilter)
-          : undefined;
+        const metricFilter = opts.metricFilter ? buildFilterExpression(opts.metricFilter) : undefined;
 
         const params: RunPivotReportParams = {
           property: `properties/${propertyId}`,
