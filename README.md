@@ -1,5 +1,6 @@
 # gacli
 
+[![Listed on Yoda Digital Open Source](https://img.shields.io/badge/listed%20on-opensource.yoda.digital-af9568?style=flat-square)](https://opensource.yoda.digital/projects/gacli/)
 [![CI](https://github.com/nalyk/gacli/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/nalyk/gacli/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/@nalyk/gacli?color=cb3837&logo=npm)](https://www.npmjs.com/package/@nalyk/gacli)
 [![License: MIT](https://img.shields.io/github/license/nalyk/gacli?color=blue)](./LICENSE)
