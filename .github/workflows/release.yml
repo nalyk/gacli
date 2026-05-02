@@ -27,6 +27,7 @@ name: release
 on:
   push:
     branches: [main]
+  workflow_dispatch:   # manual fallback (emergency, smoke-test, force-replay)
 
 permissions:
   contents: write       # push the bump commit + create GitHub Release
