@@ -5,7 +5,7 @@
   "type": "module",
   "license": "MIT",
   "author": "Ion (Nalyk) Calmîș",
-  "homepage": "https://opensource.yoda.digital/projects/gacli/",
+  "homepage": "https://opensource.yoda.digital/en/projects/gacli/",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/nalyk/gacli.git"
