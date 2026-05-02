@@ -59,9 +59,9 @@ gacli --version                          # your current version
 npm install -g @nalyk/gacli@latest
 
 # Pin to a specific version
-npm install -g @nalyk/gacli@1.1.0
+npm install -g @nalyk/gacli@1.2.3        # adjust to taste
 
-# Pre-release channel (e.g. release candidates)
+# Pre-release channel (semantic-release publishes here from the `next` branch)
 npm install -g @nalyk/gacli@next
 
 # Verify the new install is signed by the GitHub repo
@@ -286,13 +286,56 @@ Useful when you don't remember field names.
 
 ```bash
 pnpm install
-pnpm verify        # lint + type-check + test + build
+pnpm verify        # lint + type-check + test + skill-lint + build
 pnpm test:watch    # vitest watch mode
 pnpm dev <args>    # run from source (no build step)
 ```
 
 Lint/format is [Biome](https://biomejs.dev), tests are [Vitest](https://vitest.dev). The CI
 workflow runs `pnpm verify` on Node 22 and Node 24 for every push and PR.
+
+## Release automation
+
+Releases are fully automated by [semantic-release](https://github.com/semantic-release/semantic-release)
+on every push to `main`. There is no manual tag, no manual `npm publish`, no
+manual version bump anywhere — `package.json`, `CHANGELOG.md`, the git tag,
+the npm publish, and the GitHub Release all fall out of one workflow run.
+
+**Commit message → release type** ([Conventional Commits](https://www.conventionalcommits.org/)):
+
+| Commit prefix | Release |
+|---|---|
+| `feat: …` | minor (`1.1.0` → `1.2.0`) |
+| `fix: …`, `perf: …`, `refactor: …` | patch (`1.1.0` → `1.1.1`) |
+| `docs(readme): …` | patch |
+| `chore:`, `docs:`, `test:`, `ci:`, `build:`, `style:` | no release |
+| Any commit with `BREAKING CHANGE:` in the body | major (`1.1.0` → `2.0.0`) |
+
+**The flow:**
+1. You push a `feat:` or `fix:` commit to `main`.
+2. `.github/workflows/release.yml` runs the full verify gate.
+3. It packs the tarball and smoke-tests `npm install -g <tarball>` locally.
+4. It runs `semantic-release` which:
+   - Determines next semver from commits since the last tag.
+   - Bumps `package.json` and prepends `CHANGELOG.md`.
+   - Commits both back to `main` as `chore(release): vX.Y.Z [skip ci]`.
+   - Tags `vX.Y.Z` and pushes.
+   - Publishes to npm via OIDC trusted publishing (no `NPM_TOKEN`).
+   - Creates the GitHub Release with auto-generated notes + the `.tgz` asset.
+5. It smoke-tests the live npm version end-to-end.
+
+The `[skip ci]` marker on the release commit prevents the workflow from
+re-triggering itself; the workflow also short-circuits on any commit whose
+message starts with `chore(release):`.
+
+**Pre-release channels:** push to a `next` or `beta` branch instead of `main`
+to publish to the corresponding npm dist-tag (`@nalyk/gacli@next`).
+
+**Branch protection requirement.** semantic-release pushes the bump commit
+back to `main`. Configure the `main` branch protection rule (Settings →
+Branches → main) to allow GitHub Actions / repository administrators to
+bypass required PRs and required status checks. Without that, the
+`@semantic-release/git` step fails with HTTP 403.
 
 ## Documentation
 

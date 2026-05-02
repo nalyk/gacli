@@ -1,37 +1,59 @@
 name: release
 
-# OIDC Trusted Publishing to npm (no NPM_TOKEN — no token at all).
-# Triggers on v*.*.* tags. The npm registry verifies the GitHub OIDC token
-# against the trusted-publisher relationship configured at:
-#   https://www.npmjs.com/package/@nalyk/gacli/access → Trusted Publishers
-# Mismatch → 401 at the publish step.
+# Fully automated release driven by Conventional Commits.
+#
+# On every push to `main`:
+#   1. Run the full verify gate (lint + type-check + test + skill-lint + build).
+#   2. Pack the tarball and smoke-test that `npm install -g <tarball>` produces
+#      a working `gacli` binary BEFORE publishing.
+#   3. Run semantic-release, which:
+#        - decides next semver from commits since the last tag
+#        - bumps package.json + prepends CHANGELOG.md
+#        - commits both back to main as `chore(release): vX.Y.Z [skip ci]`
+#        - tags vX.Y.Z and pushes
+#        - publishes to npm via OIDC trusted publishing (no NPM_TOKEN)
+#        - creates the GitHub Release with auto-generated notes + the .tgz asset
+#   4. Smoke-test the live npm version end-to-end after publish.
+#
+# Skipped automatically when the head commit is the bot's own release commit
+# (`chore(release):`) or any commit tagged `[skip ci]` — prevents loops.
+#
+# Branch protection note: this workflow needs to push the bump commit + tag to
+# `main`. Configure branch protection (Settings → Branches → main rule) to
+# allow GitHub Actions / repository admins to bypass required PRs and required
+# status checks. Otherwise the `git push` step in semantic-release will 403.
+# See README "Release automation" for details.
 
 on:
   push:
-    tags:
-      - 'v*.*.*'
-  workflow_dispatch:
+    branches: [main]
 
 permissions:
-  contents: write   # create GitHub Releases + push tags
-  id-token: write   # OIDC trusted publishing — required for npm to verify our identity
+  contents: write       # push the bump commit + create GitHub Release
+  id-token: write       # OIDC trusted publishing to npm
+  issues: write         # semantic-release closes/labels related issues
+  pull-requests: write  # semantic-release comments on related PRs
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: auto-release-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
   release:
-    name: build + publish + release
+    name: semantic-release
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    if: >-
+      !contains(github.event.head_commit.message, '[skip ci]') &&
+      !startsWith(github.event.head_commit.message, 'chore(release):')
     environment:
       name: npm
       url: https://www.npmjs.com/package/@nalyk/gacli
     steps:
       - uses: actions/checkout@v6
         with:
-          fetch-depth: 0   # full history so release-notes generation works
+          fetch-depth: 0   # full history so commit-analyzer can walk back to the last tag
+          persist-credentials: true   # semantic-release uses the GITHUB_TOKEN to push back
 
       - uses: pnpm/action-setup@v6
         with:
@@ -48,9 +70,8 @@ jobs:
       # npm 10.x. Self-upgrading via `npm install -g npm@latest` fails on the
       # GitHub runner with "MODULE_NOT_FOUND: promise-retry" — the bundled
       # npm@10 has incomplete dependencies that can't reify a self-replacement.
-      # Even --force doesn't help: it's the existing npm that breaks, not the
-      # install operation. Workaround: install the new npm to a separate
-      # prefix and prepend it to PATH, never touching the broken global npm.
+      # Workaround: install the new npm to a separate prefix and prepend it to
+      # PATH, never touching the broken global npm.
       - name: Install npm@latest to a local prefix (PATH-prepended)
         run: |
           mkdir -p /tmp/npm-cli
@@ -69,18 +90,7 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: Verify tag matches package.json version
-        if: github.ref_type == 'tag'
-        run: |
-          TAG="${GITHUB_REF_NAME#v}"
-          PKG=$(node -p "require('./package.json').version")
-          if [ "$TAG" != "$PKG" ]; then
-            echo "::error::Tag '${GITHUB_REF_NAME}' (=$TAG) does not match package.json version '$PKG'"
-            exit 1
-          fi
-          echo "Tag and package.json version both = $PKG"
-
-      - name: Verify (lint + type-check + test + build)
+      - name: Verify (lint + type-check + test + skill-lint + build)
         run: pnpm verify
 
       - name: Smoke-test the local pack (mimic real `npm install -g`)
@@ -90,45 +100,28 @@ jobs:
           npm install -g "$TARBALL"
           gacli --version
           gacli --help > /dev/null
-          gacli mcp serve --help > /dev/null
+          gacli skills doctor > /dev/null
+          rm -f "$TARBALL"   # clear the smoke-test tarball; semantic-release will re-pack into dist-pack/
 
-      - name: Detect prerelease
-        id: prerelease
-        run: |
-          if [[ "${{ github.ref_name }}" =~ - ]]; then
-            echo "tag=next" >> "$GITHUB_OUTPUT"
-            echo "is_prerelease=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "tag=latest" >> "$GITHUB_OUTPUT"
-            echo "is_prerelease=false" >> "$GITHUB_OUTPUT"
-          fi
+      - name: Run semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # No NPM_TOKEN — npm CLI uses the workflow's OIDC token because
+          # id-token: write is granted above.
+        run: pnpm exec semantic-release
 
-      # Idempotency guard — makes `gh run rerun` and `workflow_dispatch` safe.
-      - name: Skip publish if version already on npm
-        id: check
-        run: |
-          NAME=$(node -p "require('./package.json').name")
-          VERSION=$(node -p "require('./package.json').version")
-          if npm view "${NAME}@${VERSION}" version >/dev/null 2>&1; then
-            echo "already_published=true" >> "$GITHUB_OUTPUT"
-            echo "::notice::${NAME}@${VERSION} already on npm — skipping publish step."
-          else
-            echo "already_published=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      # No --provenance flag, no NODE_AUTH_TOKEN — OIDC handles both.
-      # npm auto-generates provenance attestation when publishing via trusted publishing.
-      - name: Publish to npm via OIDC trusted publishing
-        if: steps.check.outputs.already_published == 'false'
-        run: |
-          npm publish --access public --tag "${{ steps.prerelease.outputs.tag }}"
-
-      - name: Smoke-test the published package (real-world install path)
-        if: steps.check.outputs.already_published == 'false'
+      - name: Smoke-test the published npm version (real-world install path)
+        if: success()
         run: |
           PKG_NAME=$(node -p "require('./package.json').name")
           PKG_VERSION=$(node -p "require('./package.json').version")
-          echo "Waiting for $PKG_NAME@$PKG_VERSION to appear on registry..."
+          # No-release case: package.json wasn't bumped — skip the smoke test.
+          LATEST_ON_NPM=$(npm view "$PKG_NAME" version 2>/dev/null || echo "none")
+          if [ "$PKG_VERSION" != "$LATEST_ON_NPM" ]; then
+            echo "::notice::No release this run (package.json=$PKG_VERSION, npm latest=$LATEST_ON_NPM). Skipping post-publish smoke-test."
+            exit 0
+          fi
+          echo "Verifying $PKG_NAME@$PKG_VERSION on registry..."
           for i in 1 2 3 4 5; do
             if npm view "$PKG_NAME@$PKG_VERSION" version > /dev/null 2>&1; then
               echo "Found on registry."
@@ -140,54 +133,4 @@ jobs:
           npm uninstall -g "$PKG_NAME" 2>/dev/null || true
           npm install -g "$PKG_NAME@$PKG_VERSION"
           gacli --version
-          gacli --help > /dev/null
-
-      - name: Create or update GitHub Release
-        if: github.ref_type == 'tag'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          PKG_NAME=$(node -p "require('./package.json').name")
-          PKG_VERSION=$(node -p "require('./package.json').version")
-
-          # If a release for this tag already exists, leave it alone (idempotency).
-          if gh release view "${GITHUB_REF_NAME}" --repo "${{ github.repository }}" >/dev/null 2>&1; then
-            echo "Release ${GITHUB_REF_NAME} already exists — leaving it alone."
-            exit 0
-          fi
-
-          PRERELEASE_FLAG=""
-          if [[ "${{ steps.prerelease.outputs.is_prerelease }}" == "true" ]]; then
-            PRERELEASE_FLAG="--prerelease"
-          fi
-
-          # Generate notes from PR/commit log since previous tag.
-          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-          if [[ -n "$PREV_TAG" ]]; then
-            gh api -X POST /repos/${{ github.repository }}/releases/generate-notes \
-              -f tag_name="${GITHUB_REF_NAME}" \
-              -f previous_tag_name="$PREV_TAG" \
-              -q .body > release-notes.md
-          else
-            gh api -X POST /repos/${{ github.repository }}/releases/generate-notes \
-              -f tag_name="${GITHUB_REF_NAME}" \
-              -q .body > release-notes.md
-          fi
-
-          {
-            echo
-            echo "## Install"
-            echo
-            echo '```bash'
-            echo "npm install -g ${PKG_NAME}@${PKG_VERSION}"
-            echo '```'
-            echo
-            echo "Published via [npm OIDC trusted publishing](https://docs.npmjs.com/trusted-publishers) — verify with \`npm audit signatures\`."
-          } >> release-notes.md
-
-          gh release create "${GITHUB_REF_NAME}" \
-            --repo "${{ github.repository }}" \
-            --title "${GITHUB_REF_NAME}" \
-            --notes-file release-notes.md \
-            $PRERELEASE_FLAG \
-            *.tgz
+          gacli skills doctor > /dev/null

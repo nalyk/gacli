@@ -2,12 +2,7 @@
 
 All notable changes to `@nalyk/gacli` are documented here.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-## [Unreleased]
-
-_Nothing yet. New entries land here between releases._
+The format is based on [Conventional Commits](https://www.conventionalcommits.org/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Generated automatically by [semantic-release](https://github.com/semantic-release/semantic-release) on every push to `main` — see `release.config.js` and `.github/workflows/release.yml`. Entries below v1.2.0 were authored manually under the old Keep a Changelog format and are preserved verbatim.
 
 ## [1.1.0] - 2026-05-02
 
