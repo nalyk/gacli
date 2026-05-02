@@ -9,6 +9,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Nothing yet. New entries land here between releases._
 
+## [1.1.0] - 2026-05-02
+
+### Added
+
+- **`gacli skills` command** — install the bundled gacli skill into AI
+  coding CLI agents. Subcommands: `install`, `uninstall`, `list`, `path`,
+  `doctor`. Auto-detects installed agents (claude, codex, qwen, gemini)
+  and prompts interactively when stdin is a TTY; non-interactive in CI.
+  Supports `user` (default), `project`, and arbitrary-path scopes. Atomic
+  installs via temp-dir + rename, marker-based ownership tracking
+  (`.gacli-skill`) so uninstall refuses to touch directories we don't own.
+- **Native skill packages for Claude Code, Codex CLI, Qwen Code, and Gemini
+  CLI**, shipped under `extensions/` in the npm tarball. One conceptual
+  skill packaged 4 ways:
+  - **Claude Code** — full frontmatter (`paths`, `allowed-tools`,
+    `` !`gacli ...` `` dynamic injection at skill load).
+  - **Codex** — installs at the cross-vendor `~/.agents/skills/` path;
+    `agents/openai.yaml` declares `dependencies.tools` (binary), GA4-orange
+    branding, and marketplace defaults.
+  - **Qwen Code** — auto-pr-style structure with conventional `reference.md`
+    + `examples.md`; INSTALL.md ships a pre-baked
+    `.qwen/settings.json` permissions template.
+  - **Gemini CLI** — heaviest `scripts/` investment (deterministic shell
+    wrappers); persona/grounding mandates per the danicat agent-skills pattern.
+- Shared knowledge spine (`extensions/_core/`) — 7 markdown files
+  (command catalog, filter grammar, dimensions/metrics cheatsheet, 12
+  recipes, 15 footguns, auth setup, decision tree) copied into each skill's
+  `references/` at install time so installs are self-contained.
+- `pnpm verify:skills` skill-lint enforcing every Wave-2 silent-fail trap
+  (exact `SKILL.md` filename, `name` matches directory, YAML-safe
+  descriptions, GA4 trigger keywords, references/scripts existence with
+  shebangs, LF line endings). Wired into `pnpm verify`.
+- 14 new Vitest cases covering install/uninstall/list/marker behavior,
+  force/dry-run, the cross-vendor codex path, and the "refuse to remove
+  what we don't own" guard.
+
+### Changed
+
+- `extensions/` is now bundled in the published npm package (added to
+  `files` in `package.json`) so `gacli skills install` can locate the
+  source tree under `$(npm root -g)/@nalyk/gacli/extensions/`.
+- npm keywords expanded with `claude-code`, `codex`, `gemini-cli`,
+  `qwen-code`, `ai-agent`, `agent-skills`, `skill`.
+- Package description now mentions the AI-assistant skill packages.
+- Main `README.md` and `help.md` got a new "AI Assistant Integration"
+  section pointing at `extensions/README.md`.
+
 ## [1.0.2-rc.0] - 2026-05-02
 
 ### Changed

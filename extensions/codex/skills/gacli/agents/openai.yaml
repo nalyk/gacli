@@ -1,0 +1,19 @@
+interface:
+  display_name: "Google Analytics 4 (gacli)"
+  short_description: "Expert GA4 operator — 40+ commands at your agent's fingertips"
+  brand_color: "#F9AB00"
+  default_prompt: "What's happening with my Google Analytics?"
+
+policy:
+  allow_implicit_invocation: true
+
+dependencies:
+  tools:
+    - type: "binary"
+      value: "gacli"
+      description: |
+        Required: gacli CLI (the @nalyk/gacli npm package). Install via
+        `npm install -g @nalyk/gacli`, then authenticate via `gacli auth
+        login` (OAuth) or set up a service account with
+        `gacli config set credentials /path/to/sa.json`.
+        See https://github.com/nalyk/gacli for setup details.

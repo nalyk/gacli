@@ -513,6 +513,26 @@ Shorthand for `--dimension-filter` and `--metric-filter`:
 
 Multiple filters are combined with AND.
 
+---
+
+## skills
+
+Install the bundled gacli skill into a target AI CLI agent.
+
+```
+gacli skills install   [--agent claude|codex|qwen|gemini|all] [--scope user|project|<path>] [--force] [--dry-run]
+gacli skills uninstall [--agent ...] [--scope ...] [--all] [--dry-run]
+gacli skills list                                        # all detected installs
+gacli skills path --agent <agent> [--scope <scope>]      # print install path
+gacli skills doctor                                      # detect agent CLIs on PATH
+```
+
+Skills are CLI-only — the installed skill teaches the host AI CLI to operate
+gacli via shell. Full guide and per-CLI install paths in
+`extensions/README.md`.
+
+---
+
 ## Notes for AI usage
 
 - Auth priority: OAuth tokens > service account (`credentials` config / `GOOGLE_APPLICATION_CREDENTIALS` env var). Use `gacli auth status` to check which method is active.

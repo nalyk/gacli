@@ -13,6 +13,17 @@ audiences, integrations (Firebase, Google Ads, BigQuery). Also ships an
 can call it as a tool, plus an interactive [`explore`](#interactive-explore) REPL for browsing
 metric/dimension catalogs.
 
+**AI assistant integration.** gacli ships native skill packages for Claude Code, Codex, Qwen
+Code, and Gemini CLI. After install, deploy with one command — your agent becomes an expert
+gacli operator immediately:
+
+```bash
+gacli skills install --agent claude --scope user
+# or: --agent codex / qwen / gemini / all
+```
+
+Full guide: [extensions/README.md](extensions/README.md).
+
 ## Setup
 
 Install from npm:
@@ -36,6 +47,36 @@ pnpm install && pnpm build && pnpm link --global
 ```
 
 Requires Node.js >= 22.
+
+### Updating an existing install
+
+```bash
+# See what's installed and what's available
+npm view @nalyk/gacli version            # latest published version
+gacli --version                          # your current version
+
+# Upgrade in place (most users)
+npm install -g @nalyk/gacli@latest
+
+# Pin to a specific version
+npm install -g @nalyk/gacli@1.1.0
+
+# Pre-release channel (e.g. release candidates)
+npm install -g @nalyk/gacli@next
+
+# Verify the new install is signed by the GitHub repo
+npm audit signatures
+```
+
+After upgrading, **re-run `gacli skills install --agent <agent>`** so any new
+or updated skill content lands in your AI CLI's skill directory. The skill
+files are versioned with gacli — installing a fresh gacli does NOT
+auto-refresh already-deployed skills. Pass `--force` to overwrite without
+prompting:
+
+```bash
+gacli skills install --agent all --force
+```
 
 ## Authentication
 

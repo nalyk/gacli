@@ -9,13 +9,14 @@ import { createExploreCommand } from './commands/explore/index.js';
 import { createMcpCommand } from './commands/mcp/index.js';
 import { createMetadataCommand } from './commands/metadata/index.js';
 import { createReportCommand } from './commands/report/index.js';
+import { createSkillsCommand } from './commands/skills/index.js';
 
 const program = new Command();
 
 program
   .name('gacli')
   .description('Google Analytics 4 CLI tool')
-  .version('1.0.0')
+  .version('1.1.0')
   .option('-p, --property <id>', 'GA4 property ID')
   .option('-f, --format <format>', 'Output format: table, json, ndjson, csv, chart', 'table')
   .option('-o, --output <file>', 'Write output to file')
@@ -30,5 +31,6 @@ program.addCommand(createConfigCommand());
 program.addCommand(createAuthCommand());
 program.addCommand(createExploreCommand());
 program.addCommand(createMcpCommand());
+program.addCommand(createSkillsCommand());
 
 program.parse();

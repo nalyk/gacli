@@ -1,7 +1,7 @@
 {
   "name": "@nalyk/gacli",
-  "version": "1.0.2-rc.0",
-  "description": "Full-featured Google Analytics 4 CLI tool — Data API + Admin API, OAuth/SA auth, multiple output formats, MCP server.",
+  "version": "1.1.0",
+  "description": "Full-featured Google Analytics 4 CLI — Data API + Admin API, OAuth/SA auth, multiple output formats, MCP server. Ships native AI-assistant skill packages for Claude Code, Codex, Qwen, and Gemini CLIs.",
   "type": "module",
   "license": "MIT",
   "author": "Ion (Nalyk) Calmîș",
@@ -19,6 +19,7 @@
   },
   "files": [
     "dist",
+    "extensions",
     "README.md",
     "help.md",
     "LICENSE"
@@ -31,7 +32,14 @@
     "data-api",
     "admin-api",
     "mcp",
-    "model-context-protocol"
+    "model-context-protocol",
+    "claude-code",
+    "codex",
+    "gemini-cli",
+    "qwen-code",
+    "ai-agent",
+    "agent-skills",
+    "skill"
   ],
   "scripts": {
     "build": "tsc",
@@ -45,7 +53,8 @@
     "lint": "biome check src/ test/",
     "lint:fix": "biome check --write src/ test/",
     "format": "biome format --write src/ test/",
-    "verify": "pnpm lint && pnpm type-check && pnpm test && pnpm build",
+    "verify:skills": "node scripts/verify-skills.mjs",
+    "verify": "pnpm lint && pnpm type-check && pnpm test && pnpm verify:skills && pnpm build",
     "prepublishOnly": "pnpm verify",
     "publint": "pnpm dlx publint"
   },
