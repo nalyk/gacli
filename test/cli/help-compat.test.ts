@@ -1,11 +1,11 @@
 import { execFile } from 'node:child_process';
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { promisify } from 'node:util';
 import { describe, expect, it } from 'vitest';
+import { BIN, skipWithoutDist } from '../helpers/dist.js';
 
 // Every flag string a 1.x leaf command accepted must still be accepted (new flags are fine).
-const BIN = resolve(process.cwd(), 'dist/index.js');
 const FIXTURES = resolve(process.cwd(), 'test/fixtures/help-v1');
 
 export function flagTokens(help: string): string[] {
@@ -44,7 +44,7 @@ const env = {
   GACLI_AGENT: '',
 };
 
-describe.skipIf(!existsSync(BIN))('1.x help surface is preserved', () => {
+describe.skipIf(skipWithoutDist)('1.x help surface is preserved', () => {
   const files = readdirSync(FIXTURES).filter((f) => f.endsWith('.txt'));
 
   it('has fixtures and extracts flag tokens from them', () => {

@@ -1,10 +1,8 @@
 import { execFile } from 'node:child_process';
-import { existsSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { promisify } from 'node:util';
 import { describe, expect, it } from 'vitest';
+import { BIN, skipWithoutDist } from '../helpers/dist.js';
 
-const BIN = resolve(process.cwd(), 'dist/index.js');
 const run = promisify(execFile);
 const env = {
   ...process.env,
@@ -25,7 +23,7 @@ async function cli(args: string[], extraEnv: Record<string, string> = {}) {
   }
 }
 
-describe.skipIf(!existsSync(BIN))('gacli schema (e2e)', () => {
+describe.skipIf(skipWithoutDist)('gacli schema (e2e)', () => {
   it('filters by command path', async () => {
     const r = await cli(['schema', 'admin', 'custom-dimensions']);
     expect(r.code).toBe(0);

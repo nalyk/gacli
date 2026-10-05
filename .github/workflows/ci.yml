@@ -42,11 +42,12 @@ jobs:
       - name: Type-check
         run: pnpm type-check
 
-      - name: Test
-        run: pnpm test
-
+      # Build first: CLI e2e tests (help-compat, schema, mcp-smoke) run against dist/.
       - name: Build
         run: pnpm build
+
+      - name: Test
+        run: pnpm test
 
       - name: Verify built bin executes
         run: node dist/index.js --version

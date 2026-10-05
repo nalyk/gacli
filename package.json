@@ -54,7 +54,7 @@
     "lint:fix": "biome check --write src/ test/",
     "format": "biome format --write src/ test/",
     "verify:skills": "node scripts/verify-skills.mjs",
-    "verify": "pnpm lint && pnpm type-check && pnpm test && pnpm verify:skills && pnpm build",
+    "verify": "pnpm lint && pnpm type-check && pnpm build && pnpm test && pnpm verify:skills",
     "prepublishOnly": "pnpm verify",
     "publint": "pnpm dlx publint"
   },
