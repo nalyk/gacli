@@ -1,6 +1,6 @@
 import type { ReportData } from '../types/common.js';
 
-export function formatJson(data: ReportData): string {
+export function formatJson(data: ReportData, opts: { pretty?: boolean } = {}): string {
   const objects = data.rows.map((row) => {
     const obj: Record<string, string> = {};
     for (let i = 0; i < data.headers.length; i++) {
@@ -18,5 +18,5 @@ export function formatJson(data: ReportData): string {
     output.metadata = data.metadata;
   }
 
-  return JSON.stringify(output, null, 2);
+  return opts.pretty === false ? JSON.stringify(output) : JSON.stringify(output, null, 2);
 }

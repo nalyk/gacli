@@ -39,3 +39,25 @@ describe('formatReports', () => {
     expect(formatReports([r1], 'table')).toBe(formatOutput(r1, 'table'));
   });
 });
+
+describe('formatOutput json pretty-printing follows stdout', () => {
+  it('is compact when stdout is not a TTY', () => {
+    const original = process.stdout.isTTY;
+    Object.defineProperty(process.stdout, 'isTTY', { value: false, configurable: true });
+    try {
+      expect(formatOutput(r1, 'json')).not.toContain('\n');
+    } finally {
+      Object.defineProperty(process.stdout, 'isTTY', { value: original, configurable: true });
+    }
+  });
+
+  it('is pretty on a TTY', () => {
+    const original = process.stdout.isTTY;
+    Object.defineProperty(process.stdout, 'isTTY', { value: true, configurable: true });
+    try {
+      expect(formatOutput(r1, 'json')).toContain('\n');
+    } finally {
+      Object.defineProperty(process.stdout, 'isTTY', { value: original, configurable: true });
+    }
+  });
+});
