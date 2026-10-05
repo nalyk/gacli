@@ -1,3 +1,4 @@
+import { isOutputFormat, OUTPUT_FORMATS } from '../types/common.js';
 import { type CLIConfig, CONFIG_DIR, CONFIG_FILE, CONFIG_KEYS } from '../types/config.js';
 import { ensureSecureDir, readJsonFile, writeFileAtomic } from '../utils/secure-fs.js';
 
@@ -12,6 +13,9 @@ export function getConfig(): CLIConfig {
 export function setConfigValue(key: string, value: string): void {
   if (!(key in CONFIG_KEYS)) {
     throw new Error(`Unknown config key: ${key}. Valid keys: ${Object.keys(CONFIG_KEYS).join(', ')}`);
+  }
+  if (key === 'format' && !isOutputFormat(value)) {
+    throw new Error(`Invalid format "${value}". Valid: ${OUTPUT_FORMATS.join(', ')}`);
   }
   ensureConfigDir();
   const config = getConfig();

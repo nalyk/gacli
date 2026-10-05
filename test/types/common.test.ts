@@ -39,6 +39,14 @@ describe('resolveGlobalOptions format', () => {
     expect(globalsFrom([])?.format).toBe('json');
   });
 
+  it('warns and falls back to table when the configured format is invalid', async () => {
+    const { logger } = await import('../../src/utils/logger.js');
+    const warn = vi.spyOn(logger, 'warn').mockImplementation(() => {});
+    mockedGetConfig.mockReturnValue({ format: 'xml' as never });
+    expect(globalsFrom([])?.format).toBe('table');
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('Ignoring invalid config format "xml"'));
+  });
+
   it('defaults to table', () => {
     expect(globalsFrom([])?.format).toBe('table');
   });

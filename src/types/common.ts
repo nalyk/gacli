@@ -6,6 +6,10 @@ import { logger } from '../utils/logger.js';
 export const OUTPUT_FORMATS = ['table', 'json', 'ndjson', 'csv', 'chart'] as const;
 export type OutputFormat = (typeof OUTPUT_FORMATS)[number];
 
+export function isOutputFormat(value: string): value is OutputFormat {
+  return (OUTPUT_FORMATS as readonly string[]).includes(value);
+}
+
 export interface GlobalOptions {
   property: string;
   format: OutputFormat;
@@ -35,10 +39,16 @@ export function resolveGlobalOptions(cmd: Command): GlobalOptions {
   const config = getConfig();
 
   const property = opts.property || config.property || process.env.GA4_PROPERTY_ID || '';
-  const format = opts.format || config.format || 'table';
-  if (!(OUTPUT_FORMATS as readonly string[]).includes(format)) {
-    throw new Error(`Invalid format "${format}". Valid: ${OUTPUT_FORMATS.join(', ')}`);
+  // An explicit bad -f is a usage error; a stale config value must not break every command.
+  if (opts.format && !isOutputFormat(opts.format)) {
+    throw new Error(`Invalid format "${opts.format}". Valid: ${OUTPUT_FORMATS.join(', ')}`);
   }
+  let configFormat = config.format;
+  if (configFormat && !isOutputFormat(configFormat)) {
+    logger.warn(`Ignoring invalid config format "${configFormat}". Valid: ${OUTPUT_FORMATS.join(', ')}`);
+    configFormat = undefined;
+  }
+  const format = opts.format || configFormat || 'table';
   // commander stores `--no-color` as `color: false` (default true), never as `noColor`
   const noColor = opts.color === false || (config.noColor ?? false);
   const verbose = opts.verbose ?? config.verbose ?? false;
