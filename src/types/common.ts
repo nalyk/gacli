@@ -18,8 +18,6 @@ export interface GlobalOptions {
   output?: string;
   noColor: boolean;
   verbose: boolean;
-  /** true when the user chose the format (-f, GACLI_FORMAT or config) rather than auto-detection */
-  formatExplicit: boolean;
   interactive: boolean;
   agent?: string;
 }
@@ -58,6 +56,7 @@ export function resolveGlobalOptions(cmd: Command): GlobalOptions {
   const agent = detectAgent();
   // An explicit bad -f is a usage error; a stale env/config value must not break every command.
   if (opts.format && !isOutputFormat(opts.format)) {
+    setJsonErrors(!(process.stdout.isTTY && !agent && !isCI()));
     throw new GacliError('usage', `Invalid format "${opts.format}". Valid: ${OUTPUT_FORMATS.join(', ')}`);
   }
   const preferred =
@@ -85,7 +84,6 @@ export function resolveGlobalOptions(cmd: Command): GlobalOptions {
     output,
     noColor,
     verbose,
-    formatExplicit: !!preferred,
     interactive: isInteractive(),
     agent,
   };

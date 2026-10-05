@@ -1,5 +1,5 @@
 import { CommanderError } from 'commander';
-import { ZodError, z } from 'zod';
+import { ZodError, type z } from 'zod';
 import { getGrpcCode, getGrpcMessage, isDailyQuotaError } from '../utils/grpc-error.js';
 
 export type ErrorKind = 'usage' | 'auth' | 'not_found' | 'quota' | 'confirmation' | 'api' | 'internal';
@@ -50,6 +50,20 @@ export class GacliError extends Error {
   }
 }
 
+/** One line per issue: "<label>: <message>". `label` maps the first path segment (e.g. input key → --flag). */
+export function formatZodIssues(
+  issues: readonly z.core.$ZodIssue[],
+  label: (key: string) => string = (k) => k,
+): string {
+  return issues
+    .map((i) => {
+      const [head, ...rest] = i.path.map(String);
+      const where = head === undefined ? '' : [label(head), ...rest].join('.');
+      return where ? `${where}: ${i.message}` : i.message;
+    })
+    .join('\n');
+}
+
 function fromGrpc(code: number, err: Error): GacliError {
   const msg = getGrpcMessage(err);
   const o = (hint?: string) => ({ hint, grpcStatus: code, cause: err });
@@ -95,7 +109,7 @@ function fromGrpc(code: number, err: Error): GacliError {
 
 export function toGacliError(err: unknown): GacliError {
   if (err instanceof GacliError) return err;
-  if (err instanceof ZodError) return new GacliError('usage', z.prettifyError(err), { cause: err });
+  if (err instanceof ZodError) return new GacliError('usage', formatZodIssues(err.issues), { cause: err });
   if (err instanceof CommanderError) {
     return new GacliError('usage', err.message.replace(/^error: /, ''), { cause: err });
   }

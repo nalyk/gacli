@@ -97,11 +97,10 @@ describe('resolveGlobalOptions format', () => {
     expect(globalsFrom([])?.format).toBe('csv');
   });
 
-  it('an explicit -f beats GACLI_FORMAT and records it', () => {
+  it('an explicit -f beats GACLI_FORMAT', () => {
     vi.stubEnv('GACLI_FORMAT', 'csv');
     const g = globalsFrom(['-f', 'ndjson']);
     expect(g?.format).toBe('ndjson');
-    expect(g?.formatExplicit).toBe(true);
   });
 });
 

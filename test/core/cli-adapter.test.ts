@@ -199,4 +199,65 @@ describe('mountOperations', () => {
     vi.spyOn(process.stdout, 'write').mockImplementation((() => true) as never);
     expect(await cli('demo', 'things', 'list', '--help')).toBe(0);
   });
+
+  it('names the flag (not the input key) in usage errors, without a doubled ✖', async () => {
+    expect(await cli('-p', '1', '-f', 'table', 'demo', 'things', 'list', '-m', 's', '--limit', 'abc')).toBe(
+      2,
+    );
+    const text = stderr.join('\n');
+    expect(text).toContain('--limit');
+    expect(text).not.toContain('✖ ✖');
+  });
+
+  it('reports an invalid -f as a JSON error when stdout is piped', async () => {
+    expect(await cli('-p', '1', '-f', 'xml', 'demo', 'things', 'list', '-m', 's')).toBe(2);
+    expect(JSON.parse(stderr[0]).error.code).toBe('USAGE');
+  });
+});
+
+describe('mountOperations flag generation edge cases', () => {
+  it('rejects input keys that clash with injected flags', () => {
+    const bad = defineOperation({
+      id: 'demo.bad.list',
+      summary: 'x',
+      category: 'read',
+      kind: 'resource',
+      input: z.object({ fields: z.string().optional() }),
+      output: z.unknown(),
+      run: async () => [],
+    });
+    expect(() => mountOperations(new Command('gacli'), [bad])).toThrow(/reserved/);
+  });
+
+  it('gives a boolean defaulting to true a --no- flag', async () => {
+    const run = vi.fn(async () => []);
+    const op = defineOperation({
+      id: 'demo.bool.list',
+      summary: 'x',
+      category: 'read',
+      kind: 'resource',
+      input: z.object({ includeEmpty: z.boolean().default(true).describe('Include empty') }),
+      output: z.unknown(),
+      run,
+    });
+    const program = addGlobalOptions(new Command('gacli'));
+    mountOperations(program, [op]);
+    finalizeProgram(program);
+    await runProgram(program, ['node', 'gacli', '-f', 'json', 'demo', 'bool', 'list', '--no-include-empty']);
+    expect(run.mock.calls[0][0]).toEqual({ includeEmpty: false });
+  });
+
+  it('marks a required boolean as required', async () => {
+    const { describeFlags } = await import('../../src/core/cli-adapter.js');
+    const op = defineOperation({
+      id: 'demo.req.run',
+      summary: 'x',
+      category: 'action',
+      kind: 'resource',
+      input: z.object({ acknowledge: z.boolean() }),
+      output: z.unknown(),
+      run: async () => ({}),
+    });
+    expect(describeFlags(op).find((f) => f.key === 'acknowledge')?.required).toBe(true);
+  });
 });

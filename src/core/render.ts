@@ -100,7 +100,7 @@ function renderStructured(result: unknown, items: unknown[], opts: RenderOptions
 }
 
 export function renderResult(
-  op: Pick<OperationDef, 'kind' | 'columns'>,
+  op: Pick<OperationDef, 'kind' | 'columns' | 'reportLabel'>,
   result: unknown,
   opts: RenderOptions,
 ): string {
@@ -111,6 +111,7 @@ export function renderResult(
       return formatReports(
         (result as ReportData[]).map((r) => projectReport(r, opts.fields)),
         opts.format,
+        op.reportLabel,
       );
     case 'resource':
       return renderResource(op.columns, result, opts);
