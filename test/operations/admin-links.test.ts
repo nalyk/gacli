@@ -192,7 +192,7 @@ describe('admin.google-ads-links', () => {
     expect(op.output.safeParse(out).success).toBe(true);
   });
 
-  it('create sends customerId with ads personalization on (1.x default)', async () => {
+  it('create sends customerId with ads personalization on, as a BoolValue wrapper', async () => {
     adminClient.createGoogleAdsLink.mockResolvedValue([link]);
     const op = gads.createGoogleAdsLink;
     expect(op.category).toBe('create');
@@ -200,7 +200,7 @@ describe('admin.google-ads-links', () => {
     const out = await op.run(op.input.parse({ customerId: '1234567890' }), ctx);
     expect(adminClient.createGoogleAdsLink).toHaveBeenCalledWith({
       parent: 'properties/123',
-      googleAdsLink: { customerId: '1234567890', adsPersonalizationEnabled: true },
+      googleAdsLink: { customerId: '1234567890', adsPersonalizationEnabled: { value: true } },
     });
     expect(op.output.safeParse(out).success).toBe(true);
     expect(op.columns?.map((c) => c.header)).toEqual([
@@ -211,14 +211,14 @@ describe('admin.google-ads-links', () => {
     ]);
   });
 
-  it('update parses true/false and always masks ads_personalization_enabled', async () => {
+  it('update sends a BoolValue and masks ads_personalization_enabled', async () => {
     adminClient.updateGoogleAdsLink.mockResolvedValue([link]);
     const op = gads.updateGoogleAdsLink;
     expect(op.category).toBe('update');
     expect(op.needsProperty).toBeFalsy();
     const out = await op.run(op.input.parse({ name: link.name, adsPersonalizationEnabled: 'false' }), ctx);
     expect(adminClient.updateGoogleAdsLink).toHaveBeenCalledWith({
-      googleAdsLink: { name: link.name, adsPersonalizationEnabled: false },
+      googleAdsLink: { name: link.name, adsPersonalizationEnabled: { value: false } },
       updateMask: { paths: ['ads_personalization_enabled'] },
     });
     expect(op.output.safeParse(out).success).toBe(true);
@@ -228,12 +228,16 @@ describe('admin.google-ads-links', () => {
       'Ads Personalization Enabled',
       'Update Time',
     ]);
+  });
 
-    await op.run(op.input.parse({ name: link.name }), ctx);
-    expect(adminClient.updateGoogleAdsLink).toHaveBeenLastCalledWith({
-      googleAdsLink: { name: link.name, adsPersonalizationEnabled: undefined },
-      updateMask: { paths: ['ads_personalization_enabled'] },
-    });
+  it('update with nothing to change is a usage error and never calls the API (1.x cleared the field)', () => {
+    expect(gads.updateGoogleAdsLink.input.safeParse({ name: link.name }).success).toBe(false);
+  });
+
+  it('update only accepts true or false', () => {
+    expect(
+      gads.updateGoogleAdsLink.input.safeParse({ name: link.name, adsPersonalizationEnabled: 'yes' }).success,
+    ).toBe(false);
   });
 
   it('update requires --name', () => {

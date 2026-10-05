@@ -1,11 +1,12 @@
 import { Command } from 'commander';
+import { isInteractive } from '../../core/agent.js';
 import { formatOutput } from '../../formatters/index.js';
 import { describeScope, detectAll, installSkill, parseScope } from '../../services/skills.service.js';
 import { type AgentName, ALL_AGENTS } from '../../services/skills-targets/index.js';
 import type { InstallResult, ScopeSpec } from '../../services/skills-targets/types.js';
 import { type ReportData, resolveGlobalOptions, writeOutput } from '../../types/common.js';
 import { handleError } from '../../utils/error-handler.js';
-import { askYesNo, isInteractive } from '../../utils/interactive-prompt.js';
+import { askYesNo } from '../../utils/interactive-prompt.js';
 import { logger } from '../../utils/logger.js';
 import { skillsInstallOptsSchema } from '../../validation/schemas.js';
 import { validate } from '../../validation/validators.js';

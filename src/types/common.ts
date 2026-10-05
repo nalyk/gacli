@@ -18,8 +18,6 @@ export interface GlobalOptions {
   output?: string;
   noColor: boolean;
   verbose: boolean;
-  /** true when the user chose the format (-f, GACLI_FORMAT or config) rather than auto-detection */
-  formatExplicit: boolean;
   interactive: boolean;
   agent?: string;
 }
@@ -86,7 +84,6 @@ export function resolveGlobalOptions(cmd: Command): GlobalOptions {
     output,
     noColor,
     verbose,
-    formatExplicit: !!preferred,
     interactive: isInteractive(),
     agent,
   };

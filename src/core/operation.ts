@@ -32,6 +32,8 @@ export interface OperationDef<I extends z.ZodObject = z.ZodObject, O = unknown> 
   input: I;
   output: z.ZodType<O>;
   columns?: Column[];
+  /** Section heading for kind 'reports' in table/csv/chart output (default 'Report'). */
+  reportLabel?: string;
   /** Verbatim commander flag strings keyed by input key; generated when absent. */
   flags?: Partial<Record<Extract<keyof z.input<I>, string>, string>>;
   run(input: z.output<I>, ctx: RunContext): Promise<O>;

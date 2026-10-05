@@ -68,8 +68,8 @@ export const createGoogleAdsLink = defineOperation({
   columns: [name, customerId, adsPersonalization, createTime],
   run: async ({ customerId }, ctx) => {
     const client = await getAdminClient();
-    // 1.x sent a plain boolean for this BoolValue field
-    const body = { customerId, adsPersonalizationEnabled: true } as unknown as IGoogleAdsLink;
+    // ads_personalization_enabled is a google.protobuf.BoolValue: send { value } (1.x sent a bare boolean)
+    const body: IGoogleAdsLink = { customerId, adsPersonalizationEnabled: { value: true } };
     const [item] = await client.createGoogleAdsLink({
       parent: parentOf('property', ctx.property),
       googleAdsLink: body,
@@ -86,9 +86,9 @@ export const updateGoogleAdsLink = defineOperation({
   api: adminApi('UpdateGoogleAdsLink'),
   input: z.object({
     name: resourceName('Google Ads link'),
+    // Required in practice: it is the only updatable field, and 1.x sent an empty value with the mask (clearing it).
     adsPersonalizationEnabled: z
-      .string()
-      .optional()
+      .enum(['true', 'false'])
       .describe('Enable/disable ads personalization (true/false)'),
   }),
   flags: {
@@ -99,11 +99,10 @@ export const updateGoogleAdsLink = defineOperation({
   columns: [name, customerId, adsPersonalization, updateTime],
   run: async ({ name, adsPersonalizationEnabled }) => {
     const client = await getAdminClient();
-    // 1.x parity: any non-empty value other than 'true' is false; the mask is always sent
-    const body = {
+    const body: IGoogleAdsLink = {
       name,
-      adsPersonalizationEnabled: adsPersonalizationEnabled ? adsPersonalizationEnabled === 'true' : undefined,
-    } as unknown as IGoogleAdsLink;
+      adsPersonalizationEnabled: { value: adsPersonalizationEnabled === 'true' },
+    };
     const [item] = await client.updateGoogleAdsLink({
       googleAdsLink: body,
       updateMask: { paths: ['ads_personalization_enabled'] },

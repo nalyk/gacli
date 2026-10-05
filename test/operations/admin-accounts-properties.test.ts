@@ -106,12 +106,15 @@ describe('admin.properties', () => {
     expect(adminClient.createProperty).toHaveBeenCalledWith({
       property: {
         displayName: 'Site',
-        parent: '9',
+        parent: 'accounts/9',
         timeZone: 'Europe/Chisinau',
         currencyCode: 'USD',
         industryCategory: undefined,
       },
     });
+    const again = p.createProperty.input.parse({ account: 'accounts/9', displayName: 'S', timeZone: 'UTC' });
+    await p.createProperty.run(again, ctxNoProp);
+    expect(adminClient.createProperty.mock.lastCall?.[0].property.parent).toBe('accounts/9');
     expect(p.createProperty.output.safeParse(out).success).toBe(true);
     expect(p.createProperty.columns?.map((c) => c.header)).toEqual([
       'Name',

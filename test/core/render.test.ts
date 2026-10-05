@@ -119,3 +119,14 @@ describe('toPlain', () => {
     expect(plain).toEqual({ a: 1 });
   });
 });
+
+describe('renderResult: reports label', () => {
+  it('uses the operation reportLabel for section headings', () => {
+    const r = { headers: ['a'], rows: [['1']], rowCount: 1 };
+    const out = renderResult({ kind: 'reports', reportLabel: 'Pivot Report' }, [r, r], {
+      format: 'csv',
+      pretty: false,
+    });
+    expect(out).toContain('--- Pivot Report 2 ---');
+  });
+});

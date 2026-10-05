@@ -84,11 +84,11 @@ export const createProperty = defineOperation({
   columns,
   run: async (input) => {
     const client = await getAdminClient();
-    // 1.x parity: parent is the raw --account value; currency falls back to USD like the 1.x service
+    // currency falls back to USD like the 1.x service; parent must be accounts/<id> (1.x sent the bare id)
     const [item] = await client.createProperty({
       property: {
         displayName: input.displayName,
-        parent: input.account,
+        parent: parentOf('account', input.account.replace(/^accounts\//, '')),
         timeZone: input.timeZone,
         currencyCode: input.currencyCode || 'USD',
         industryCategory: input.industryCategory as IndustryCategory,

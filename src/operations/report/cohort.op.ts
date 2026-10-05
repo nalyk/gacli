@@ -31,7 +31,10 @@ export const reportCohort = defineOperation({
     endOffset: z.coerce.number().int().min(0).optional().describe('End offset for the cohort report'),
     startOffset: z.coerce.number().int().min(0).optional().describe('Start offset for the cohort report'),
     dimensions: z.array(z.string().min(1)).optional().describe('Dimensions to include in the report'),
-    accumulate: z.boolean().optional().describe('Accumulate cohort data over time'),
+    accumulate: z
+      .boolean()
+      .optional()
+      .describe('Accumulate cohort data over time (accepted for 1.x compatibility; RunReport ignores it)'),
   }),
   flags: {
     metrics: '-m, --metrics <metrics...>',

@@ -28,8 +28,3 @@ export async function askYesNo(
     rl.close();
   }
 }
-
-/** True iff we should prompt the user interactively. */
-export function isInteractive(): boolean {
-  return process.stdin.isTTY === true && process.stdout.isTTY === true;
-}

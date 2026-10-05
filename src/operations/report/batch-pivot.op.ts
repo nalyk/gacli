@@ -7,6 +7,7 @@ import { requestsFile } from './_requests.js';
 
 export const reportBatchPivot = defineOperation({
   id: 'report.batch-pivot',
+  reportLabel: 'Pivot Report',
   summary: 'Run multiple GA4 pivot reports in a single batch request',
   category: 'read',
   kind: 'reports',
