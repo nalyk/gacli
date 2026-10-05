@@ -40,7 +40,7 @@ export const reportRun = defineOperation({
       .boolean()
       .optional()
       .describe('Also return the property quota state; it lands in the report metadata as propertyQuota'),
-    conversionSpec: jsonArg(conversionSpec, '--conversion-spec')
+    conversionSpec: jsonArg(conversionSpec)
       .optional()
       .describe(
         'Conversion report spec as JSON (inline, @file or @-): {"conversionActions":["conversionActions/1234"],' +
