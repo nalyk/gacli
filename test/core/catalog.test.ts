@@ -34,10 +34,37 @@ describe('buildCatalog', () => {
     expect(flags('report.run')).not.toContain('--dry-run');
   });
 
-  it('emits JSON Schema for input and output', () => {
-    const run = entry('report.run');
-    expect(run?.input).toMatchObject({ type: 'object', required: expect.arrayContaining(['metrics']) });
-    expect(run?.output).toMatchObject({ type: 'object' });
+  it('emits JSON Schema for input', () => {
+    expect(entry('report.run')?.input).toMatchObject({
+      type: 'object',
+      required: expect.arrayContaining(['metrics']),
+    });
+  });
+
+  it('describes the -f json envelope of a report, not the internal ReportData', () => {
+    const out = entry('report.run')?.output as { properties: Record<string, { type?: string }> };
+    expect(Object.keys(out.properties)).toEqual(expect.arrayContaining(['rowCount', 'data']));
+    expect(out.properties.data.type).toBe('array');
+    expect(out.properties).not.toHaveProperty('headers');
+  });
+
+  it('wraps resource lists as { rowCount, data: [...] }', () => {
+    const out = entry('admin.custom-dimensions.list')?.output as {
+      required: string[];
+      properties: { data: { type: string; items: { properties: Record<string, unknown> } } };
+    };
+    expect(out.required).toEqual(expect.arrayContaining(['rowCount', 'data']));
+    expect(out.properties.data.type).toBe('array');
+    expect(out.properties.data.items.properties).toHaveProperty('name');
+  });
+
+  it('wraps single resources as { data: {...} }', () => {
+    const out = entry('admin.custom-dimensions.get')?.output as {
+      required: string[];
+      properties: { data: { properties: Record<string, unknown> } };
+    };
+    expect(out.required).toEqual(['data']);
+    expect(out.properties.data.properties).toHaveProperty('name');
   });
 });
 

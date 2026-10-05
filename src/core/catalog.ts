@@ -27,6 +27,30 @@ export interface Catalog {
 const jsonSchema = (schema: z.ZodType, io: 'input' | 'output') =>
   z.toJSONSchema(schema, { io, unrepresentable: 'any' });
 
+const reportEnvelope = z.object({
+  rowCount: z.number(),
+  data: z
+    .array(z.record(z.string(), z.string()))
+    .describe('One object per row, keyed by dimension/metric name'),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+
+/** Schema of what `-f json` actually prints for this operation (see render.ts), not the internal result. */
+export function jsonOutputSchema(op: AnyOperation): z.ZodType {
+  switch (op.kind) {
+    case 'report':
+      return reportEnvelope;
+    case 'reports':
+      return z
+        .union([reportEnvelope, z.array(reportEnvelope)])
+        .describe('An array when more than one report is returned');
+    case 'resource': {
+      const isList = (op.output as z.ZodType & { def: { type: string } }).def.type === 'array';
+      return isList ? z.object({ rowCount: z.number(), data: op.output }) : z.object({ data: op.output });
+    }
+  }
+}
+
 export function buildCatalog(ops: AnyOperation[]): Catalog {
   return {
     version: VERSION,
@@ -44,7 +68,7 @@ export function buildCatalog(ops: AnyOperation[]): Catalog {
         .filter((f) => !f.hidden)
         .map(({ hidden: _hidden, ...f }) => f),
       input: jsonSchema(op.input, 'input'),
-      output: jsonSchema(op.output, 'output'),
+      output: jsonSchema(jsonOutputSchema(op), 'output'),
     })),
   };
 }
