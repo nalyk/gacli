@@ -59,14 +59,14 @@
     "publint": "pnpm dlx publint"
   },
   "dependencies": {
-    "@google-analytics/admin": "^9.0.1",
-    "@google-analytics/data": "^5.2.1",
+    "@google-analytics/admin": "^10.1.1",
+    "@google-analytics/data": "^7.2.1",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "boxen": "^8.0.1",
     "chalk": "^5.3.0",
     "cli-table3": "^0.6.5",
     "commander": "^14.0.0",
-    "google-auth-library": "^9.14.0",
+    "google-auth-library": "^11.1.0",
     "ora": "^9.4.0",
     "zod": "^3.23.0"
   },
@@ -88,5 +88,6 @@
   },
   "engines": {
     "node": ">=22.0.0"
-  }
+  },
+  "packageManager": "pnpm@10.29.3"
 }
