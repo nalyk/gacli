@@ -1,12 +1,12 @@
-import { ZodError, type ZodSchema } from 'zod';
+import { ZodError, type z } from 'zod';
 import { logger } from '../utils/logger.js';
 
-export function validate<T>(schema: ZodSchema<T>, data: unknown): T {
+export function validate<T>(schema: z.ZodType<T>, data: unknown): T {
   try {
     return schema.parse(data);
   } catch (err) {
     if (err instanceof ZodError) {
-      const messages = err.errors.map((e) => `  ${e.path.join('.')}: ${e.message}`);
+      const messages = err.issues.map((e) => `  ${e.path.join('.')}: ${e.message}`);
       logger.error('Validation failed:');
       for (const m of messages) {
         console.error(m);

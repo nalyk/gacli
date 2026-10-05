@@ -1,0 +1,6 @@
+Usage: gacli admin properties get [options]
+
+Get a GA4 property
+
+Options:
+  -h, --help  display help for command

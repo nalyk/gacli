@@ -1,0 +1,8 @@
+Usage: gacli admin datastreams update [options]
+
+Update a data stream
+
+Options:
+  --name <resourceName>  Data stream resource name
+  --display-name <name>  New display name
+  -h, --help             display help for command

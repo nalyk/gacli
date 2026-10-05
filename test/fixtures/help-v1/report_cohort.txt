@@ -1,0 +1,14 @@
+Usage: gacli report cohort [options]
+
+Run a GA4 cohort report
+
+Options:
+  -m, --metrics <metrics...>          Metrics to include in the report
+  --cohorts <json>                    Cohort definitions as a JSON string
+  --cohort-granularity <granularity>  Cohort granularity: DAILY, WEEKLY, or
+                                      MONTHLY
+  --end-offset <number>               End offset for the cohort report
+  --start-offset <number>             Start offset for the cohort report
+  -d, --dimensions <dimensions...>    Dimensions to include in the report
+  --accumulate                        Accumulate cohort data over time
+  -h, --help                          display help for command

@@ -1,0 +1,8 @@
+Usage: gacli audience recurring create [options]
+
+Create a recurring audience list
+
+Options:
+  --audience <audience>         Audience resource name
+  --dimensions <dimensions...>  Dimensions to include
+  -h, --help                    display help for command

@@ -1,0 +1,8 @@
+Usage: gacli admin access-bindings update [options]
+
+Update an access binding
+
+Options:
+  --name <resourceName>  Access binding resource name
+  --roles <roles...>     New roles to assign (variadic)
+  -h, --help             display help for command

@@ -1,0 +1,14 @@
+Usage: gacli report pivot [options]
+
+Run a GA4 pivot report
+
+Options:
+  -m, --metrics <metrics...>        Metrics to include in the report
+  -d, --dimensions <dimensions...>  Dimensions to include in the report
+  --pivots <json>                   Pivot definitions as a JSON string
+  --start-date <date>               Start date for the report (default:
+                                    "7daysAgo")
+  --end-date <date>                 End date for the report (default: "today")
+  --dimension-filter <filters...>   Dimension filters
+  --metric-filter <filters...>      Metric filters
+  -h, --help                        display help for command

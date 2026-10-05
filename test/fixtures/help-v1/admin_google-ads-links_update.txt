@@ -1,0 +1,8 @@
+Usage: gacli admin google-ads-links update [options]
+
+Update a Google Ads link
+
+Options:
+  --name <resourceName>                    Google Ads link resource name
+  --ads-personalization-enabled <enabled>  Enable/disable ads personalization (true/false)
+  -h, --help                               display help for command

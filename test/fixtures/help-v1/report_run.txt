@@ -1,0 +1,18 @@
+Usage: gacli report run [options]
+
+Run a standard GA4 report
+
+Options:
+  -m, --metrics <metrics...>        Metrics to include in the report
+  -d, --dimensions <dimensions...>  Dimensions to include in the report
+  --start-date <date>               Start date for the report (default:
+                                    "7daysAgo")
+  --end-date <date>                 End date for the report (default: "today")
+  --limit <number>                  Maximum number of rows to return
+  --offset <number>                 Row offset for pagination
+  --order-by <orderBys...>          Order by specifications (e.g.
+                                    "metric:sessions:desc")
+  --dimension-filter <filters...>   Dimension filters
+  --metric-filter <filters...>      Metric filters
+  --keep-empty-rows                 Include rows with all zero metric values
+  -h, --help                        display help for command

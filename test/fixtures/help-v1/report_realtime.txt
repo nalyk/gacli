@@ -1,0 +1,13 @@
+Usage: gacli report realtime [options]
+
+Run a GA4 realtime report
+
+Options:
+  -m, --metrics <metrics...>        Metrics to include in the report
+  -d, --dimensions <dimensions...>  Dimensions to include in the report
+  --minute-ranges <json>            Minute ranges as a JSON string (e.g.
+                                    '[{"startMinutesAgo":10,"endMinutesAgo":0}]')
+  --dimension-filter <filters...>   Dimension filters
+  --metric-filter <filters...>      Metric filters
+  --limit <number>                  Maximum number of rows to return
+  -h, --help                        display help for command

@@ -1,0 +1,6 @@
+Usage: gacli skills list [options]
+
+List gacli skills installed across detected AI CLI scopes
+
+Options:
+  -h, --help  display help for command

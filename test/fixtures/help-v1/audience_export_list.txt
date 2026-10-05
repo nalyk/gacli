@@ -1,0 +1,6 @@
+Usage: gacli audience export list [options]
+
+List audience exports for a property
+
+Options:
+  -h, --help  display help for command

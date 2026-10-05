@@ -1,0 +1,7 @@
+Usage: gacli admin firebase-links get [options]
+
+Get a Firebase link
+
+Options:
+  --name <resourceName>  Firebase link resource name
+  -h, --help             display help for command

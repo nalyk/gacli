@@ -1,0 +1,9 @@
+Usage: gacli admin audiences update [options]
+
+Update an audience
+
+Options:
+  --name <resourceName>         Audience resource name
+  --display-name <displayName>  New display name
+  --description <description>   New description
+  -h, --help                    display help for command

@@ -1,0 +1,6 @@
+Usage: gacli audience recurring list [options]
+
+List recurring audience lists for a property
+
+Options:
+  -h, --help  display help for command

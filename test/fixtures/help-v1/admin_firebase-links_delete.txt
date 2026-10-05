@@ -1,0 +1,7 @@
+Usage: gacli admin firebase-links delete [options]
+
+Delete a Firebase link
+
+Options:
+  --name <resourceName>  Firebase link resource name
+  -h, --help             display help for command

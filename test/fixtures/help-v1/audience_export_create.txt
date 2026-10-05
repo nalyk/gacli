@@ -1,0 +1,10 @@
+Usage: gacli audience export create [options]
+
+Create an audience export
+
+Options:
+  --audience <audience>         Audience resource name
+  --dimensions <dimensions...>  Dimensions to include in the export
+  --watch                       Wait for the export to finish (long-running
+                                operation) (default: false)
+  -h, --help                    display help for command

@@ -1,0 +1,9 @@
+Usage: gacli admin custom-dimensions update [options]
+
+Update a custom dimension
+
+Options:
+  --name <resourceName>         Custom dimension resource name
+  --display-name <displayName>  New display name
+  --description <description>   New description
+  -h, --help                    display help for command

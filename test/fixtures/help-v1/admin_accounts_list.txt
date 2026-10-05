@@ -1,0 +1,6 @@
+Usage: gacli admin accounts list [options]
+
+List all GA4 accounts accessible by the caller
+
+Options:
+  -h, --help  display help for command

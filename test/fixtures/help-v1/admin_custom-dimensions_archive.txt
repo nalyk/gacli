@@ -1,0 +1,7 @@
+Usage: gacli admin custom-dimensions archive [options]
+
+Archive a custom dimension
+
+Options:
+  --name <resourceName>  Custom dimension resource name
+  -h, --help             display help for command

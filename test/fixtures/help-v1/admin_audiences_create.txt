@@ -1,0 +1,10 @@
+Usage: gacli admin audiences create [options]
+
+Create an audience
+
+Options:
+  --display-name <displayName>       Display name
+  --description <description>        Description of the audience
+  --membership-duration-days <days>  Membership duration in days
+  --filter-clauses <json>            Filter clauses as JSON string
+  -h, --help                         display help for command

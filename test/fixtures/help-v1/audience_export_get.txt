@@ -1,0 +1,7 @@
+Usage: gacli audience export get [options]
+
+Get details of an audience export
+
+Options:
+  --name <name>  Audience export resource name
+  -h, --help     display help for command

@@ -1,0 +1,13 @@
+Usage: gacli report funnel [options]
+
+Run a GA4 funnel report
+
+Options:
+  --steps <json>                  Funnel steps as a JSON string of FunnelStep[]
+  --open-funnel                   Use an open funnel (users can enter at any
+                                  step)
+  --funnel-breakdown <dimension>  Dimension name to break down the funnel by
+  --start-date <date>             Start date for the report (default:
+                                  "7daysAgo")
+  --end-date <date>               End date for the report (default: "today")
+  -h, --help                      display help for command

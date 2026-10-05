@@ -1,0 +1,11 @@
+Usage: gacli admin properties create [options]
+
+Create a new GA4 property
+
+Options:
+  --account <accountId>           GA4 account ID
+  --display-name <name>           Display name for the property
+  --time-zone <timeZone>          Reporting time zone (e.g., America/New_York)
+  --currency-code <code>          Currency code (e.g., USD)
+  --industry-category <category>  Industry category
+  -h, --help                      display help for command

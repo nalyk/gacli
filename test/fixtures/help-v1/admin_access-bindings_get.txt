@@ -1,0 +1,7 @@
+Usage: gacli admin access-bindings get [options]
+
+Get an access binding
+
+Options:
+  --name <resourceName>  Access binding resource name
+  -h, --help             display help for command

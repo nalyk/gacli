@@ -1,0 +1,6 @@
+Usage: gacli admin bigquery-links list [options]
+
+List BigQuery links for a property
+
+Options:
+  -h, --help  display help for command

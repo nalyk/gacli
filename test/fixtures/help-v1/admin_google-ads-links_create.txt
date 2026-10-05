@@ -1,0 +1,7 @@
+Usage: gacli admin google-ads-links create [options]
+
+Create a Google Ads link
+
+Options:
+  --customer-id <customerId>  Google Ads customer ID
+  -h, --help                  display help for command

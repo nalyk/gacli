@@ -1,0 +1,11 @@
+Usage: gacli config set [options] <key> <value>
+
+Set a configuration value
+
+Arguments:
+  key         Config key (credentials, property, format, noColor, verbose,
+              oauthClientSecretFile)
+  value       Value to set
+
+Options:
+  -h, --help  display help for command

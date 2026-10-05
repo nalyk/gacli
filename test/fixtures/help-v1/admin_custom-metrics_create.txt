@@ -1,0 +1,13 @@
+Usage: gacli admin custom-metrics create [options]
+
+Create a custom metric
+
+Options:
+  --parameter-name <parameterName>  Event parameter name
+  --display-name <displayName>      Display name
+  --description <description>       Description of the custom metric
+  --scope <scope>                   Metric scope (EVENT)
+  --measurement-unit <unit>         Measurement unit (STANDARD, CURRENCY, FEET,
+                                    METERS, KILOMETERS, MILES, MILLISECONDS,
+                                    SECONDS, MINUTES, HOURS)
+  -h, --help                        display help for command

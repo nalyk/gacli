@@ -1,0 +1,7 @@
+Usage: gacli admin custom-metrics archive [options]
+
+Archive a custom metric
+
+Options:
+  --name <resourceName>  Custom metric resource name
+  -h, --help             display help for command
