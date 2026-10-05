@@ -2,7 +2,7 @@ import { type Command, Command as CommandCtor, CommanderError, Option } from 'co
 import type { z } from 'zod';
 import { type GlobalOptions, resolveGlobalOptions, writeOutput } from '../types/common.js';
 import { handleError } from '../utils/error-handler.js';
-import { createSpinner } from '../utils/spinner.js';
+import { type Spinner, startSpinner } from '../utils/spinner.js';
 import { confirm } from './confirm.js';
 import { GacliError } from './errors.js';
 import { dryRunPreview, parseOperationInput, resolveProperty } from './invoke.js';
@@ -208,7 +208,7 @@ async function executeOperation(
   opts: Record<string, unknown>,
   command: Command,
 ): Promise<void> {
-  let spinner: ReturnType<typeof createSpinner> | undefined;
+  let spinner: Spinner | undefined;
   try {
     const globals = resolveGlobalOptions(command);
     const property = resolveProperty(op, globals.property);
@@ -232,7 +232,7 @@ async function executeOperation(
     }
 
     if (globals.interactive && globals.format !== 'json' && globals.format !== 'ndjson') {
-      spinner = createSpinner(`${op.summary}...`).start();
+      spinner = await startSpinner(`${op.summary}...`);
     }
     const result = await op.run(input, { property, globals, interactive: globals.interactive });
     spinner?.stop();
