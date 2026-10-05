@@ -5,6 +5,14 @@ export type SourceReader = (src: string | 0) => string;
 
 const defaultRead: SourceReader = (src) => readFileSync(src, 'utf-8');
 
+// The MCP server turns this off: a tool argument must never read the server's files or its stdin
+// (stdin is the protocol channel).
+let fileArgsAllowed = true;
+
+export function setFileArgsAllowed(allowed: boolean): void {
+  fileArgsAllowed = allowed;
+}
+
 const errMsg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 /**
@@ -16,6 +24,13 @@ export function jsonArg<T extends z.ZodType>(schema: T, what: string, read: Sour
     let text = raw;
     let from = '';
     if (raw.startsWith('@')) {
+      if (!fileArgsAllowed) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'File references (@path, @-) are not allowed here; pass the JSON inline',
+        });
+        return z.NEVER;
+      }
       const src = raw.slice(1);
       from = src === '-' ? 'stdin' : src;
       try {

@@ -50,6 +50,9 @@ Out of scope:
 - Service account paths are read but never copied or logged.
 - gacli does not phone home, send telemetry, or contact any host other than
   Google's GA4 / OAuth endpoints (or the MCP client over stdio).
-- The MCP server (`gacli mcp serve`) speaks only over stdio — no TCP listener.
-- All API errors with codes 3/5/7/16 surface the gRPC message verbatim with
-  no stack trace by default; set `GACLI_VERBOSE=1` to include stacks.
+- The MCP server (`gacli mcp serve`) speaks stdio by default. `--http <port>` opens a listener bound to
+  127.0.0.1 only, with Host/Origin validation and **no authentication** — anything on the local machine
+  can call it while it runs. Tools are read-only unless `--allow-write` / `--allow-delete` are given, and
+  tool arguments cannot reference files (`@path`).
+- API errors surface the gRPC message verbatim with no stack trace by default;
+  set `GACLI_VERBOSE=1` (or `-v`) to include stacks.

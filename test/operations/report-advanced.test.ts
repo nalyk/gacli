@@ -363,3 +363,10 @@ describe('report.funnel', () => {
     expect(r.error?.issues[0].message).toMatch(/--steps/);
   });
 });
+
+describe('report.batch --requests inline JSON', () => {
+  it('accepts an inline JSON array as well as a path', () => {
+    const parsed = reportBatch.input.parse({ requests: '[{"metrics":[{"name":"sessions"}]}]' });
+    expect(parsed.requests).toEqual([{ metrics: [{ name: 'sessions' }] }]);
+  });
+});

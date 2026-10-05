@@ -1,5 +1,5 @@
 import type { AnalyticsAdminServiceClient } from '@google-analytics/admin';
-import { getAuthClientOptions } from './auth.service.js';
+import { ensureCredentials, getAuthClientOptions } from './auth.service.js';
 
 let adminClient: AnalyticsAdminServiceClient | null = null;
 
@@ -7,6 +7,7 @@ let adminClient: AnalyticsAdminServiceClient | null = null;
 // The default export is the v1alpha client: it is the only version that covers every Admin resource.
 export async function getAdminClient(): Promise<AnalyticsAdminServiceClient> {
   if (!adminClient) {
+    await ensureCredentials();
     const { AnalyticsAdminServiceClient } = await import('@google-analytics/admin');
     type Ctor = ConstructorParameters<typeof AnalyticsAdminServiceClient>[0];
     adminClient = new AnalyticsAdminServiceClient(getAuthClientOptions() as unknown as Ctor);

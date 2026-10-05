@@ -3,9 +3,9 @@ import type { z } from 'zod';
 import { type GlobalOptions, resolveGlobalOptions, writeOutput } from '../types/common.js';
 import { handleError } from '../utils/error-handler.js';
 import { createSpinner } from '../utils/spinner.js';
-import { validatePropertyId } from '../validation/validators.js';
 import { confirm } from './confirm.js';
-import { formatZodIssues, GacliError } from './errors.js';
+import { GacliError } from './errors.js';
+import { dryRunPreview, parseOperationInput, resolveProperty } from './invoke.js';
 import { type AnyOperation, cliPath, isMutating } from './operation.js';
 import { renderResult, toPlain } from './render.js';
 
@@ -198,16 +198,9 @@ async function executeOperation(
   let spinner: ReturnType<typeof createSpinner> | undefined;
   try {
     const globals = resolveGlobalOptions(command);
-    const property = op.needsProperty ? validatePropertyId(globals.property) : '';
-    const parsed = op.input.safeParse(Object.fromEntries(inputKeys(op).map((k) => [k, opts[k]])));
-    if (!parsed.success) {
-      const longFlag = new Map(describeFlags(op).map((f) => [f.key, f.flag.match(/--[\w-]+/)?.[0] ?? f.key]));
-      throw new GacliError(
-        'usage',
-        formatZodIssues(parsed.error.issues, (k) => longFlag.get(k) ?? k),
-      );
-    }
-    const input = parsed.data;
+    const property = resolveProperty(op, globals.property);
+    const longFlag = new Map(describeFlags(op).map((f) => [f.key, f.flag.match(/--[\w-]+/)?.[0] ?? f.key]));
+    const input = parseOperationInput(op, opts, (k) => longFlag.get(k) ?? k);
     const fields =
       typeof opts.fields === 'string'
         ? opts.fields
@@ -218,14 +211,7 @@ async function executeOperation(
     const pretty = !!process.stdout.isTTY;
 
     if (isMutating(op.category) && opts.dryRun) {
-      const preview = {
-        dryRun: true,
-        operation: op.id,
-        rpc: op.api?.rpc,
-        property: property || undefined,
-        input,
-      };
-      writeOutput(JSON.stringify(preview, null, pretty ? 2 : undefined), globals);
+      writeOutput(JSON.stringify(dryRunPreview(op, property, input), null, pretty ? 2 : undefined), globals);
       return;
     }
     if (op.category === 'delete' && !opts.yes && !opts.force) {

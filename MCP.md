@@ -6,20 +6,43 @@ queryable in natural language by an LLM.
 
 ## Tools exposed
 
-All read-only. No admin/audience write surface — by design.
+Every gacli operation is a tool, generated from the same catalogue as the CLI (`gacli schema`
+lists them). Tool name = `ga_` + the command path with `_` separators:
 
-| Tool | Purpose |
+| CLI | MCP tool |
 |---|---|
-| `gacli_report_run` | Standard GA4 Data API report (the workhorse). |
-| `gacli_report_realtime` | Last-30-minutes data. |
-| `gacli_metadata` | Dimension/metric catalog for a property, with search + custom-only filter. |
-| `gacli_check_compatibility` | Verify a metric+dimension combination is queryable. |
+| `gacli report run` | `ga_report_run` |
+| `gacli metadata get` | `ga_metadata_get` |
+| `gacli admin custom-dimensions list` | `ga_admin_custom_dimensions_list` |
+
+- **Read-only by default** (35 tools: every report, metadata, audience-export read and admin list/get).
+- `gacli mcp serve --allow-write` adds create/update tools.
+- `gacli mcp serve --allow-delete` also adds delete/archive tools. Those require the argument
+  `confirm: true`, and carry `destructiveHint: true` so clients can ask the user first.
+- Every mutating tool accepts `dryRun: true`, which returns `{ dryRun: true, preview: { operation, rpc, property, input } }`
+  instead of calling the API.
+- `outputSchema` is the same JSON envelope `gacli … -f json` prints (`{rowCount, data, metadata?}` for reports,
+  `{rowCount, data}` for lists, `{data}` for single resources, `{reports: [...]}` for batches), returned as
+  `structuredContent` plus a text copy.
+- Errors are `isError` results whose text is `{"error":{"code","message","hint","exitCode"}}` (same codes as the CLI).
+- Protocol: MCP TypeScript SDK v2; negotiates 2025-11-25 down to 2024-11-05.
+
+### HTTP (local)
+
+```bash
+gacli mcp serve --http 8765          # http://127.0.0.1:8765/mcp
+```
+
+Streamable HTTP bound to 127.0.0.1 only, with Host/Origin validation (DNS-rebinding protection) and
+**no authentication** — do not expose it beyond your machine.
 
 ## Auth
 
-The MCP server reuses gacli's existing auth chain. Run `gacli auth login` once on
-the host where the MCP server runs. Tokens at `~/.gacli/oauth-tokens.json` are
-read on each tool invocation.
+The MCP server reuses gacli's auth chain (`GACLI_ACCESS_TOKEN` → OAuth tokens →
+`GOOGLE_APPLICATION_CREDENTIALS` → config `credentials` → Application Default Credentials).
+Run `gacli auth login` once on the host. Credentials are resolved on the first tool call and
+cached for the life of the server process — restart the server after re-authenticating.
+A credential problem is returned as an `isError` result (code `AUTH`); it never stops the server.
 
 For service-account-based deployments, set `GOOGLE_APPLICATION_CREDENTIALS` in the
 client's MCP server env block.
@@ -48,7 +71,14 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) o
 }
 ```
 
-Restart Claude Desktop. The four `gacli_*` tools will appear in the tool picker.
+Restart Claude Desktop. The `ga_*` tools appear in the tool picker.
+
+### Claude Code
+
+```bash
+claude mcp add gacli -- gacli mcp serve            # read-only
+claude mcp add gacli-admin -- gacli mcp serve --allow-write
+``` Add `"--allow-write"` to `args` to let the model change GA4 configuration.
 
 ### Cursor
 
@@ -103,20 +133,20 @@ printf '%s\n%s\n' \
 ```
 
 You should see two JSON-RPC responses: an `initialize` ack and a `tools/list` with
-the four tools.
+the read-only `ga_*` tools (35 by default).
 
-## Why these four tools and not all 30+ gacli commands
+## Safety model
 
-Two reasons:
-
-1. **Safety**. Admin/audience write operations (deleting properties, creating audiences)
-   should not be one prompt-injection away from happening. Read-only is the right v1
-   boundary. Add write tools later behind explicit gates if needed.
-2. **LLM ergonomics**. Tool surface area is a discoverability cost. Four tools with
-   clear semantics outperform thirty tools with overlapping responsibilities. The
-   `gacli_metadata` tool lets the LLM self-discover which fields exist for any
-   report; the others execute. That's the whole productive surface for analytics
-   Q&A.
+1. **Read-only by default.** Write tools exist only with `--allow-write`; destructive ones only with
+   `--allow-delete`, and those require `confirm: true` *and* an explicit `propertyId` (never the
+   server's default property) — a prompt injection cannot delete the default property implicitly.
+2. **No file access from arguments.** JSON-valued arguments (`steps`, `pivots`, `requests`, …) must be
+   inline JSON strings; the CLI's `@file` / `@-` forms are rejected by the MCP server.
+3. **Local transports only.** stdio, or HTTP bound to 127.0.0.1 with Host/Origin checks (any
+   `localhost` origin/port is accepted) and no authentication.
+4. **Errors are data.** Tool failures are `isError` results — `{"error":{"code","message","hint","exitCode"}}`
+   from gacli, or the SDK's plain-text "Input validation error: …" when arguments don't match the
+   input schema (e.g. a missing `propertyId` or `confirm`).
 
 ## Why this matters
 

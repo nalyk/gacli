@@ -27,7 +27,7 @@ export interface Catalog {
 const jsonSchema = (schema: z.ZodType, io: 'input' | 'output') =>
   z.toJSONSchema(schema, { io, unrepresentable: 'any' });
 
-const reportEnvelope = z.object({
+export const reportEnvelope = z.object({
   rowCount: z.number(),
   data: z
     .array(z.record(z.string(), z.string()))

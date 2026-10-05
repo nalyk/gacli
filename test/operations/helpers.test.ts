@@ -129,3 +129,18 @@ describe('admin op helpers', () => {
     expect(await del.run(del.input.parse({ name: 'n' }), ctx)).toEqual({ name: 'n', deleted: true });
   });
 });
+
+describe('jsonArg file references can be disabled (MCP)', () => {
+  it('rejects @path and @- when file args are not allowed, still accepts inline JSON', async () => {
+    const { setFileArgsAllowed } = await import('../../src/operations/json-arg.js');
+    setFileArgsAllowed(false);
+    try {
+      const schema = jsonArg(steps, '--steps');
+      expect(schema.safeParse('@/etc/passwd').error?.issues[0].message).toMatch(/not allowed/);
+      expect(schema.safeParse('@-').success).toBe(false);
+      expect(schema.parse('[{"name":"a"}]')).toEqual([{ name: 'a' }]);
+    } finally {
+      setFileArgsAllowed(true);
+    }
+  });
+});
