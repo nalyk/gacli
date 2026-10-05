@@ -181,4 +181,45 @@ describe('MCP server generated from operations', () => {
     expect(tools.every((t) => t.outputSchema.type === 'object')).toBe(true);
     expect(new Set(tools.map((t) => t.name)).size).toBe(tools.length);
   });
+
+  it('never reads server files from JSON arguments', async () => {
+    const { jsonArg } = await import('../../src/operations/json-arg.js');
+    const run = vi.fn(async () => ({ ok: true }));
+    const jsonOp = defineOperation({
+      id: 'demo.json.get',
+      summary: 'x',
+      category: 'read',
+      kind: 'resource',
+      input: z.object({ steps: jsonArg(z.array(z.unknown()), '--steps') }),
+      output: z.looseObject({}),
+      run,
+    });
+    const s = await mcpSession(createServerFactory([jsonOp], base)());
+    const r = await s.callTool('ga_demo_json_get', { steps: '@/etc/hosts' });
+    expect(r.result?.isError).toBe(true);
+    expect((r.result?.content as { text: string }[])[0].text).toMatch(/not allowed/);
+    expect(run).not.toHaveBeenCalled();
+    const { setFileArgsAllowed } = await import('../../src/operations/json-arg.js');
+    setFileArgsAllowed(true);
+  });
+
+  it('requires an explicit propertyId on property-scoped delete tools even with a default', async () => {
+    const propDelete = defineOperation({
+      id: 'admin.props.delete',
+      summary: 'Delete the property',
+      category: 'delete',
+      kind: 'resource',
+      needsProperty: true,
+      input: z.object({}),
+      output: z.object({ deleted: z.literal(true) }),
+      run: async () => ({ deleted: true as const }),
+    });
+    const s = await mcpSession(
+      createServerFactory([propDelete], { ...base, defaultProperty: '42', allowDelete: true })(),
+    );
+    const tools = (await s.request('tools/list')).result?.tools as { inputSchema: { required?: string[] } }[];
+    expect(tools[0].inputSchema.required).toEqual(expect.arrayContaining(['propertyId', 'confirm']));
+    const r = await s.callTool('ga_admin_props_delete', { confirm: true });
+    expect(r.result?.isError).toBe(true);
+  });
 });
