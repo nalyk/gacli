@@ -15,6 +15,8 @@ const conversionSpec = z.looseObject({
 export const reportRun = defineOperation({
   id: 'report.run',
   summary: 'Run a standard GA4 report',
+  description:
+    'Example: gacli report run -p 371981488 -m sessions activeUsers -d date country --start-date 30daysAgo --limit 50 --order-by metric:sessions:desc',
   category: 'read',
   kind: 'report',
   needsProperty: true,

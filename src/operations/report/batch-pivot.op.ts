@@ -9,6 +9,8 @@ export const reportBatchPivot = defineOperation({
   id: 'report.batch-pivot',
   reportLabel: 'Pivot Report',
   summary: 'Run multiple GA4 pivot reports in a single batch request',
+  description:
+    '--requests is a JSON array of RunPivotReport request objects (dateRanges, dimensions, metrics, …) given as a file path, @file, @- or inline JSON. With several requests, -f json prints an array of report envelopes, -f ndjson tags each row with "report": <n>, and table/csv/chart print "--- Pivot Report N ---" sections; -o writes all reports to one file.',
   category: 'read',
   kind: 'reports',
   needsProperty: true,

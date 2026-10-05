@@ -70,423 +70,1537 @@ Displays whether OAuth or service account is active, token file path, expiry, an
 
 ---
 
-## report run
+<!-- BEGIN GENERATED: operations -->
+## gacli report run
 
-Standard GA4 report. Most-used command.
+Run a standard GA4 report
+
+Example: gacli report run -p 371981488 -m sessions activeUsers -d date country --start-date 30daysAgo --limit 50 --order-by metric:sessions:desc
 
 ```
 gacli report run [options]
 ```
 
-| Option | Required | Description |
-|--------|----------|-------------|
-| `-m, --metrics <m...>` | YES | Metrics (variadic). E.g. `-m activeUsers -m sessions` |
-| `-d, --dimensions <d...>` | no | Dimensions (variadic). E.g. `-d date -d country` |
-| `--start-date <date>` | no | Start date. Default `7daysAgo`. Accepts: YYYY-MM-DD, NdaysAgo, today, yesterday |
-| `--end-date <date>` | no | End date. Default `today` |
-| `--limit <n>` | no | Max rows (1-100000) |
-| `--offset <n>` | no | Row offset for pagination |
-| `--order-by <spec...>` | no | Ordering. Format: `metric:metricName:desc` or `dimension:dimName:asc` |
-| `--dimension-filter <f...>` | no | Dimension filters. Shorthand: `field==value`, `field!=val`, `field=~regex`, `field>N` |
-| `--metric-filter <f...>` | no | Metric filters. Same shorthand syntax |
-| `--keep-empty-rows` | no | Include rows with all-zero metrics |
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `-m, --metrics <metrics...>` | yes |  | Metrics to include in the report |
+| `-d, --dimensions <dimensions...>` |  |  | Dimensions to include in the report |
+| `--start-date <date>` |  | `"7daysAgo"` | Start date for the report |
+| `--end-date <date>` |  | `"today"` | End date for the report |
+| `--limit <number>` |  |  | Maximum number of rows to return |
+| `--offset <number>` |  |  | Row offset for pagination |
+| `--order-by <orderBys...>` |  |  | Order by specifications (e.g. "metric:sessions:desc") |
+| `--dimension-filter <filters...>` |  |  | Dimension filters (e.g. "country==Romania") |
+| `--metric-filter <filters...>` |  |  | Metric filters (e.g. "sessions>100") |
+| `--keep-empty-rows` |  |  | Include rows with all zero metric values |
+| `--return-property-quota` |  |  | Also return the property quota state; it lands in the report metadata as propertyQuota |
+| `--conversion-spec <json>` |  |  | Conversion report spec as JSON (inline, @file or @-): {"conversionActions":["conversionActions/1234"],"attributionModel":"DATA_DRIVEN"\|"LAST_CLICK"}. When set the report runs on the v1alpha API |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
 
-Example: `gacli report run -p 371981488 -m sessions -m activeUsers -d date -d country --start-date 30daysAgo --limit 50 --order-by "metric:sessions:desc"`
+Needs `-p <property>`.
 
-## report batch
+Output: `-f json` → `{rowCount, data: [{<dimension|metric>: string}], metadata?}`.
 
-Run multiple reports in one API call.
+## gacli report pivot
 
-```
-gacli report batch --requests <path>
-```
-
-| Option | Required | Description |
-|--------|----------|-------------|
-| `--requests <path>` | YES | Path to JSON file with array of report request objects |
-
-JSON file format: array of objects with same structure as runReport params (dateRanges, dimensions, metrics, etc.).
-
-Output with several reports: `-f json` emits one JSON array (one envelope per report), `-f ndjson` tags every row with `"report": <n>`, and table/csv/chart print `--- Report N ---` sections. `-o` writes all reports to the one file.
-
-## report pivot
-
-Pivot report with cross-tabulation.
+Run a GA4 pivot report
 
 ```
 gacli report pivot [options]
 ```
 
-| Option | Required | Description |
-|--------|----------|-------------|
-| `-m, --metrics <m...>` | YES | Metrics |
-| `-d, --dimensions <d...>` | YES | Dimensions |
-| `--pivots <json>` | YES | Pivot definitions as JSON string. Format: `[{"fieldNames":["browser"],"limit":5}]` |
-| `--start-date <date>` | no | Default `7daysAgo` |
-| `--end-date <date>` | no | Default `today` |
-| `--dimension-filter <f...>` | no | Dimension filters |
-| `--metric-filter <f...>` | no | Metric filters |
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `-m, --metrics <metrics...>` | yes |  | Metrics to include in the report |
+| `-d, --dimensions <dimensions...>` | yes |  | Dimensions to include in the report |
+| `--pivots <json>` | yes |  | Pivot definitions as a JSON string |
+| `--start-date <date>` |  | `"7daysAgo"` | Start date for the report |
+| `--end-date <date>` |  | `"today"` | End date for the report |
+| `--dimension-filter <filters...>` |  |  | Dimension filters |
+| `--metric-filter <filters...>` |  |  | Metric filters |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
 
-## report batch-pivot
+Needs `-p <property>`.
 
-Multiple pivot reports in one call.
+Output: `-f json` → `{rowCount, data: [{<dimension|metric>: string}], metadata?}`.
+
+## gacli report batch
+
+Run multiple GA4 reports in a single batch request
+
+--requests is a JSON array of RunReport request objects (dateRanges, dimensions, metrics, …) given as a file path, @file, @- or inline JSON. With several requests, -f json prints an array of report envelopes, -f ndjson tags each row with "report": <n>, and table/csv/chart print "--- Report N ---" sections; -o writes all reports to one file.
 
 ```
-gacli report batch-pivot --requests <path>
+gacli report batch [options]
 ```
 
-| Option | Required | Description |
-|--------|----------|-------------|
-| `--requests <path>` | YES | Path to JSON file with array of pivot report request objects |
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--requests <path>` | yes |  | Path to JSON file containing an array of report request objects |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
 
-## report realtime
+Needs `-p <property>`.
 
-Real-time data (last 30 minutes).
+Output: `-f json` → one report envelope, or an array of them for several requests.
+
+## gacli report batch-pivot
+
+Run multiple GA4 pivot reports in a single batch request
+
+--requests is a JSON array of RunPivotReport request objects (dateRanges, dimensions, metrics, …) given as a file path, @file, @- or inline JSON. With several requests, -f json prints an array of report envelopes, -f ndjson tags each row with "report": <n>, and table/csv/chart print "--- Pivot Report N ---" sections; -o writes all reports to one file.
+
+```
+gacli report batch-pivot [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--requests <path>` | yes |  | Path to JSON file containing an array of pivot report request objects |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+
+Needs `-p <property>`.
+
+Output: `-f json` → one report envelope, or an array of them for several requests.
+
+## gacli report realtime
+
+Run a GA4 realtime report
 
 ```
 gacli report realtime [options]
 ```
 
-| Option | Required | Description |
-|--------|----------|-------------|
-| `-m, --metrics <m...>` | YES | Metrics |
-| `-d, --dimensions <d...>` | no | Dimensions |
-| `--minute-ranges <json>` | no | JSON: `[{"startMinutesAgo":10,"endMinutesAgo":0}]` (max 29 min ago) |
-| `--dimension-filter <f...>` | no | Dimension filters |
-| `--metric-filter <f...>` | no | Metric filters |
-| `--limit <n>` | no | Max rows |
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `-m, --metrics <metrics...>` | yes |  | Metrics to include in the report |
+| `-d, --dimensions <dimensions...>` |  |  | Dimensions to include in the report |
+| `--minute-ranges <json>` |  |  | Minute ranges as a JSON string (e.g. '[{"startMinutesAgo":10,"endMinutesAgo":0}]') |
+| `--dimension-filter <filters...>` |  |  | Dimension filters |
+| `--metric-filter <filters...>` |  |  | Metric filters |
+| `--limit <number>` |  |  | Maximum number of rows to return |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
 
-## report funnel
+Needs `-p <property>`.
 
-Funnel exploration report.
+Output: `-f json` → `{rowCount, data: [{<dimension|metric>: string}], metadata?}`.
 
-```
-gacli report funnel [options]
-```
+## gacli report cohort
 
-| Option | Required | Description |
-|--------|----------|-------------|
-| `--steps <json>` | YES | Funnel steps as JSON: `[{"name":"Step 1","filterExpression":{...}}]` |
-| `--open-funnel` | no | Open funnel (users enter at any step) |
-| `--funnel-breakdown <dim>` | no | Dimension name for breakdown |
-| `--start-date <date>` | no | Default `7daysAgo` |
-| `--end-date <date>` | no | Default `today` |
-
-## report cohort
-
-Cohort analysis report.
+Run a GA4 cohort report
 
 ```
 gacli report cohort [options]
 ```
 
-| Option | Required | Description |
-|--------|----------|-------------|
-| `-m, --metrics <m...>` | YES | Metrics |
-| `--cohorts <json>` | YES | Cohort defs as JSON: `[{"name":"cohort1","dimension":"firstSessionDate","dateRange":{"startDate":"2025-01-01","endDate":"2025-01-07"}}]` |
-| `--cohort-granularity <g>` | no | DAILY, WEEKLY, MONTHLY (default: DAILY) |
-| `--end-offset <n>` | no | End offset (default: 5) |
-| `--start-offset <n>` | no | Start offset |
-| `-d, --dimensions <d...>` | no | Extra dimensions |
-| `--accumulate` | no | Accumulate data over time |
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `-m, --metrics <metrics...>` | yes |  | Metrics to include in the report |
+| `--cohorts <json>` | yes |  | Cohort definitions as a JSON string |
+| `--cohort-granularity <granularity>` |  |  | Cohort granularity: DAILY, WEEKLY, or MONTHLY |
+| `--end-offset <number>` |  |  | End offset for the cohort report |
+| `--start-offset <number>` |  |  | Start offset for the cohort report |
+| `-d, --dimensions <dimensions...>` |  |  | Dimensions to include in the report |
+| `--accumulate` |  |  | Accumulate cohort data over time (accepted for 1.x compatibility; RunReport ignores it) |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
 
----
+Needs `-p <property>`.
 
-## metadata get
+Output: `-f json` → `{rowCount, data: [{<dimension|metric>: string}], metadata?}`.
 
-List available dimensions and metrics for a property.
+## gacli report funnel
+
+Run a GA4 funnel report
+
+```
+gacli report funnel [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--steps <json>` | yes |  | Funnel steps as a JSON string of FunnelStep[] |
+| `--open-funnel` |  |  | Use an open funnel (users can enter at any step) |
+| `--funnel-breakdown <dimension>` |  |  | Dimension name to break down the funnel by |
+| `--start-date <date>` |  | `"7daysAgo"` | Start date for the report |
+| `--end-date <date>` |  | `"today"` | End date for the report |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+
+Needs `-p <property>`.
+
+Output: `-f json` → `{rowCount, data: [{<dimension|metric>: string}], metadata?}`.
+
+## gacli report quota
+
+Show the property quota snapshot (consumed / remaining per quota category)
+
+```
+gacli report quota [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+
+Needs `-p <property>`.
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli report tasks create
+
+Create an asynchronous report task
+
+Starts a report task (kept for 72 hours) and returns at once. Check it with `report tasks get` and read rows with `report tasks query` once its state is ACTIVE, or pass --watch to wait for it.
+
+```
+gacli report tasks create [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `-m, --metrics <metrics...>` | yes |  | Metrics to include in the report |
+| `-d, --dimensions <dimensions...>` |  |  | Dimensions to include in the report |
+| `--start-date <date>` |  | `"7daysAgo"` | Start date for the report |
+| `--end-date <date>` |  | `"today"` | End date for the report |
+| `--limit <number>` |  |  | Maximum number of rows the task produces (API default 10,000) |
+| `--dimension-filter <filters...>` |  |  | Dimension filters (e.g. "country==Romania") |
+| `--metric-filter <filters...>` |  |  | Metric filters (e.g. "sessions>100") |
+| `--watch` |  | `false` | Wait for the task to finish (long-running operation) and return the finished task |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  |  | Print the request that would be sent, without calling the API |
+
+Supports `--dry-run`. Needs `-p <property>`.
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli report tasks get
+
+Get a report task (definition and processing state)
+
+```
+gacli report tasks get [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--name <resourceName>` | yes |  | Report task resource name (properties/<id>/reportTasks/<task>) |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli report tasks list
+
+List report tasks for a property
+
+```
+gacli report tasks list [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+
+Needs `-p <property>`.
+
+Output: `-f json` → `{rowCount, data}` (list).
+
+## gacli report tasks query
+
+Read the rows of a finished (ACTIVE) report task
+
+Fails with the API error while the task is still CREATING; check `report tasks get` first.
+
+```
+gacli report tasks query [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--name <resourceName>` | yes |  | Report task resource name (properties/<id>/reportTasks/<task>) |
+| `--limit <number>` |  |  | Maximum number of rows to return |
+| `--offset <number>` |  |  | Row offset for pagination |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+
+Output: `-f json` → `{rowCount, data: [{<dimension|metric>: string}], metadata?}`.
+
+## gacli report chat
+
+Ask a natural-language question about the property (GA4 Data API chat, alpha)
+
+Needs the https://www.googleapis.com/auth/analytics.chatbot.read scope. Pass the returned session ID back with --session to continue the conversation. Answers are AI-generated and may be inaccurate.
+
+```
+gacli report chat [question] [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--question <text>` |  |  | The question to ask about this property's Analytics data |
+| `--session <id>` |  |  | Session ID from a previous answer, to continue that conversation (omit to start a new one) |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+
+Needs `-p <property>`.
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli metadata get
+
+Get metadata (dimensions and metrics) for a GA4 property
 
 ```
 gacli metadata get [options]
 ```
 
-| Option | Required | Description |
-|--------|----------|-------------|
-| `--type <type>` | no | `dims`, `metrics`, or `all` (default: `all`) |
-| `--search <term>` | no | Filter by apiName, uiName, or description |
-| `--custom-only` | no | Show only custom definitions |
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--type <type>` |  | `"all"` | Type of metadata to retrieve (dims, metrics, all) |
+| `--search <term>` |  |  | Filter results by name or description |
+| `--custom-only` |  |  | Show only custom dimensions/metrics |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
 
-Requires `-p` property ID.
+Needs `-p <property>`.
 
-## metadata check-compatibility
+Output: `-f json` → `{rowCount, data}` (list).
 
-Check if dimensions and metrics can be used together in a report.
+## gacli metadata check-compatibility
+
+Check compatibility of dimensions and metrics
 
 ```
 gacli metadata check-compatibility [options]
 ```
 
-| Option | Required | Description |
-|--------|----------|-------------|
-| `-m, --metrics <m...>` | YES | Metrics to check |
-| `-d, --dimensions <d...>` | YES | Dimensions to check |
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `-m, --metrics <metrics...>` | yes |  | Metrics to check compatibility for |
+| `-d, --dimensions <dimensions...>` | yes |  | Dimensions to check compatibility for |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
 
----
+Needs `-p <property>`.
 
-## audience export create
+Output: `-f json` → `{rowCount, data}` (list).
 
-Create a one-time audience export.
+## gacli audience export create
+
+Create an audience export
 
 ```
 gacli audience export create [options]
 ```
 
-| Option | Required | Description |
-|--------|----------|-------------|
-| `--audience <name>` | YES | Audience resource name (e.g. `properties/123/audiences/456`) |
-| `--dimensions <d...>` | no | Dimensions to include |
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--audience <audience>` | yes |  | Audience resource name |
+| `--dimensions <dimensions...>` |  |  | Dimensions to include in the export |
+| `--watch` |  | `false` | Wait for the export to finish (long-running operation) |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  |  | Print the request that would be sent, without calling the API |
 
-## audience export get
+Supports `--dry-run`. Needs `-p <property>`.
 
-Get status of an audience export.
+Output: `-f json` → `{rowCount, data: [{<dimension|metric>: string}], metadata?}`.
+
+## gacli audience export get
+
+Get details of an audience export
 
 ```
-gacli audience export get --name <resourceName>
+gacli audience export get [options]
 ```
 
-## audience export list
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--name <name>` | yes |  | Audience export resource name |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
 
-List all audience exports for a property. Requires `-p`.
+Output: `-f json` → `{data}` (single resource).
+
+## gacli audience export list
+
+List audience exports for a property
 
 ```
-gacli audience export list
+gacli audience export list [options]
 ```
 
-## audience export query
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
 
-Query rows from a completed audience export.
+Needs `-p <property>`.
+
+Output: `-f json` → `{rowCount, data}` (list).
+
+## gacli audience export query
+
+Query an audience export to retrieve audience members
 
 ```
 gacli audience export query [options]
 ```
 
-| Option | Required | Description |
-|--------|----------|-------------|
-| `--name <name>` | YES | Audience export resource name |
-| `--limit <n>` | no | Max rows |
-| `--offset <n>` | no | Row offset |
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--name <name>` | yes |  | Audience export resource name |
+| `--limit <number>` |  |  | Maximum number of rows to return |
+| `--offset <number>` |  |  | Row offset for pagination |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
 
-## audience recurring create
+Output: `-f json` → `{rowCount, data: [{<dimension|metric>: string}], metadata?}`.
 
-Create a recurring audience list.
+## gacli audience recurring create
 
-```
-gacli audience recurring create --audience <name> [--dimensions <d...>]
-```
-
-## audience recurring get
+Create a recurring audience list
 
 ```
-gacli audience recurring get --name <resourceName>
+gacli audience recurring create [options]
 ```
 
-## audience recurring list
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--audience <audience>` | yes |  | Audience resource name |
+| `--dimensions <dimensions...>` |  |  | Dimensions to include |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  |  | Print the request that would be sent, without calling the API |
 
-List recurring audience lists. Requires `-p`.
+Supports `--dry-run`. Needs `-p <property>`.
 
-```
-gacli audience recurring list
-```
+Output: `-f json` → `{data}` (single resource).
 
----
+## gacli audience recurring get
 
-## admin accounts list
-
-List all GA4 accounts accessible with current credentials.
-
-```
-gacli admin accounts list
-```
-
-No options required.
-
-## admin properties
-
-CRUD for GA4 properties.
+Get details of a recurring audience list
 
 ```
-gacli admin properties list --account <accountId>
-gacli admin properties get                           # uses -p
+gacli audience recurring get [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--name <name>` | yes |  | Recurring audience list resource name |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli audience recurring list
+
+List recurring audience lists for a property
+
+```
+gacli audience recurring list [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+
+Needs `-p <property>`.
+
+Output: `-f json` → `{rowCount, data}` (list).
+
+## gacli admin accounts list
+
+List all GA4 accounts accessible by the caller
+
+```
+gacli admin accounts list [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+
+Output: `-f json` → `{rowCount, data}` (list).
+
+## gacli admin accounts summaries
+
+List summaries of all accessible accounts and their properties
+
+```
+gacli admin accounts summaries [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+
+Output: `-f json` → `{rowCount, data}` (list).
+
+## gacli admin properties list
+
+List GA4 properties under an account
+
+```
+gacli admin properties list [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--account <accountId>` | yes |  | GA4 account ID |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+
+Output: `-f json` → `{rowCount, data}` (list).
+
+## gacli admin properties get
+
+Get a GA4 property
+
+```
+gacli admin properties get [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+
+Needs `-p <property>`.
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin properties create
+
+Create a new GA4 property
+
+```
 gacli admin properties create [options]
-gacli admin properties update [options]               # uses -p
-gacli admin properties delete --yes                         # uses -p
 ```
 
-**create options:**
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--account <accountId>` | yes |  | GA4 account ID |
+| `--display-name <name>` | yes |  | Display name for the property |
+| `--time-zone <timeZone>` | yes |  | Reporting time zone (e.g., America/New_York) |
+| `--currency-code <code>` |  |  | Currency code (e.g., USD) |
+| `--industry-category <category>` |  |  | Industry category |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  |  | Print the request that would be sent, without calling the API |
 
-| Option | Required | Description |
-|--------|----------|-------------|
-| `--account <id>` | YES | Account ID |
-| `--display-name <name>` | YES | Display name |
-| `--time-zone <tz>` | YES | e.g. America/New_York |
-| `--currency-code <code>` | no | e.g. USD |
-| `--industry-category <cat>` | no | Industry category |
+Supports `--dry-run`.
 
-**update options:** `--display-name`, `--time-zone`, `--currency-code`, `--industry-category` (all optional, uses -p for target).
+Output: `-f json` → `{data}` (single resource).
 
-## admin datastreams
+## gacli admin properties update
 
-CRUD for data streams.
-
-```
-gacli admin datastreams list                          # uses -p
-gacli admin datastreams get --name <resourceName>
-gacli admin datastreams create [options]              # uses -p
-gacli admin datastreams update --name <rn> --display-name <n>
-gacli admin datastreams delete --name <resourceName> --yes
-```
-
-**create options:**
-
-| Option | Required | Description |
-|--------|----------|-------------|
-| `--type <type>` | YES | WEB_DATA_STREAM, ANDROID_APP_DATA_STREAM, IOS_APP_DATA_STREAM |
-| `--display-name <name>` | YES | Display name |
-| `--uri <uri>` | no | For WEB type |
-| `--package-name <pkg>` | no | For ANDROID type |
-| `--bundle-id <id>` | no | For IOS type |
-
-## admin custom-dimensions
-
-CRUD + archive for custom dimensions.
+Update a GA4 property
 
 ```
-gacli admin custom-dimensions list                    # uses -p
-gacli admin custom-dimensions get --name <rn>
-gacli admin custom-dimensions create [options]        # uses -p
-gacli admin custom-dimensions update --name <rn> [options]
-gacli admin custom-dimensions archive --name <rn> --yes
+gacli admin properties update [options]
 ```
 
-**create options:**
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--display-name <name>` |  |  | New display name |
+| `--time-zone <timeZone>` |  |  | New reporting time zone |
+| `--currency-code <code>` |  |  | New currency code |
+| `--industry-category <category>` |  |  | New industry category |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  |  | Print the request that would be sent, without calling the API |
 
-| Option | Required | Description |
-|--------|----------|-------------|
-| `--parameter-name <name>` | YES | Event parameter name |
-| `--display-name <name>` | YES | Display name |
-| `--scope <scope>` | YES | EVENT, USER, or ITEM |
-| `--description <desc>` | no | Description |
+Supports `--dry-run`. Needs `-p <property>`.
 
-**update options:** `--name` (required), `--display-name`, `--description` (optional).
+Output: `-f json` → `{data}` (single resource).
 
-## admin custom-metrics
+## gacli admin properties delete
 
-CRUD + archive for custom metrics.
-
-```
-gacli admin custom-metrics list                       # uses -p
-gacli admin custom-metrics get --name <rn>
-gacli admin custom-metrics create [options]           # uses -p
-gacli admin custom-metrics update --name <rn> [options]
-gacli admin custom-metrics archive --name <rn> --yes
-```
-
-**create options:**
-
-| Option | Required | Description |
-|--------|----------|-------------|
-| `--parameter-name <name>` | YES | Event parameter name |
-| `--display-name <name>` | YES | Display name |
-| `--scope <scope>` | YES | EVENT |
-| `--measurement-unit <unit>` | YES | STANDARD, CURRENCY, FEET, METERS, KILOMETERS, MILES, MILLISECONDS, SECONDS, MINUTES, HOURS |
-| `--description <desc>` | no | Description |
-
-**update options:** `--name` (required), `--display-name`, `--description`, `--measurement-unit` (optional).
-
-## admin key-events
-
-CRUD for key events (conversions).
+Delete a GA4 property
 
 ```
-gacli admin key-events list                           # uses -p
-gacli admin key-events get --name <rn>
-gacli admin key-events create [options]               # uses -p
-gacli admin key-events update --name <rn> [options]
-gacli admin key-events delete --name <rn> --yes
+gacli admin properties delete [options]
 ```
 
-**create options:**
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  |  | Print the request that would be sent, without calling the API |
+| `-y, --yes` |  |  | Confirm this destructive operation (required when not interactive) |
 
-| Option | Required | Description |
-|--------|----------|-------------|
-| `--event-name <name>` | YES | Event name |
-| `--counting-method <m>` | no | ONCE_PER_EVENT (default), ONCE_PER_SESSION |
-| `--default-value <n>` | no | Numeric default value |
-| `--currency-code <code>` | no | Currency for default value |
+Destructive: requires `--yes` when not interactive. Supports `--dry-run`. Needs `-p <property>`.
 
-**update options:** `--name` (required), `--counting-method`, `--default-value`, `--currency-code` (optional).
+Output: `-f json` → `{data}` (single resource).
 
-## admin audiences
+## gacli admin datastreams list
 
-CRUD + archive for audiences.
-
-```
-gacli admin audiences list                            # uses -p
-gacli admin audiences get --name <rn>
-gacli admin audiences create [options]                # uses -p
-gacli admin audiences update --name <rn> [options]
-gacli admin audiences archive --name <rn> --yes
-```
-
-**create options:**
-
-| Option | Required | Description |
-|--------|----------|-------------|
-| `--display-name <name>` | YES | Display name |
-| `--description <desc>` | no | Description |
-| `--membership-duration-days <n>` | no | Days (default: 30) |
-| `--filter-clauses <json>` | no | Filter clauses as JSON |
-
-**update options:** `--name` (required), `--display-name`, `--description` (optional).
-
-## admin access-bindings
-
-CRUD for user access bindings.
+List data streams for a property
 
 ```
-gacli admin access-bindings list --parent <parent>
-gacli admin access-bindings get --name <rn>
-gacli admin access-bindings create --parent <p> --user <email> --roles <r...>
-gacli admin access-bindings update --name <rn> --roles <r...>
-gacli admin access-bindings delete --name <rn> --yes
+gacli admin datastreams list [options]
 ```
 
-`--parent`: account or property resource name (e.g. `accounts/123` or `properties/456`).
-`--roles`: variadic, e.g. `--roles predefinedRoles/viewer predefinedRoles/editor`.
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
 
-## admin firebase-links
+Needs `-p <property>`.
 
-Manage Firebase integrations.
+Output: `-f json` → `{rowCount, data}` (list).
 
-```
-gacli admin firebase-links list                       # uses -p
-gacli admin firebase-links get --name <rn>
-gacli admin firebase-links create --project <projectId>  # uses -p
-gacli admin firebase-links delete --name <rn> --yes
-```
+## gacli admin datastreams get
 
-## admin google-ads-links
-
-Manage Google Ads integrations.
+Get a data stream
 
 ```
-gacli admin google-ads-links list                     # uses -p
-gacli admin google-ads-links get --name <rn>
-gacli admin google-ads-links create --customer-id <id>  # uses -p
-gacli admin google-ads-links update --name <rn> --ads-personalization-enabled <true|false>
-gacli admin google-ads-links delete --name <rn> --yes
+gacli admin datastreams get [options]
 ```
 
-## admin bigquery-links
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--name <resourceName>` | yes |  | Data stream resource name |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
 
-Manage BigQuery integrations.
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin datastreams create
+
+Create a data stream
 
 ```
-gacli admin bigquery-links list                       # uses -p
-gacli admin bigquery-links get --name <rn>
-gacli admin bigquery-links create --project <projectId> [--daily-export-enabled true] [--streaming-export-enabled false]  # uses -p
-gacli admin bigquery-links delete --name <rn> --yes
+gacli admin datastreams create [options]
 ```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--type <streamType>` | yes |  | Data stream type (WEB_DATA_STREAM, ANDROID_APP_DATA_STREAM, IOS_APP_DATA_STREAM) |
+| `--display-name <name>` | yes |  | Display name for the data stream |
+| `--uri <uri>` |  |  | Web stream URI (for WEB_DATA_STREAM) |
+| `--package-name <packageName>` |  |  | Android package name (for ANDROID_APP_DATA_STREAM) |
+| `--bundle-id <bundleId>` |  |  | iOS bundle ID (for IOS_APP_DATA_STREAM) |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  |  | Print the request that would be sent, without calling the API |
+
+Supports `--dry-run`. Needs `-p <property>`.
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin datastreams update
+
+Update a data stream
+
+```
+gacli admin datastreams update [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--name <resourceName>` | yes |  | Data stream resource name |
+| `--display-name <name>` | yes |  | New display name |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  |  | Print the request that would be sent, without calling the API |
+
+Supports `--dry-run`.
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin datastreams delete
+
+Delete a data stream
+
+```
+gacli admin datastreams delete [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--name <resourceName>` | yes |  | Data Stream resource name |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  |  | Print the request that would be sent, without calling the API |
+| `-y, --yes` |  |  | Confirm this destructive operation (required when not interactive) |
+
+Destructive: requires `--yes` when not interactive. Supports `--dry-run`.
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin custom-dimensions list
+
+List custom dimensions for a property
+
+```
+gacli admin custom-dimensions list [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+
+Needs `-p <property>`.
+
+Output: `-f json` → `{rowCount, data}` (list).
+
+## gacli admin custom-dimensions get
+
+Get a custom dimension
+
+```
+gacli admin custom-dimensions get [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--name <resourceName>` | yes |  | Custom dimension resource name |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin custom-dimensions create
+
+Create a custom dimension
+
+```
+gacli admin custom-dimensions create [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--parameter-name <parameterName>` | yes |  | Event parameter name |
+| `--display-name <displayName>` | yes |  | Display name |
+| `--description <description>` |  |  | Description of the custom dimension |
+| `--scope <scope>` | yes |  | Dimension scope (EVENT, USER, ITEM) |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  |  | Print the request that would be sent, without calling the API |
+
+Supports `--dry-run`. Needs `-p <property>`.
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin custom-dimensions update
+
+Update a custom dimension
+
+```
+gacli admin custom-dimensions update [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--name <resourceName>` | yes |  | Custom dimension resource name |
+| `--display-name <displayName>` |  |  | New display name |
+| `--description <description>` |  |  | New description |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  |  | Print the request that would be sent, without calling the API |
+
+Supports `--dry-run`.
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin custom-dimensions archive
+
+Archive a custom dimension
+
+```
+gacli admin custom-dimensions archive [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--name <resourceName>` | yes |  | Custom Dimension resource name |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  |  | Print the request that would be sent, without calling the API |
+| `-y, --yes` |  |  | Confirm this destructive operation (required when not interactive) |
+
+Destructive: requires `--yes` when not interactive. Supports `--dry-run`.
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin custom-metrics list
+
+List custom metrics for a property
+
+```
+gacli admin custom-metrics list [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+
+Needs `-p <property>`.
+
+Output: `-f json` → `{rowCount, data}` (list).
+
+## gacli admin custom-metrics get
+
+Get a custom metric
+
+```
+gacli admin custom-metrics get [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--name <resourceName>` | yes |  | Custom metric resource name |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin custom-metrics create
+
+Create a custom metric
+
+```
+gacli admin custom-metrics create [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--parameter-name <parameterName>` | yes |  | Event parameter name |
+| `--display-name <displayName>` | yes |  | Display name |
+| `--description <description>` |  |  | Description of the custom metric |
+| `--scope <scope>` | yes |  | Metric scope (EVENT) |
+| `--measurement-unit <unit>` | yes |  | Measurement unit (STANDARD, CURRENCY, FEET, METERS, KILOMETERS, MILES, MILLISECONDS, SECONDS, MINUTES, HOURS) |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  |  | Print the request that would be sent, without calling the API |
+
+Supports `--dry-run`. Needs `-p <property>`.
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin custom-metrics update
+
+Update a custom metric
+
+```
+gacli admin custom-metrics update [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--name <resourceName>` | yes |  | Custom metric resource name |
+| `--display-name <displayName>` |  |  | New display name |
+| `--description <description>` |  |  | New description |
+| `--measurement-unit <unit>` |  |  | New measurement unit |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  |  | Print the request that would be sent, without calling the API |
+
+Supports `--dry-run`.
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin custom-metrics archive
+
+Archive a custom metric
+
+```
+gacli admin custom-metrics archive [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--name <resourceName>` | yes |  | Custom Metric resource name |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  |  | Print the request that would be sent, without calling the API |
+| `-y, --yes` |  |  | Confirm this destructive operation (required when not interactive) |
+
+Destructive: requires `--yes` when not interactive. Supports `--dry-run`.
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin key-events list
+
+List key events for a property
+
+```
+gacli admin key-events list [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+
+Needs `-p <property>`.
+
+Output: `-f json` → `{rowCount, data}` (list).
+
+## gacli admin key-events get
+
+Get a key event
+
+```
+gacli admin key-events get [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--name <resourceName>` | yes |  | Key event resource name |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin key-events create
+
+Create a key event
+
+```
+gacli admin key-events create [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--event-name <eventName>` | yes |  | Event name |
+| `--counting-method <method>` |  | `"ONCE_PER_EVENT"` | Counting method (ONCE_PER_EVENT, ONCE_PER_SESSION) |
+| `--default-value <value>` |  |  | Default value for the key event |
+| `--currency-code <code>` |  |  | Currency code for the default value |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  |  | Print the request that would be sent, without calling the API |
+
+Supports `--dry-run`. Needs `-p <property>`.
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin key-events update
+
+Update a key event
+
+```
+gacli admin key-events update [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--name <resourceName>` | yes |  | Key event resource name |
+| `--counting-method <method>` |  |  | Counting method (ONCE_PER_EVENT, ONCE_PER_SESSION) |
+| `--default-value <value>` |  |  | Default value for the key event |
+| `--currency-code <code>` |  |  | Currency code for the default value |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  |  | Print the request that would be sent, without calling the API |
+
+Supports `--dry-run`.
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin key-events delete
+
+Delete a key event
+
+```
+gacli admin key-events delete [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--name <resourceName>` | yes |  | Key Event resource name |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  |  | Print the request that would be sent, without calling the API |
+| `-y, --yes` |  |  | Confirm this destructive operation (required when not interactive) |
+
+Destructive: requires `--yes` when not interactive. Supports `--dry-run`.
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin audiences list
+
+List audiences for a property
+
+```
+gacli admin audiences list [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+
+Needs `-p <property>`.
+
+Output: `-f json` → `{rowCount, data}` (list).
+
+## gacli admin audiences get
+
+Get an audience
+
+```
+gacli admin audiences get [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--name <resourceName>` | yes |  | Audience resource name |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin audiences create
+
+Create an audience
+
+```
+gacli admin audiences create [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--display-name <displayName>` | yes |  | Display name |
+| `--description <description>` |  |  | Description of the audience |
+| `--membership-duration-days <days>` |  | `30` | Membership duration in days |
+| `--filter-clauses <json>` |  |  | Filter clauses as JSON string |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  |  | Print the request that would be sent, without calling the API |
+
+Supports `--dry-run`. Needs `-p <property>`.
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin audiences update
+
+Update an audience
+
+```
+gacli admin audiences update [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--name <resourceName>` | yes |  | Audience resource name |
+| `--display-name <displayName>` |  |  | New display name |
+| `--description <description>` |  |  | New description |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  |  | Print the request that would be sent, without calling the API |
+
+Supports `--dry-run`.
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin audiences archive
+
+Archive an audience
+
+```
+gacli admin audiences archive [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--name <resourceName>` | yes |  | Audience resource name |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  |  | Print the request that would be sent, without calling the API |
+| `-y, --yes` |  |  | Confirm this destructive operation (required when not interactive) |
+
+Destructive: requires `--yes` when not interactive. Supports `--dry-run`.
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin access-bindings list
+
+List access bindings for an account or property
+
+```
+gacli admin access-bindings list [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--parent <parent>` | yes |  | Account or property resource name (e.g., accounts/123 or properties/456) |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+
+Output: `-f json` → `{rowCount, data}` (list).
+
+## gacli admin access-bindings get
+
+Get an access binding
+
+```
+gacli admin access-bindings get [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--name <resourceName>` | yes |  | Access binding resource name |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin access-bindings create
+
+Create an access binding
+
+Grants a user roles on an account or property. --parent is accounts/<id> or properties/<id>; --roles is variadic, e.g. --roles predefinedRoles/viewer predefinedRoles/editor.
+
+```
+gacli admin access-bindings create [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--parent <parent>` | yes |  | Account or property resource name |
+| `--user <email>` | yes |  | User email address |
+| `--roles <roles...>` | yes |  | Roles to assign (variadic) |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  |  | Print the request that would be sent, without calling the API |
+
+Supports `--dry-run`.
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin access-bindings update
+
+Update an access binding
+
+```
+gacli admin access-bindings update [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--name <resourceName>` | yes |  | Access binding resource name |
+| `--roles <roles...>` | yes |  | New roles to assign (variadic) |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  |  | Print the request that would be sent, without calling the API |
+
+Supports `--dry-run`.
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin access-bindings delete
+
+Delete an access binding
+
+```
+gacli admin access-bindings delete [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--name <resourceName>` | yes |  | Access Binding resource name |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  |  | Print the request that would be sent, without calling the API |
+| `-y, --yes` |  |  | Confirm this destructive operation (required when not interactive) |
+
+Destructive: requires `--yes` when not interactive. Supports `--dry-run`.
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin firebase-links list
+
+List Firebase links for a property
+
+```
+gacli admin firebase-links list [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+
+Needs `-p <property>`.
+
+Output: `-f json` → `{rowCount, data}` (list).
+
+## gacli admin firebase-links get
+
+Get a Firebase link
+
+```
+gacli admin firebase-links get [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--name <resourceName>` | yes |  | Firebase link resource name |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin firebase-links create
+
+Create a Firebase link
+
+```
+gacli admin firebase-links create [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--project <projectId>` | yes |  | Firebase project ID or resource name |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  |  | Print the request that would be sent, without calling the API |
+
+Supports `--dry-run`. Needs `-p <property>`.
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin firebase-links delete
+
+Delete a Firebase link
+
+```
+gacli admin firebase-links delete [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--name <resourceName>` | yes |  | Firebase Link resource name |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  |  | Print the request that would be sent, without calling the API |
+| `-y, --yes` |  |  | Confirm this destructive operation (required when not interactive) |
+
+Destructive: requires `--yes` when not interactive. Supports `--dry-run`.
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin google-ads-links list
+
+List Google Ads links for a property
+
+```
+gacli admin google-ads-links list [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+
+Needs `-p <property>`.
+
+Output: `-f json` → `{rowCount, data}` (list).
+
+## gacli admin google-ads-links get
+
+Get a Google Ads link
+
+```
+gacli admin google-ads-links get [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--name <resourceName>` | yes |  | Google Ads link resource name |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin google-ads-links create
+
+Create a Google Ads link
+
+```
+gacli admin google-ads-links create [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--customer-id <customerId>` | yes |  | Google Ads customer ID |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  |  | Print the request that would be sent, without calling the API |
+
+Supports `--dry-run`. Needs `-p <property>`.
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin google-ads-links update
+
+Update a Google Ads link
+
+```
+gacli admin google-ads-links update [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--name <resourceName>` | yes |  | Google Ads link resource name |
+| `--ads-personalization-enabled <enabled>` | yes |  | Enable/disable ads personalization (true/false) |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  |  | Print the request that would be sent, without calling the API |
+
+Supports `--dry-run`.
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin google-ads-links delete
+
+Delete a Google Ads link
+
+```
+gacli admin google-ads-links delete [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--name <resourceName>` | yes |  | Google Ads Link resource name |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  |  | Print the request that would be sent, without calling the API |
+| `-y, --yes` |  |  | Confirm this destructive operation (required when not interactive) |
+
+Destructive: requires `--yes` when not interactive. Supports `--dry-run`.
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin bigquery-links list
+
+List BigQuery links for a property
+
+```
+gacli admin bigquery-links list [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+
+Needs `-p <property>`.
+
+Output: `-f json` → `{rowCount, data}` (list).
+
+## gacli admin bigquery-links get
+
+Get a BigQuery link
+
+```
+gacli admin bigquery-links get [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--name <resourceName>` | yes |  | BigQuery link resource name |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin bigquery-links create
+
+Create a BigQuery link
+
+```
+gacli admin bigquery-links create [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--project <projectId>` | yes |  | Google Cloud project ID |
+| `--daily-export-enabled <enabled>` |  | `"true"` | Enable daily export (true/false) |
+| `--streaming-export-enabled <enabled>` |  | `"false"` | Enable streaming export (true/false) |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  |  | Print the request that would be sent, without calling the API |
+
+Supports `--dry-run`. Needs `-p <property>`.
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin bigquery-links delete
+
+Delete a BigQuery link
+
+```
+gacli admin bigquery-links delete [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--name <resourceName>` | yes |  | BigQuery Link resource name |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  |  | Print the request that would be sent, without calling the API |
+| `-y, --yes` |  |  | Confirm this destructive operation (required when not interactive) |
+
+Destructive: requires `--yes` when not interactive. Supports `--dry-run`.
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin annotations list
+
+List reporting data annotations for a property
+
+```
+gacli admin annotations list [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+
+Needs `-p <property>`.
+
+Output: `-f json` → `{rowCount, data}` (list).
+
+## gacli admin annotations create
+
+Create a reporting data annotation
+
+```
+gacli admin annotations create [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--title <title>` | yes |  | Annotation title |
+| `--description <description>` |  |  | Annotation description |
+| `--color <color>` | yes |  | Annotation color (PURPLE, BROWN, BLUE, GREEN, RED, CYAN, ORANGE) |
+| `--annotation-date <date>` |  |  | Single annotation date (YYYY-MM-DD); mutually exclusive with --start-date/--end-date |
+| `--start-date <date>` |  |  | Start of the annotated date range (YYYY-MM-DD); requires --end-date |
+| `--end-date <date>` |  |  | End of the annotated date range (YYYY-MM-DD); requires --start-date |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  |  | Print the request that would be sent, without calling the API |
+
+Supports `--dry-run`. Needs `-p <property>`.
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin annotations update
+
+Update a reporting data annotation
+
+```
+gacli admin annotations update [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--name <resourceName>` | yes |  | Annotation resource name (properties/<id>/reportingDataAnnotations/<id>) |
+| `--title <title>` |  |  | New title |
+| `--description <description>` |  |  | New description |
+| `--color <color>` |  |  | New color (PURPLE, BROWN, BLUE, GREEN, RED, CYAN, ORANGE) |
+| `--annotation-date <date>` |  |  | Single annotation date (YYYY-MM-DD); mutually exclusive with --start-date/--end-date |
+| `--start-date <date>` |  |  | Start of the annotated date range (YYYY-MM-DD); requires --end-date |
+| `--end-date <date>` |  |  | End of the annotated date range (YYYY-MM-DD); requires --start-date |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  |  | Print the request that would be sent, without calling the API |
+
+Supports `--dry-run`.
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin annotations delete
+
+Delete a reporting data annotation
+
+```
+gacli admin annotations delete [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--name <resourceName>` | yes |  | Annotation resource name |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  |  | Print the request that would be sent, without calling the API |
+| `-y, --yes` |  |  | Confirm this destructive operation (required when not interactive) |
+
+Destructive: requires `--yes` when not interactive. Supports `--dry-run`.
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin change-history search
+
+Search change history events for an account
+
+```
+gacli admin change-history search [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--account <id>` | yes |  | Account to search (accounts/<id> or bare numeric ID) |
+| `--filter-property <id>` |  |  | Only changes to this property (properties/<id> or numeric ID) |
+| `--resource-type <types...>` |  |  | Only changes to these resource types (ACCOUNT, PROPERTY, FIREBASE_LINK, GOOGLE_ADS_LINK, GOOGLE_SIGNALS_SETTINGS, CONVERSION_EVENT, MEASUREMENT_PROTOCOL_SECRET, CUSTOM_DIMENSION, CUSTOM_METRIC, DATA_RETENTION_SETTINGS, DISPLAY_VIDEO_360_ADVERTISER_LINK, DISPLAY_VIDEO_360_ADVERTISER_LINK_PROPOSAL, SEARCH_ADS_360_LINK, DATA_STREAM, ATTRIBUTION_SETTINGS, EXPANDED_DATA_SET, CHANNEL_GROUP, BIGQUERY_LINK, ENHANCED_MEASUREMENT_SETTINGS, DATA_REDACTION_SETTINGS, SKADNETWORK_CONVERSION_VALUE_SCHEMA, ADSENSE_LINK, AUDIENCE, EVENT_CREATE_RULE, KEY_EVENT, CALCULATED_METRIC, REPORTING_DATA_ANNOTATION, SUBPROPERTY_SYNC_CONFIG, REPORTING_IDENTITY_SETTINGS, USER_PROVIDED_DATA_SETTINGS) |
+| `--action <actions...>` |  |  | Only these actions (CREATED, UPDATED, DELETED) |
+| `--earliest <datetime>` |  |  | Only changes at or after this ISO 8601 datetime |
+| `--latest <datetime>` |  |  | Only changes at or before this ISO 8601 datetime |
+| `--limit <number>` |  |  | Maximum number of events (one page, max 200); omit to fetch all pages |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+
+Output: `-f json` → `{rowCount, data}` (list).
+
+## gacli admin access-report run
+
+Run a data access report (who read which data, when)
+
+```
+gacli admin access-report run [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--entity <entity>` |  |  | Report scope: properties/<id> or accounts/<id> (default: the global -p property) |
+| `-d, --dimensions <dimensions...>` | yes |  | Access dimensions (e.g. userEmail, epochTimeMicros, reportType, dataApiQuotaCategory) |
+| `-m, --metrics <metrics...>` | yes |  | Access metrics (e.g. accessCount) |
+| `--start-date <date>` |  | `"30daysAgo"` | Start date (YYYY-MM-DD, NdaysAgo, yesterday, today) |
+| `--end-date <date>` |  | `"today"` | End date (YYYY-MM-DD, NdaysAgo, yesterday, today) |
+| `--limit <number>` |  |  | Maximum number of rows to return |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+
+Output: `-f json` → `{rowCount, data: [{<dimension|metric>: string}], metadata?}`.
+
+## gacli admin measurement-secrets list
+
+List Measurement Protocol secrets for a data stream
+
+```
+gacli admin measurement-secrets list [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--stream <dataStreamName>` | yes |  | Data stream resource name (properties/<id>/dataStreams/<id>) |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+
+Output: `-f json` → `{rowCount, data}` (list).
+
+## gacli admin measurement-secrets create
+
+Create a Measurement Protocol secret
+
+```
+gacli admin measurement-secrets create [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--stream <dataStreamName>` | yes |  | Data stream resource name (properties/<id>/dataStreams/<id>) |
+| `--display-name <displayName>` | yes |  | Human-readable name of the secret |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  |  | Print the request that would be sent, without calling the API |
+
+Supports `--dry-run`.
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin measurement-secrets delete
+
+Delete a Measurement Protocol secret
+
+```
+gacli admin measurement-secrets delete [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--name <resourceName>` | yes |  | Measurement Protocol secret resource name |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  |  | Print the request that would be sent, without calling the API |
+| `-y, --yes` |  |  | Confirm this destructive operation (required when not interactive) |
+
+Destructive: requires `--yes` when not interactive. Supports `--dry-run`.
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin data-retention get
+
+Get the data retention settings of a property
+
+```
+gacli admin data-retention get [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+
+Needs `-p <property>`.
+
+Output: `-f json` → `{data}` (single resource).
+
+## gacli admin data-retention update
+
+Update the data retention settings of a property
+
+```
+gacli admin data-retention update [options]
+```
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--event-data-retention <duration>` |  |  | How long event-level data is retained (TWO_MONTHS, FOURTEEN_MONTHS, TWENTY_SIX_MONTHS, THIRTY_EIGHT_MONTHS, FIFTY_MONTHS; over 14 months needs GA4 360) |
+| `--user-data-retention <duration>` |  |  | How long user-level data is retained (TWO_MONTHS, FOURTEEN_MONTHS, TWENTY_SIX_MONTHS, THIRTY_EIGHT_MONTHS, FIFTY_MONTHS; over 14 months needs GA4 360) |
+| `--reset-user-data-on-new-activity <boolean>` |  |  | Reset the user identifier retention period on new activity from that user (true\|false) |
+| `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  |  | Print the request that would be sent, without calling the API |
+
+Supports `--dry-run`. Needs `-p <property>`.
+
+Output: `-f json` → `{data}` (single resource).
+<!-- END GENERATED: operations -->
 
 ---
 

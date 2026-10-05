@@ -8,6 +8,8 @@ import { requestsFile } from './_requests.js';
 export const reportBatch = defineOperation({
   id: 'report.batch',
   summary: 'Run multiple GA4 reports in a single batch request',
+  description:
+    '--requests is a JSON array of RunReport request objects (dateRanges, dimensions, metrics, …) given as a file path, @file, @- or inline JSON. With several requests, -f json prints an array of report envelopes, -f ndjson tags each row with "report": <n>, and table/csv/chart print "--- Report N ---" sections; -o writes all reports to one file.',
   category: 'read',
   kind: 'reports',
   needsProperty: true,

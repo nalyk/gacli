@@ -1,0 +1,899 @@
+# gacli — operation reference
+
+Global: `-p <property>`, `-f table|json|ndjson|csv|chart` (json when piped), `-o <file>`.
+Exit codes: 0 ok, 2 usage, 3 auth, 4 confirmation, 5 not_found, 6 quota, 1 api, 1 internal.
+
+## gacli report run
+
+Run a standard GA4 report — category `read`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `-m, --metrics <metrics...>` | yes | Metrics to include in the report |
+| `-d, --dimensions <dimensions...>` |  | Dimensions to include in the report |
+| `--start-date <date>` |  | Start date for the report |
+| `--end-date <date>` |  | End date for the report |
+| `--limit <number>` |  | Maximum number of rows to return |
+| `--offset <number>` |  | Row offset for pagination |
+| `--order-by <orderBys...>` |  | Order by specifications (e.g. "metric:sessions:desc") |
+| `--dimension-filter <filters...>` |  | Dimension filters (e.g. "country==Romania") |
+| `--metric-filter <filters...>` |  | Metric filters (e.g. "sessions>100") |
+| `--keep-empty-rows` |  | Include rows with all zero metric values |
+| `--return-property-quota` |  | Also return the property quota state; it lands in the report metadata as propertyQuota |
+| `--conversion-spec <json>` |  | Conversion report spec as JSON (inline, @file or @-): {"conversionActions":["conversionActions/1234"],"attributionModel":"DATA_DRIVEN"\|"LAST_CLICK"}. When set the report runs on the v1alpha API |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli report pivot
+
+Run a GA4 pivot report — category `read`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `-m, --metrics <metrics...>` | yes | Metrics to include in the report |
+| `-d, --dimensions <dimensions...>` | yes | Dimensions to include in the report |
+| `--pivots <json>` | yes | Pivot definitions as a JSON string |
+| `--start-date <date>` |  | Start date for the report |
+| `--end-date <date>` |  | End date for the report |
+| `--dimension-filter <filters...>` |  | Dimension filters |
+| `--metric-filter <filters...>` |  | Metric filters |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli report batch
+
+Run multiple GA4 reports in a single batch request — category `read`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--requests <path>` | yes | Path to JSON file containing an array of report request objects |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli report batch-pivot
+
+Run multiple GA4 pivot reports in a single batch request — category `read`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--requests <path>` | yes | Path to JSON file containing an array of pivot report request objects |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli report realtime
+
+Run a GA4 realtime report — category `read`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `-m, --metrics <metrics...>` | yes | Metrics to include in the report |
+| `-d, --dimensions <dimensions...>` |  | Dimensions to include in the report |
+| `--minute-ranges <json>` |  | Minute ranges as a JSON string (e.g. '[{"startMinutesAgo":10,"endMinutesAgo":0}]') |
+| `--dimension-filter <filters...>` |  | Dimension filters |
+| `--metric-filter <filters...>` |  | Metric filters |
+| `--limit <number>` |  | Maximum number of rows to return |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli report cohort
+
+Run a GA4 cohort report — category `read`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `-m, --metrics <metrics...>` | yes | Metrics to include in the report |
+| `--cohorts <json>` | yes | Cohort definitions as a JSON string |
+| `--cohort-granularity <granularity>` |  | Cohort granularity: DAILY, WEEKLY, or MONTHLY |
+| `--end-offset <number>` |  | End offset for the cohort report |
+| `--start-offset <number>` |  | Start offset for the cohort report |
+| `-d, --dimensions <dimensions...>` |  | Dimensions to include in the report |
+| `--accumulate` |  | Accumulate cohort data over time (accepted for 1.x compatibility; RunReport ignores it) |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli report funnel
+
+Run a GA4 funnel report — category `read`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--steps <json>` | yes | Funnel steps as a JSON string of FunnelStep[] |
+| `--open-funnel` |  | Use an open funnel (users can enter at any step) |
+| `--funnel-breakdown <dimension>` |  | Dimension name to break down the funnel by |
+| `--start-date <date>` |  | Start date for the report |
+| `--end-date <date>` |  | End date for the report |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli report quota
+
+Show the property quota snapshot (consumed / remaining per quota category) — category `read`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli report tasks create
+
+Create an asynchronous report task — category `create`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `-m, --metrics <metrics...>` | yes | Metrics to include in the report |
+| `-d, --dimensions <dimensions...>` |  | Dimensions to include in the report |
+| `--start-date <date>` |  | Start date for the report |
+| `--end-date <date>` |  | End date for the report |
+| `--limit <number>` |  | Maximum number of rows the task produces (API default 10,000) |
+| `--dimension-filter <filters...>` |  | Dimension filters (e.g. "country==Romania") |
+| `--metric-filter <filters...>` |  | Metric filters (e.g. "sessions>100") |
+| `--watch` |  | Wait for the task to finish (long-running operation) and return the finished task |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  | Print the request that would be sent, without calling the API |
+
+## gacli report tasks get
+
+Get a report task (definition and processing state) — category `read`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--name <resourceName>` | yes | Report task resource name (properties/<id>/reportTasks/<task>) |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli report tasks list
+
+List report tasks for a property — category `read`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli report tasks query
+
+Read the rows of a finished (ACTIVE) report task — category `read`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--name <resourceName>` | yes | Report task resource name (properties/<id>/reportTasks/<task>) |
+| `--limit <number>` |  | Maximum number of rows to return |
+| `--offset <number>` |  | Row offset for pagination |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli report chat
+
+Ask a natural-language question about the property (GA4 Data API chat, alpha) — category `read`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--question <text>` |  | The question to ask about this property's Analytics data |
+| `--session <id>` |  | Session ID from a previous answer, to continue that conversation (omit to start a new one) |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli metadata get
+
+Get metadata (dimensions and metrics) for a GA4 property — category `read`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--type <type>` |  | Type of metadata to retrieve (dims, metrics, all) |
+| `--search <term>` |  | Filter results by name or description |
+| `--custom-only` |  | Show only custom dimensions/metrics |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli metadata check-compatibility
+
+Check compatibility of dimensions and metrics — category `read`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `-m, --metrics <metrics...>` | yes | Metrics to check compatibility for |
+| `-d, --dimensions <dimensions...>` | yes | Dimensions to check compatibility for |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli audience export create
+
+Create an audience export — category `create`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--audience <audience>` | yes | Audience resource name |
+| `--dimensions <dimensions...>` |  | Dimensions to include in the export |
+| `--watch` |  | Wait for the export to finish (long-running operation) |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  | Print the request that would be sent, without calling the API |
+
+## gacli audience export get
+
+Get details of an audience export — category `read`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--name <name>` | yes | Audience export resource name |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli audience export list
+
+List audience exports for a property — category `read`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli audience export query
+
+Query an audience export to retrieve audience members — category `read`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--name <name>` | yes | Audience export resource name |
+| `--limit <number>` |  | Maximum number of rows to return |
+| `--offset <number>` |  | Row offset for pagination |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli audience recurring create
+
+Create a recurring audience list — category `create`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--audience <audience>` | yes | Audience resource name |
+| `--dimensions <dimensions...>` |  | Dimensions to include |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  | Print the request that would be sent, without calling the API |
+
+## gacli audience recurring get
+
+Get details of a recurring audience list — category `read`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--name <name>` | yes | Recurring audience list resource name |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli audience recurring list
+
+List recurring audience lists for a property — category `read`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli admin accounts list
+
+List all GA4 accounts accessible by the caller — category `read`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli admin accounts summaries
+
+List summaries of all accessible accounts and their properties — category `read`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli admin properties list
+
+List GA4 properties under an account — category `read`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--account <accountId>` | yes | GA4 account ID |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli admin properties get
+
+Get a GA4 property — category `read`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli admin properties create
+
+Create a new GA4 property — category `create`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--account <accountId>` | yes | GA4 account ID |
+| `--display-name <name>` | yes | Display name for the property |
+| `--time-zone <timeZone>` | yes | Reporting time zone (e.g., America/New_York) |
+| `--currency-code <code>` |  | Currency code (e.g., USD) |
+| `--industry-category <category>` |  | Industry category |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  | Print the request that would be sent, without calling the API |
+
+## gacli admin properties update
+
+Update a GA4 property — category `update`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--display-name <name>` |  | New display name |
+| `--time-zone <timeZone>` |  | New reporting time zone |
+| `--currency-code <code>` |  | New currency code |
+| `--industry-category <category>` |  | New industry category |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  | Print the request that would be sent, without calling the API |
+
+## gacli admin properties delete
+
+Delete a GA4 property — category `delete`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  | Print the request that would be sent, without calling the API |
+| `-y, --yes` |  | Confirm this destructive operation (required when not interactive) |
+
+## gacli admin datastreams list
+
+List data streams for a property — category `read`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli admin datastreams get
+
+Get a data stream — category `read`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--name <resourceName>` | yes | Data stream resource name |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli admin datastreams create
+
+Create a data stream — category `create`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--type <streamType>` | yes | Data stream type (WEB_DATA_STREAM, ANDROID_APP_DATA_STREAM, IOS_APP_DATA_STREAM) |
+| `--display-name <name>` | yes | Display name for the data stream |
+| `--uri <uri>` |  | Web stream URI (for WEB_DATA_STREAM) |
+| `--package-name <packageName>` |  | Android package name (for ANDROID_APP_DATA_STREAM) |
+| `--bundle-id <bundleId>` |  | iOS bundle ID (for IOS_APP_DATA_STREAM) |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  | Print the request that would be sent, without calling the API |
+
+## gacli admin datastreams update
+
+Update a data stream — category `update`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--name <resourceName>` | yes | Data stream resource name |
+| `--display-name <name>` | yes | New display name |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  | Print the request that would be sent, without calling the API |
+
+## gacli admin datastreams delete
+
+Delete a data stream — category `delete`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--name <resourceName>` | yes | Data Stream resource name |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  | Print the request that would be sent, without calling the API |
+| `-y, --yes` |  | Confirm this destructive operation (required when not interactive) |
+
+## gacli admin custom-dimensions list
+
+List custom dimensions for a property — category `read`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli admin custom-dimensions get
+
+Get a custom dimension — category `read`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--name <resourceName>` | yes | Custom dimension resource name |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli admin custom-dimensions create
+
+Create a custom dimension — category `create`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--parameter-name <parameterName>` | yes | Event parameter name |
+| `--display-name <displayName>` | yes | Display name |
+| `--description <description>` |  | Description of the custom dimension |
+| `--scope <scope>` | yes | Dimension scope (EVENT, USER, ITEM) |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  | Print the request that would be sent, without calling the API |
+
+## gacli admin custom-dimensions update
+
+Update a custom dimension — category `update`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--name <resourceName>` | yes | Custom dimension resource name |
+| `--display-name <displayName>` |  | New display name |
+| `--description <description>` |  | New description |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  | Print the request that would be sent, without calling the API |
+
+## gacli admin custom-dimensions archive
+
+Archive a custom dimension — category `delete`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--name <resourceName>` | yes | Custom Dimension resource name |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  | Print the request that would be sent, without calling the API |
+| `-y, --yes` |  | Confirm this destructive operation (required when not interactive) |
+
+## gacli admin custom-metrics list
+
+List custom metrics for a property — category `read`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli admin custom-metrics get
+
+Get a custom metric — category `read`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--name <resourceName>` | yes | Custom metric resource name |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli admin custom-metrics create
+
+Create a custom metric — category `create`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--parameter-name <parameterName>` | yes | Event parameter name |
+| `--display-name <displayName>` | yes | Display name |
+| `--description <description>` |  | Description of the custom metric |
+| `--scope <scope>` | yes | Metric scope (EVENT) |
+| `--measurement-unit <unit>` | yes | Measurement unit (STANDARD, CURRENCY, FEET, METERS, KILOMETERS, MILES, MILLISECONDS, SECONDS, MINUTES, HOURS) |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  | Print the request that would be sent, without calling the API |
+
+## gacli admin custom-metrics update
+
+Update a custom metric — category `update`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--name <resourceName>` | yes | Custom metric resource name |
+| `--display-name <displayName>` |  | New display name |
+| `--description <description>` |  | New description |
+| `--measurement-unit <unit>` |  | New measurement unit |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  | Print the request that would be sent, without calling the API |
+
+## gacli admin custom-metrics archive
+
+Archive a custom metric — category `delete`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--name <resourceName>` | yes | Custom Metric resource name |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  | Print the request that would be sent, without calling the API |
+| `-y, --yes` |  | Confirm this destructive operation (required when not interactive) |
+
+## gacli admin key-events list
+
+List key events for a property — category `read`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli admin key-events get
+
+Get a key event — category `read`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--name <resourceName>` | yes | Key event resource name |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli admin key-events create
+
+Create a key event — category `create`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--event-name <eventName>` | yes | Event name |
+| `--counting-method <method>` |  | Counting method (ONCE_PER_EVENT, ONCE_PER_SESSION) |
+| `--default-value <value>` |  | Default value for the key event |
+| `--currency-code <code>` |  | Currency code for the default value |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  | Print the request that would be sent, without calling the API |
+
+## gacli admin key-events update
+
+Update a key event — category `update`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--name <resourceName>` | yes | Key event resource name |
+| `--counting-method <method>` |  | Counting method (ONCE_PER_EVENT, ONCE_PER_SESSION) |
+| `--default-value <value>` |  | Default value for the key event |
+| `--currency-code <code>` |  | Currency code for the default value |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  | Print the request that would be sent, without calling the API |
+
+## gacli admin key-events delete
+
+Delete a key event — category `delete`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--name <resourceName>` | yes | Key Event resource name |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  | Print the request that would be sent, without calling the API |
+| `-y, --yes` |  | Confirm this destructive operation (required when not interactive) |
+
+## gacli admin audiences list
+
+List audiences for a property — category `read`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli admin audiences get
+
+Get an audience — category `read`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--name <resourceName>` | yes | Audience resource name |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli admin audiences create
+
+Create an audience — category `create`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--display-name <displayName>` | yes | Display name |
+| `--description <description>` |  | Description of the audience |
+| `--membership-duration-days <days>` |  | Membership duration in days |
+| `--filter-clauses <json>` |  | Filter clauses as JSON string |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  | Print the request that would be sent, without calling the API |
+
+## gacli admin audiences update
+
+Update an audience — category `update`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--name <resourceName>` | yes | Audience resource name |
+| `--display-name <displayName>` |  | New display name |
+| `--description <description>` |  | New description |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  | Print the request that would be sent, without calling the API |
+
+## gacli admin audiences archive
+
+Archive an audience — category `delete`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--name <resourceName>` | yes | Audience resource name |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  | Print the request that would be sent, without calling the API |
+| `-y, --yes` |  | Confirm this destructive operation (required when not interactive) |
+
+## gacli admin access-bindings list
+
+List access bindings for an account or property — category `read`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--parent <parent>` | yes | Account or property resource name (e.g., accounts/123 or properties/456) |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli admin access-bindings get
+
+Get an access binding — category `read`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--name <resourceName>` | yes | Access binding resource name |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli admin access-bindings create
+
+Create an access binding — category `create`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--parent <parent>` | yes | Account or property resource name |
+| `--user <email>` | yes | User email address |
+| `--roles <roles...>` | yes | Roles to assign (variadic) |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  | Print the request that would be sent, without calling the API |
+
+## gacli admin access-bindings update
+
+Update an access binding — category `update`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--name <resourceName>` | yes | Access binding resource name |
+| `--roles <roles...>` | yes | New roles to assign (variadic) |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  | Print the request that would be sent, without calling the API |
+
+## gacli admin access-bindings delete
+
+Delete an access binding — category `delete`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--name <resourceName>` | yes | Access Binding resource name |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  | Print the request that would be sent, without calling the API |
+| `-y, --yes` |  | Confirm this destructive operation (required when not interactive) |
+
+## gacli admin firebase-links list
+
+List Firebase links for a property — category `read`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli admin firebase-links get
+
+Get a Firebase link — category `read`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--name <resourceName>` | yes | Firebase link resource name |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli admin firebase-links create
+
+Create a Firebase link — category `create`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--project <projectId>` | yes | Firebase project ID or resource name |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  | Print the request that would be sent, without calling the API |
+
+## gacli admin firebase-links delete
+
+Delete a Firebase link — category `delete`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--name <resourceName>` | yes | Firebase Link resource name |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  | Print the request that would be sent, without calling the API |
+| `-y, --yes` |  | Confirm this destructive operation (required when not interactive) |
+
+## gacli admin google-ads-links list
+
+List Google Ads links for a property — category `read`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli admin google-ads-links get
+
+Get a Google Ads link — category `read`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--name <resourceName>` | yes | Google Ads link resource name |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli admin google-ads-links create
+
+Create a Google Ads link — category `create`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--customer-id <customerId>` | yes | Google Ads customer ID |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  | Print the request that would be sent, without calling the API |
+
+## gacli admin google-ads-links update
+
+Update a Google Ads link — category `update`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--name <resourceName>` | yes | Google Ads link resource name |
+| `--ads-personalization-enabled <enabled>` | yes | Enable/disable ads personalization (true/false) |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  | Print the request that would be sent, without calling the API |
+
+## gacli admin google-ads-links delete
+
+Delete a Google Ads link — category `delete`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--name <resourceName>` | yes | Google Ads Link resource name |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  | Print the request that would be sent, without calling the API |
+| `-y, --yes` |  | Confirm this destructive operation (required when not interactive) |
+
+## gacli admin bigquery-links list
+
+List BigQuery links for a property — category `read`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli admin bigquery-links get
+
+Get a BigQuery link — category `read`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--name <resourceName>` | yes | BigQuery link resource name |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli admin bigquery-links create
+
+Create a BigQuery link — category `create`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--project <projectId>` | yes | Google Cloud project ID |
+| `--daily-export-enabled <enabled>` |  | Enable daily export (true/false) |
+| `--streaming-export-enabled <enabled>` |  | Enable streaming export (true/false) |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  | Print the request that would be sent, without calling the API |
+
+## gacli admin bigquery-links delete
+
+Delete a BigQuery link — category `delete`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--name <resourceName>` | yes | BigQuery Link resource name |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  | Print the request that would be sent, without calling the API |
+| `-y, --yes` |  | Confirm this destructive operation (required when not interactive) |
+
+## gacli admin annotations list
+
+List reporting data annotations for a property — category `read`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli admin annotations create
+
+Create a reporting data annotation — category `create`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--title <title>` | yes | Annotation title |
+| `--description <description>` |  | Annotation description |
+| `--color <color>` | yes | Annotation color (PURPLE, BROWN, BLUE, GREEN, RED, CYAN, ORANGE) |
+| `--annotation-date <date>` |  | Single annotation date (YYYY-MM-DD); mutually exclusive with --start-date/--end-date |
+| `--start-date <date>` |  | Start of the annotated date range (YYYY-MM-DD); requires --end-date |
+| `--end-date <date>` |  | End of the annotated date range (YYYY-MM-DD); requires --start-date |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  | Print the request that would be sent, without calling the API |
+
+## gacli admin annotations update
+
+Update a reporting data annotation — category `update`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--name <resourceName>` | yes | Annotation resource name (properties/<id>/reportingDataAnnotations/<id>) |
+| `--title <title>` |  | New title |
+| `--description <description>` |  | New description |
+| `--color <color>` |  | New color (PURPLE, BROWN, BLUE, GREEN, RED, CYAN, ORANGE) |
+| `--annotation-date <date>` |  | Single annotation date (YYYY-MM-DD); mutually exclusive with --start-date/--end-date |
+| `--start-date <date>` |  | Start of the annotated date range (YYYY-MM-DD); requires --end-date |
+| `--end-date <date>` |  | End of the annotated date range (YYYY-MM-DD); requires --start-date |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  | Print the request that would be sent, without calling the API |
+
+## gacli admin annotations delete
+
+Delete a reporting data annotation — category `delete`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--name <resourceName>` | yes | Annotation resource name |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  | Print the request that would be sent, without calling the API |
+| `-y, --yes` |  | Confirm this destructive operation (required when not interactive) |
+
+## gacli admin change-history search
+
+Search change history events for an account — category `read`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--account <id>` | yes | Account to search (accounts/<id> or bare numeric ID) |
+| `--filter-property <id>` |  | Only changes to this property (properties/<id> or numeric ID) |
+| `--resource-type <types...>` |  | Only changes to these resource types (ACCOUNT, PROPERTY, FIREBASE_LINK, GOOGLE_ADS_LINK, GOOGLE_SIGNALS_SETTINGS, CONVERSION_EVENT, MEASUREMENT_PROTOCOL_SECRET, CUSTOM_DIMENSION, CUSTOM_METRIC, DATA_RETENTION_SETTINGS, DISPLAY_VIDEO_360_ADVERTISER_LINK, DISPLAY_VIDEO_360_ADVERTISER_LINK_PROPOSAL, SEARCH_ADS_360_LINK, DATA_STREAM, ATTRIBUTION_SETTINGS, EXPANDED_DATA_SET, CHANNEL_GROUP, BIGQUERY_LINK, ENHANCED_MEASUREMENT_SETTINGS, DATA_REDACTION_SETTINGS, SKADNETWORK_CONVERSION_VALUE_SCHEMA, ADSENSE_LINK, AUDIENCE, EVENT_CREATE_RULE, KEY_EVENT, CALCULATED_METRIC, REPORTING_DATA_ANNOTATION, SUBPROPERTY_SYNC_CONFIG, REPORTING_IDENTITY_SETTINGS, USER_PROVIDED_DATA_SETTINGS) |
+| `--action <actions...>` |  | Only these actions (CREATED, UPDATED, DELETED) |
+| `--earliest <datetime>` |  | Only changes at or after this ISO 8601 datetime |
+| `--latest <datetime>` |  | Only changes at or before this ISO 8601 datetime |
+| `--limit <number>` |  | Maximum number of events (one page, max 200); omit to fetch all pages |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli admin access-report run
+
+Run a data access report (who read which data, when) — category `read`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--entity <entity>` |  | Report scope: properties/<id> or accounts/<id> (default: the global -p property) |
+| `-d, --dimensions <dimensions...>` | yes | Access dimensions (e.g. userEmail, epochTimeMicros, reportType, dataApiQuotaCategory) |
+| `-m, --metrics <metrics...>` | yes | Access metrics (e.g. accessCount) |
+| `--start-date <date>` |  | Start date (YYYY-MM-DD, NdaysAgo, yesterday, today) |
+| `--end-date <date>` |  | End date (YYYY-MM-DD, NdaysAgo, yesterday, today) |
+| `--limit <number>` |  | Maximum number of rows to return |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli admin measurement-secrets list
+
+List Measurement Protocol secrets for a data stream — category `read`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--stream <dataStreamName>` | yes | Data stream resource name (properties/<id>/dataStreams/<id>) |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli admin measurement-secrets create
+
+Create a Measurement Protocol secret — category `create`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--stream <dataStreamName>` | yes | Data stream resource name (properties/<id>/dataStreams/<id>) |
+| `--display-name <displayName>` | yes | Human-readable name of the secret |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  | Print the request that would be sent, without calling the API |
+
+## gacli admin measurement-secrets delete
+
+Delete a Measurement Protocol secret — category `delete`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--name <resourceName>` | yes | Measurement Protocol secret resource name |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  | Print the request that would be sent, without calling the API |
+| `-y, --yes` |  | Confirm this destructive operation (required when not interactive) |
+
+## gacli admin data-retention get
+
+Get the data retention settings of a property — category `read`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+
+## gacli admin data-retention update
+
+Update the data retention settings of a property — category `update`, needs `-p`.
+
+| Flag | Required | Description |
+|---|---|---|
+| `--event-data-retention <duration>` |  | How long event-level data is retained (TWO_MONTHS, FOURTEEN_MONTHS, TWENTY_SIX_MONTHS, THIRTY_EIGHT_MONTHS, FIFTY_MONTHS; over 14 months needs GA4 360) |
+| `--user-data-retention <duration>` |  | How long user-level data is retained (TWO_MONTHS, FOURTEEN_MONTHS, TWENTY_SIX_MONTHS, THIRTY_EIGHT_MONTHS, FIFTY_MONTHS; over 14 months needs GA4 360) |
+| `--reset-user-data-on-new-activity <boolean>` |  | Reset the user identifier retention period on new activity from that user (true\|false) |
+| `--fields <paths>` |  | Comma-separated fields to output (dot paths for nested values) |
+| `--dry-run` |  | Print the request that would be sent, without calling the API |
+

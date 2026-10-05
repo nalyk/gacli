@@ -27,24 +27,117 @@ Agents/CI: export `GACLI_ACCESS_TOKEN` (wins over everything); with nothing conf
 | `gacli config get <key>` | Read a config key. | Single-cell row |
 | `gacli config list` | Show all config keys + descriptions. Stored in `~/.gacli/config.json`. | Table |
 
-## report
+## Operations
 
-The 7 report types — every "give me data" question maps here.
+Generated from the operation catalogue (`pnpm docs`). For flags, defaults and input/output
+JSON Schema of any command run `gacli schema <command...>`; destructive commands need `--yes`.
 
-| Command | Purpose | Required flags | Returns |
-|---|---|---|---|
-| `gacli report run` | Standard report. Workhorse. | `-m <metrics...>` | `ReportData` (headers + rows) |
-| `gacli report batch --requests <path>` | Multiple reports in one call. JSON file = array of report request objects. | `--requests` | Array of `ReportData` |
-| `gacli report pivot` | Cross-tabulation. | `-m`, `-d`, `--pivots <json>` | Pivoted `ReportData` |
-| `gacli report batch-pivot --requests <path>` | Multiple pivots in one call. | `--requests` | Array |
-| `gacli report realtime` | Last 30 minutes. Date flags ignored. | `-m` | `ReportData` |
-| `gacli report funnel` | Funnel exploration. | `--steps <json>` | `ReportData` (one row per step) |
-| `gacli report cohort` | Cohort analysis. | `-m`, `--cohorts <json>` | `ReportData` |
-| `gacli report quota` | Property quota snapshot (tokens per day/hour, concurrency) — check before heavy jobs. | — | Quota row |
-| `gacli report tasks create\|get\|list\|query` | Asynchronous report tasks for large exports (`create --watch` waits; `query --name` reads rows). | `create`: `-m` | Task / `ReportData` |
-| `gacli report chat --question "<text>" [--session <name>]` | GA4 natural-language Q&A (v1alpha; needs `auth login --scopes chat`). | `--question` | Answer text + blocks |
+<!-- BEGIN GENERATED: operations-index -->
+### report
 
-`report run` also takes `--return-property-quota` (quota in `metadata.propertyQuota`) and `--conversion-spec <json>` (key-event attribution, v1alpha).
+| Command | Category | Purpose |
+|---|---|---|
+| `gacli report run` | read | Run a standard GA4 report |
+| `gacli report pivot` | read | Run a GA4 pivot report |
+| `gacli report batch` | read | Run multiple GA4 reports in a single batch request |
+| `gacli report batch-pivot` | read | Run multiple GA4 pivot reports in a single batch request |
+| `gacli report realtime` | read | Run a GA4 realtime report |
+| `gacli report cohort` | read | Run a GA4 cohort report |
+| `gacli report funnel` | read | Run a GA4 funnel report |
+| `gacli report quota` | read | Show the property quota snapshot (consumed / remaining per quota category) |
+| `gacli report tasks create` | create | Create an asynchronous report task |
+| `gacli report tasks get` | read | Get a report task (definition and processing state) |
+| `gacli report tasks list` | read | List report tasks for a property |
+| `gacli report tasks query` | read | Read the rows of a finished (ACTIVE) report task |
+| `gacli report chat` | read | Ask a natural-language question about the property (GA4 Data API chat, alpha) |
+
+### metadata
+
+| Command | Category | Purpose |
+|---|---|---|
+| `gacli metadata get` | read | Get metadata (dimensions and metrics) for a GA4 property |
+| `gacli metadata check-compatibility` | read | Check compatibility of dimensions and metrics |
+
+### audience
+
+| Command | Category | Purpose |
+|---|---|---|
+| `gacli audience export create` | create | Create an audience export |
+| `gacli audience export get` | read | Get details of an audience export |
+| `gacli audience export list` | read | List audience exports for a property |
+| `gacli audience export query` | read | Query an audience export to retrieve audience members |
+| `gacli audience recurring create` | create | Create a recurring audience list |
+| `gacli audience recurring get` | read | Get details of a recurring audience list |
+| `gacli audience recurring list` | read | List recurring audience lists for a property |
+
+### admin
+
+| Command | Category | Purpose |
+|---|---|---|
+| `gacli admin accounts list` | read | List all GA4 accounts accessible by the caller |
+| `gacli admin accounts summaries` | read | List summaries of all accessible accounts and their properties |
+| `gacli admin properties list` | read | List GA4 properties under an account |
+| `gacli admin properties get` | read | Get a GA4 property |
+| `gacli admin properties create` | create | Create a new GA4 property |
+| `gacli admin properties update` | update | Update a GA4 property |
+| `gacli admin properties delete` | delete | Delete a GA4 property |
+| `gacli admin datastreams list` | read | List data streams for a property |
+| `gacli admin datastreams get` | read | Get a data stream |
+| `gacli admin datastreams create` | create | Create a data stream |
+| `gacli admin datastreams update` | update | Update a data stream |
+| `gacli admin datastreams delete` | delete | Delete a data stream |
+| `gacli admin custom-dimensions list` | read | List custom dimensions for a property |
+| `gacli admin custom-dimensions get` | read | Get a custom dimension |
+| `gacli admin custom-dimensions create` | create | Create a custom dimension |
+| `gacli admin custom-dimensions update` | update | Update a custom dimension |
+| `gacli admin custom-dimensions archive` | delete | Archive a custom dimension |
+| `gacli admin custom-metrics list` | read | List custom metrics for a property |
+| `gacli admin custom-metrics get` | read | Get a custom metric |
+| `gacli admin custom-metrics create` | create | Create a custom metric |
+| `gacli admin custom-metrics update` | update | Update a custom metric |
+| `gacli admin custom-metrics archive` | delete | Archive a custom metric |
+| `gacli admin key-events list` | read | List key events for a property |
+| `gacli admin key-events get` | read | Get a key event |
+| `gacli admin key-events create` | create | Create a key event |
+| `gacli admin key-events update` | update | Update a key event |
+| `gacli admin key-events delete` | delete | Delete a key event |
+| `gacli admin audiences list` | read | List audiences for a property |
+| `gacli admin audiences get` | read | Get an audience |
+| `gacli admin audiences create` | create | Create an audience |
+| `gacli admin audiences update` | update | Update an audience |
+| `gacli admin audiences archive` | delete | Archive an audience |
+| `gacli admin access-bindings list` | read | List access bindings for an account or property |
+| `gacli admin access-bindings get` | read | Get an access binding |
+| `gacli admin access-bindings create` | create | Create an access binding |
+| `gacli admin access-bindings update` | update | Update an access binding |
+| `gacli admin access-bindings delete` | delete | Delete an access binding |
+| `gacli admin firebase-links list` | read | List Firebase links for a property |
+| `gacli admin firebase-links get` | read | Get a Firebase link |
+| `gacli admin firebase-links create` | create | Create a Firebase link |
+| `gacli admin firebase-links delete` | delete | Delete a Firebase link |
+| `gacli admin google-ads-links list` | read | List Google Ads links for a property |
+| `gacli admin google-ads-links get` | read | Get a Google Ads link |
+| `gacli admin google-ads-links create` | create | Create a Google Ads link |
+| `gacli admin google-ads-links update` | update | Update a Google Ads link |
+| `gacli admin google-ads-links delete` | delete | Delete a Google Ads link |
+| `gacli admin bigquery-links list` | read | List BigQuery links for a property |
+| `gacli admin bigquery-links get` | read | Get a BigQuery link |
+| `gacli admin bigquery-links create` | create | Create a BigQuery link |
+| `gacli admin bigquery-links delete` | delete | Delete a BigQuery link |
+| `gacli admin annotations list` | read | List reporting data annotations for a property |
+| `gacli admin annotations create` | create | Create a reporting data annotation |
+| `gacli admin annotations update` | update | Update a reporting data annotation |
+| `gacli admin annotations delete` | delete | Delete a reporting data annotation |
+| `gacli admin change-history search` | read | Search change history events for an account |
+| `gacli admin access-report run` | read | Run a data access report (who read which data, when) |
+| `gacli admin measurement-secrets list` | read | List Measurement Protocol secrets for a data stream |
+| `gacli admin measurement-secrets create` | create | Create a Measurement Protocol secret |
+| `gacli admin measurement-secrets delete` | delete | Delete a Measurement Protocol secret |
+| `gacli admin data-retention get` | read | Get the data retention settings of a property |
+| `gacli admin data-retention update` | update | Update the data retention settings of a property |
+<!-- END GENERATED: operations-index -->
+
+### Report flags worth knowing
 
 Common optional flags across `report run/realtime/pivot`:
 `--start-date`, `--end-date`, `--limit`, `--offset`, `--order-by` (variadic
@@ -52,98 +145,9 @@ Common optional flags across `report run/realtime/pivot`:
 shorthand — see `filter-grammar.md`), `--metric-filter` (variadic shorthand),
 `--keep-empty-rows`.
 
-## metadata
-
-| Command | Purpose | Returns |
-|---|---|---|
-| `gacli metadata get [--type all\|dims\|metrics] [--search <term>] [--custom-only]` | List dimensions and metrics available on the property. | Table of name/uiName/scope/description |
-| `gacli metadata check-compatibility -m <m...> -d <d...>` | Validate that a metric+dimension combination is queryable. Run BEFORE building exotic report combos. | Compatible/incompatible per pair |
-
-## audience
-
-| Command | Purpose | Returns |
-|---|---|---|
-| `gacli audience export create --audience <resourceName> [--dimensions <d...>]` | One-time export of an audience. Returns operation name; poll with `get`. | Operation row |
-| `gacli audience export get --name <resourceName>` | Status of an export. | Status row |
-| `gacli audience export list` | All exports for `-p` property. | Table |
-| `gacli audience export query --name <resourceName> [--limit] [--offset]` | Query rows from a completed export. | `ReportData` |
-| `gacli audience recurring create --audience <name> [--dimensions <d...>]` | Create a recurring audience list. | Resource row |
-| `gacli audience recurring get --name <resourceName>` | Get status. | Row |
-| `gacli audience recurring list` | List recurring lists for `-p` property. | Table |
-
-## admin (10 sub-domains)
-
-All admin operations go through the GA4 Admin API. Most need the `analytics.edit`
-scope. `--name` ALWAYS takes the full resource name (e.g.
-`properties/123/keyEvents/456`), not a numeric ID.
-
-### admin accounts
-
-| Command | Purpose |
-|---|---|
-| `gacli admin accounts list` | All accounts the active credentials can see |
-
-### admin properties
-
-| Command | Purpose | Required |
-|---|---|---|
-| `list --account <id>` | Properties under an account | `--account` |
-| `get` (uses `-p`) | Get one property | — |
-| `create --account --display-name --time-zone [--currency-code] [--industry-category]` | Create | listed |
-| `update` (uses `-p`) | Patch fields | — |
-| `delete` (uses `-p`) | Delete | — |
-
-### admin datastreams
-
-`list` (uses `-p`), `get --name`, `create --type --display-name [--uri\|--package-name\|--bundle-id]` (uses `-p`), `update --name --display-name`, `delete --name`.
-`--type`: `WEB_DATA_STREAM`, `ANDROID_APP_DATA_STREAM`, `IOS_APP_DATA_STREAM`.
-
-### admin custom-dimensions
-
-`list` (uses `-p`), `get --name`, `create --parameter-name --display-name --scope [--description]` (uses `-p`), `update --name [--display-name] [--description]`, `archive --name`.
-`--scope`: `EVENT`, `USER`, or `ITEM`. **Scope is immutable after create.**
-
-### admin custom-metrics
-
-`list` (uses `-p`), `get --name`, `create --parameter-name --display-name --scope --measurement-unit [--description]` (uses `-p`), `update --name [--display-name] [--description] [--measurement-unit]`, `archive --name`.
-`--scope`: `EVENT` only. `--measurement-unit`: STANDARD, CURRENCY, FEET, METERS, KILOMETERS, MILES, MILLISECONDS, SECONDS, MINUTES, HOURS.
-
-### admin key-events
-
-`list` (uses `-p`), `get --name`, `create --event-name [--counting-method] [--default-value] [--currency-code]` (uses `-p`), `update --name [...]`, `delete --name`.
-`--counting-method`: `ONCE_PER_EVENT` (default) or `ONCE_PER_SESSION`.
-
-### admin audiences
-
-`list` (uses `-p`), `get --name`, `create --display-name [--description] [--membership-duration-days] [--filter-clauses <json>]` (uses `-p`), `update --name [...]`, `archive --name`.
-
-### admin access-bindings
-
-`list --parent <p>`, `get --name`, `create --parent --user --roles <r...>`, `update --name --roles <r...>`, `delete --name`.
-`--parent`: account or property resource name (`accounts/123` or `properties/456`). `--roles` variadic, e.g. `--roles predefinedRoles/viewer predefinedRoles/editor`.
-
-### admin firebase-links
-
-`list` (uses `-p`), `get --name`, `create --project <projectId>` (uses `-p`), `delete --name`.
-
-### admin google-ads-links
-
-`list` (uses `-p`), `get --name`, `create --customer-id <id>` (uses `-p`), `update --name --ads-personalization-enabled <true|false>`, `delete --name`.
-
-### admin bigquery-links
-
-`list` (uses `-p`), `get --name`, `create --project <projectId> [--daily-export-enabled true] [--streaming-export-enabled false]` (uses `-p`), `delete --name`.
-
-### admin (2.0 additions)
-
-| Command | Purpose |
-|---|---|
-| `gacli admin accounts summaries` | Every account with its properties — the fastest way to find a property ID. |
-| `gacli admin annotations list\|create\|update\|delete` | Reporting data annotations (`--title`, `--annotation-date` or `--start-date/--end-date`, `--color`). |
-| `gacli admin change-history search --account <id> [--filter-property <id>]` | Who changed what (resource types, actions, time window). |
-| `gacli admin access-report run [--entity properties/X\|accounts/Y]` | Data-access audit report. |
-| `gacli admin measurement-secrets list\|create\|delete --stream <name>` | Measurement Protocol API secrets. |
-| `gacli admin data-retention get\|update` | Event/user data retention settings. |
+`report run` also takes `--return-property-quota` (quota in `metadata.propertyQuota`) and
+`--conversion-spec <json>` (key-event attribution, v1alpha). JSON-valued flags accept inline JSON,
+`@file` or `@-` (stdin).
 
 ### Anything else: `gacli api`
 

@@ -75,7 +75,7 @@ export function buildCatalog(ops: AnyOperation[]): Catalog {
 
 export function toLlmsMarkdown(catalog: Catalog): string {
   const lines = [
-    `# gacli ${catalog.version} — operation reference`,
+    `# gacli${catalog.version ? ` ${catalog.version}` : ''} — operation reference`,
     '',
     'Global: `-p <property>`, `-f table|json|ndjson|csv|chart` (json when piped), `-o <file>`.',
     `Exit codes: ${Object.entries(catalog.exitCodes)
