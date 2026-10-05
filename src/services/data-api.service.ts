@@ -3,10 +3,12 @@ import type { ReportData } from '../types/common.js';
 import type {
   BatchRunPivotReportsRequest,
   BatchRunReportsRequest,
+  ReportTaskInput,
   RunCohortReportParams,
   RunFunnelReportParams,
   RunPivotReportParams,
   RunRealtimeReportParams,
+  RunReportAlphaParams,
   RunReportParams,
 } from '../types/data-api.js';
 import { withRetry } from '../utils/retry.js';
@@ -27,6 +29,11 @@ type IAudienceExport = protos.google.analytics.data.v1beta.IAudienceExport;
 type IRecurringAudienceList = protos.google.analytics.data.v1alpha.IRecurringAudienceList;
 type IRunFunnelReportRequest = protos.google.analytics.data.v1alpha.IRunFunnelReportRequest;
 type IRunFunnelReportResponse = protos.google.analytics.data.v1alpha.IRunFunnelReportResponse;
+type IAlphaRunReportRequest = protos.google.analytics.data.v1alpha.IRunReportRequest;
+type IPropertyQuotasSnapshot = protos.google.analytics.data.v1alpha.IPropertyQuotasSnapshot;
+type IReportTask = protos.google.analytics.data.v1alpha.IReportTask;
+type IChatRequest = protos.google.analytics.data.v1alpha.IChatRequest;
+type IChatResponse = protos.google.analytics.data.v1alpha.IChatResponse;
 
 type ReportLike = {
   dimensionHeaders?: { name?: string | null }[] | null;
@@ -39,6 +46,7 @@ type ReportLike = {
     | null;
   rowCount?: number | null;
   metadata?: unknown;
+  propertyQuota?: unknown;
 };
 
 // SDK ClientOptions narrowed in @google-analytics/data 5.x: `auth` is now typed as
@@ -79,14 +87,23 @@ export function toReportData(response: ReportLike): ReportData {
     return [...dimValues, ...metValues];
   });
 
+  const metadata: Record<string, unknown> =
+    response.metadata && typeof response.metadata === 'object'
+      ? { ...(response.metadata as Record<string, unknown>) }
+      : {};
+  // Repeated proto fields decode as [] — only keep truncation reasons that say something.
+  if (Array.isArray(metadata.dataTruncationReasons) && metadata.dataTruncationReasons.length === 0) {
+    delete metadata.dataTruncationReasons;
+  }
+  if (response.propertyQuota && typeof response.propertyQuota === 'object') {
+    metadata.propertyQuota = response.propertyQuota;
+  }
+
   return {
     headers,
     rows,
     rowCount: Number(response.rowCount ?? rows.length),
-    metadata:
-      response.metadata && typeof response.metadata === 'object'
-        ? { ...(response.metadata as Record<string, unknown>) }
-        : undefined,
+    metadata: Object.keys(metadata).length ? metadata : undefined,
   };
 }
 
@@ -274,4 +291,74 @@ export async function listRecurringAudienceLists(propertyId: string): Promise<IR
     parent: `properties/${propertyId}`,
   });
   return response ?? [];
+}
+
+export async function runReportAlpha(params: RunReportAlphaParams): Promise<ReportData> {
+  const [response] = await withRetry(
+    async () => (await getAlphaClient()).runReport(params as IAlphaRunReportRequest),
+    { label: 'runReportAlpha' },
+  );
+  return toReportData(response as ReportLike);
+}
+
+export async function getPropertyQuotasSnapshot(propertyId: string): Promise<IPropertyQuotasSnapshot> {
+  const [response] = await withRetry(
+    async () =>
+      (await getAlphaClient()).getPropertyQuotasSnapshot({
+        name: `properties/${propertyId}/propertyQuotasSnapshot`,
+      }),
+    { label: 'getPropertyQuotasSnapshot' },
+  );
+  return response as IPropertyQuotasSnapshot;
+}
+
+export interface ReportTaskOperation {
+  name?: string | null;
+  done?: boolean | null;
+  promise?: () => Promise<[IReportTask, unknown, unknown]>;
+}
+
+export async function createReportTask(
+  propertyId: string,
+  reportTask: ReportTaskInput,
+): Promise<ReportTaskOperation> {
+  const [operation] = await (await getAlphaClient()).createReportTask({
+    parent: `properties/${propertyId}`,
+    reportTask: reportTask as IReportTask,
+  });
+  return operation as unknown as ReportTaskOperation;
+}
+
+export async function getReportTask(name: string): Promise<IReportTask> {
+  const [response] = await withRetry(async () => (await getAlphaClient()).getReportTask({ name }), {
+    label: 'getReportTask',
+  });
+  return response as IReportTask;
+}
+
+export async function listReportTasks(propertyId: string): Promise<IReportTask[]> {
+  const [response] = await withRetry(
+    async () => (await getAlphaClient()).listReportTasks({ parent: `properties/${propertyId}` }),
+    { label: 'listReportTasks' },
+  );
+  return response ?? [];
+}
+
+export async function queryReportTask(name: string, limit?: number, offset?: number): Promise<ReportData> {
+  const [response] = await withRetry(
+    async () =>
+      (await getAlphaClient()).queryReportTask({
+        name,
+        ...(limit !== undefined && { limit }),
+        ...(offset !== undefined && { offset }),
+      }),
+    { label: 'queryReportTask' },
+  );
+  return toReportData(response as ReportLike);
+}
+
+// Not retried: a replayed turn could land twice in the conversation session.
+export async function chat(request: IChatRequest): Promise<IChatResponse> {
+  const [response] = await (await getAlphaClient()).chat(request);
+  return response as IChatResponse;
 }
