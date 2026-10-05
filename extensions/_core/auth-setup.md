@@ -62,10 +62,10 @@ credential pattern.
 | Message | Cause | Fix |
 |---|---|---|
 | `Property ID is required. Use -p <id>...` | No property resolved (no flag, no config, no env). | `gacli admin properties list --account <id>` to find one, then `gacli config set property <id>` (default) or pass `-p` per call. |
-| `Unauthenticated: ...` (exit 16) | Token expired and refresh failed, or no auth path set up. | `gacli auth login` (OAuth) or check `gacli config get credentials` (SA). |
-| `Permission denied: ...` (exit 7) | Auth works but the principal lacks access to the property. | Add the OAuth user / SA email to the GA4 property at the right role (Viewer for read, Editor for write). |
-| `Invalid argument: ...` (exit 3) | Malformed request. Most often: invalid dimension/metric name, bad date, scope mismatch. | Run `gacli metadata get` to confirm names; run `gacli metadata check-compatibility` for combos. |
-| `Resource exhausted (quota): ...` (exit 8) | API quota hit (Data API daily token quota or per-minute QPS). | Back off, retry in a few seconds; for sustained work, request quota increase in GCP Console. |
+| `Unauthenticated: ...` (exit 3) | Token expired and refresh failed, or no auth path set up. | `gacli auth login` (OAuth) or check `gacli config get credentials` (SA). |
+| `Permission denied: ...` (exit 3) | Auth works but the principal lacks access to the property. | Add the OAuth user / SA email to the GA4 property at the right role (Viewer for read, Editor for write). |
+| `Invalid argument: ...` (exit 2) | Malformed request. Most often: invalid dimension/metric name, bad date, scope mismatch. | Run `gacli metadata get` to confirm names; run `gacli metadata check-compatibility` for combos. |
+| `Resource exhausted (quota): ...` (exit 6) | API quota hit (Data API daily token quota or per-minute QPS). | Back off, retry in a few seconds; for sustained work, request quota increase in GCP Console. |
 
 ## After `gacli auth login`
 

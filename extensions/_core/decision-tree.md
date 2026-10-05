@@ -73,8 +73,12 @@ After picking the command, pick `-f`:
 
 | Error | Probable cause | Action |
 |---|---|---|
-| Exit 1 / "Property ID required" | No `-p` and no default | Property-resolution pre-flight above. |
-| Exit 16 / "Unauthenticated" | Token issue | `gacli auth status` then `gacli auth login` if needed. |
-| Exit 7 / "Permission denied" | Principal lacks access | Confirm the OAuth user / SA email is added to the property. |
-| Exit 3 / "Invalid argument" | Bad dim/metric name, scope mismatch, malformed JSON | `gacli metadata get` + `gacli metadata check-compatibility`. |
-| Exit 8 / "Resource exhausted" | API quota | Back off and retry. Don't hammer. |
+| Exit 2 / "Property ID is required" | No `-p` and no default | Property-resolution pre-flight above. |
+| Exit 2 / "Invalid argument" or validation message | Bad flag value, bad dim/metric name, scope mismatch, malformed JSON | `gacli schema <command>` for flags; `gacli metadata get` + `gacli metadata check-compatibility`. |
+| Exit 3 / "Unauthenticated" | Token issue / no credentials | `gacli auth status` then `gacli auth login` if needed. |
+| Exit 3 / "Permission denied" | Principal lacks access | Confirm the OAuth user / SA email is added to the property. |
+| Exit 4 / "Refusing to run … without --yes" | Destructive op (delete/archive) run non-interactively | Confirm with the user, then re-run with `--yes` (the hint prints the exact command). |
+| Exit 5 / "Not found" | Wrong resource name or property | List the parent collection first. |
+| Exit 6 / "Resource exhausted" | API quota | Back off and retry. Don't hammer. Daily quota resets at midnight Pacific. |
+
+With `-f json` (the default when piped), errors are one JSON line on stderr: `{"error":{"code","message","hint","exitCode"}}`.
