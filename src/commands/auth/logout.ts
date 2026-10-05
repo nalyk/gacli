@@ -1,5 +1,4 @@
 import { Command } from 'commander';
-import { OAuth2Client } from 'google-auth-library';
 import { resetAuth } from '../../services/auth.service.js';
 import { deleteOAuthTokens, loadOAuthTokens } from '../../services/oauth.service.js';
 import { handleError } from '../../utils/error-handler.js';
@@ -27,6 +26,7 @@ async function runLogout(revoke?: boolean): Promise<void> {
 
   if (revoke) {
     try {
+      const { OAuth2Client } = await import('google-auth-library');
       const oauth2Client = new OAuth2Client({
         clientId: tokens.client_id,
         clientSecret: tokens.client_secret,

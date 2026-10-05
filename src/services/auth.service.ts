@@ -1,4 +1,5 @@
-import { GoogleAuth, OAuth2Client } from 'google-auth-library';
+import { createRequire } from 'node:module';
+import type { GoogleAuth, OAuth2Client } from 'google-auth-library';
 import { GacliError } from '../core/errors.js';
 import { getConfig } from './config.service.js';
 import { loadOAuthTokens, saveOAuthTokens } from './oauth.service.js';
@@ -46,8 +47,16 @@ export function resolveCredentialsPath(): string | undefined {
 
 let cachedAuthOptions: { authClient: OAuth2Client } | { auth: GoogleAuth } | null = null;
 
+// google-auth-library (+ gaxios, gcp-metadata, jws, ...) costs ~130ms to load; only pay it when a
+// command actually needs credentials. It is CommonJS, so a synchronous require keeps this API sync.
+type GoogleAuthLibrary = typeof import('google-auth-library');
+let authLibrary: GoogleAuthLibrary | undefined;
+const loadAuthLibrary = (): GoogleAuthLibrary =>
+  (authLibrary ??= createRequire(import.meta.url)('google-auth-library') as GoogleAuthLibrary);
+
 export function getAuthClientOptions(): { authClient: OAuth2Client } | { auth: GoogleAuth } {
   if (cachedAuthOptions) return cachedAuthOptions;
+  const { GoogleAuth, OAuth2Client } = loadAuthLibrary();
 
   // Agents/CI: a pre-obtained access token, used as-is (no refresh; expiry surfaces as exit 3).
   const accessToken = process.env.GACLI_ACCESS_TOKEN;

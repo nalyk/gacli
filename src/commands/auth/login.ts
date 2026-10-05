@@ -2,7 +2,6 @@ import { randomBytes } from 'node:crypto';
 import { createServer } from 'node:http';
 import { URL } from 'node:url';
 import { Command, Option } from 'commander';
-import { CodeChallengeMethod, OAuth2Client } from 'google-auth-library';
 import { GacliError } from '../../core/errors.js';
 import { resetAuth, type ScopePreset, scopesFor } from '../../services/auth.service.js';
 import { getConfig } from '../../services/config.service.js';
@@ -48,6 +47,7 @@ async function runLogin(clientSecretFilePath: string | undefined, scopes: string
 
   const { redirectUri, closeServer } = await startLoopbackServer(state, client_id, client_secret);
 
+  const { CodeChallengeMethod, OAuth2Client } = await import('google-auth-library');
   const oauth2Client = new OAuth2Client({ clientId: client_id, clientSecret: client_secret, redirectUri });
   const { codeVerifier, codeChallenge } = await oauth2Client.generateCodeVerifierAsync();
 
