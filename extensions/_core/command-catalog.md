@@ -13,7 +13,11 @@ Property resolution: `--property` flag → `~/.gacli/config.json` `property` key
 |---|---|---|
 | `gacli auth login [--client-secret-file <path>]` | OAuth 2.0 login (browser PKCE), saves tokens to `~/.gacli/oauth-tokens.json`. | Status line on stderr |
 | `gacli auth logout [--revoke]` | Remove saved OAuth tokens. `--revoke` revokes at Google first. | Status line |
-| `gacli auth status` | Show active auth method (OAuth vs service account), token file, expiry, scopes. | Single-row table |
+| `gacli auth login --scopes readonly\|edit\|chat` | Request read-only, read+write (default) or chat access (`report chat` needs `chat`). | Status line |
+| `gacli auth status` | Show the active credential source (access token, OAuth, service account, ADC), token file, expiry, scopes. `-f json` for scripts. | Status lines / JSON |
+| `gacli auth token` | Print an access token for the active credentials (stdout only). | Token string |
+
+Agents/CI: export `GACLI_ACCESS_TOKEN` (wins over everything); with nothing configured gacli falls back to Google Application Default Credentials.
 
 ## config
 
@@ -36,6 +40,11 @@ The 7 report types — every "give me data" question maps here.
 | `gacli report realtime` | Last 30 minutes. Date flags ignored. | `-m` | `ReportData` |
 | `gacli report funnel` | Funnel exploration. | `--steps <json>` | `ReportData` (one row per step) |
 | `gacli report cohort` | Cohort analysis. | `-m`, `--cohorts <json>` | `ReportData` |
+| `gacli report quota` | Property quota snapshot (tokens per day/hour, concurrency) — check before heavy jobs. | — | Quota row |
+| `gacli report tasks create\|get\|list\|query` | Asynchronous report tasks for large exports (`create --watch` waits; `query --name` reads rows). | `create`: `-m` | Task / `ReportData` |
+| `gacli report chat --question "<text>" [--session <name>]` | GA4 natural-language Q&A (v1alpha; needs `auth login --scopes chat`). | `--question` | Answer text + blocks |
+
+`report run` also takes `--return-property-quota` (quota in `metadata.propertyQuota`) and `--conversion-spec <json>` (key-event attribution, v1alpha).
 
 Common optional flags across `report run/realtime/pivot`:
 `--start-date`, `--end-date`, `--limit`, `--offset`, `--order-by` (variadic
@@ -124,6 +133,23 @@ scope. `--name` ALWAYS takes the full resource name (e.g.
 ### admin bigquery-links
 
 `list` (uses `-p`), `get --name`, `create --project <projectId> [--daily-export-enabled true] [--streaming-export-enabled false]` (uses `-p`), `delete --name`.
+
+### admin (2.0 additions)
+
+| Command | Purpose |
+|---|---|
+| `gacli admin accounts summaries` | Every account with its properties — the fastest way to find a property ID. |
+| `gacli admin annotations list\|create\|update\|delete` | Reporting data annotations (`--title`, `--annotation-date` or `--start-date/--end-date`, `--color`). |
+| `gacli admin change-history search --account <id> [--filter-property <id>]` | Who changed what (resource types, actions, time window). |
+| `gacli admin access-report run [--entity properties/X\|accounts/Y]` | Data-access audit report. |
+| `gacli admin measurement-secrets list\|create\|delete --stream <name>` | Measurement Protocol API secrets. |
+| `gacli admin data-retention get\|update` | Event/user data retention settings. |
+
+### Anything else: `gacli api`
+
+`gacli api <admin|admin.v1beta|data|data.v1alpha> <Method> --body '<json>'` calls any RPC by name
+(e.g. `gacli api admin ListAccountSummaries`). Typos get suggestions; `Delete*`/`Archive*` need
+`--yes`; `--dry-run` previews.
 
 ## explore
 
