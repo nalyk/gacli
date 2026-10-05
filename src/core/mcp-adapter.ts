@@ -37,7 +37,7 @@ export function exposedOperations(
   { allowWrite = false, allowDelete = false }: { allowWrite?: boolean; allowDelete?: boolean },
 ): AnyOperation[] {
   return ops.filter((op) => {
-    if (op.category === 'read') return true;
+    if (op.category === 'read') return !op.sensitive || allowWrite || allowDelete;
     if (op.category === 'delete') return allowDelete;
     return allowWrite || allowDelete;
   });

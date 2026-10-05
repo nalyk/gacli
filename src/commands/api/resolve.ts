@@ -1,6 +1,6 @@
 import { confirm } from '../../core/confirm.js';
 import { GacliError } from '../../core/errors.js';
-import { getAuthClientOptions } from '../../services/auth.service.js';
+import { ensureCredentials, getAuthClientOptions } from '../../services/auth.service.js';
 import { withRetry } from '../../utils/retry.js';
 
 export type ApiService = 'admin' | 'data';
@@ -33,8 +33,37 @@ export function parseServiceArg(arg: string): ApiTarget {
   return { service, version: (version as ApiVersion | undefined) ?? DEFAULT_VERSION[service] };
 }
 
-interface VerifiableType {
-  verify(message: Record<string, unknown>): string | null;
+interface ProtoType {
+  prototype: object;
+  fromObject(object: Record<string, unknown>): object;
+  toObject(
+    message: object,
+    options: { enums: StringConstructor; longs: StringConstructor },
+  ): Record<string, unknown>;
+  verify(message: object): string | null;
+}
+
+/** First path whose scalar did not survive fromObject → toObject (e.g. "x" silently became 0). */
+function lossyPath(sent: unknown, back: unknown, path: string): string | undefined {
+  if (Array.isArray(sent)) {
+    const arr = Array.isArray(back) ? back : [];
+    for (let i = 0; i < sent.length; i++) {
+      const p = lossyPath(sent[i], arr[i], `${path}[${i}]`);
+      if (p) return p;
+    }
+    return undefined;
+  }
+  if (sent && typeof sent === 'object') {
+    const obj = (back && typeof back === 'object' ? back : {}) as Record<string, unknown>;
+    for (const [k, v] of Object.entries(sent)) {
+      const p = lossyPath(v, obj[k], path ? `${path}.${k}` : k);
+      if (p) return p;
+    }
+    return undefined;
+  }
+  if (sent === null || sent === undefined) return undefined;
+  const same = String(sent) === String(back) || (typeof sent === 'string' && Number(sent) === back);
+  return same ? undefined : path;
 }
 
 async function loadModule(service: ApiService): Promise<Record<string, unknown>> {
@@ -54,7 +83,7 @@ async function loadDescriptor(target: ApiTarget) {
   const service = ns[PROTO_SERVICE[target.service][target.version]] as { prototype: object };
   const names = Object.getOwnPropertyNames(service.prototype).filter((n) => n !== 'constructor');
   const requestType = (method: string) =>
-    ns[`${method[0].toUpperCase()}${method.slice(1)}Request`] as VerifiableType | undefined;
+    ns[`${method[0].toUpperCase()}${method.slice(1)}Request`] as ProtoType | undefined;
   return { names, requestType };
 }
 
@@ -87,7 +116,7 @@ export function resolveMethod(input: string, names: string[]): string {
 }
 
 export function methodKind(method: string): 'read' | 'mutate' | 'delete' {
-  if (/^(delete|archive)/.test(method)) return 'delete';
+  if (/^(delete|archive|batchDelete|submitUserDeletion|cancel)/.test(method)) return 'delete';
   if (/^(get|list|search|check|query|batchGet)/.test(method) || /^(run|batchRun)\w*Report/.test(method))
     return 'read';
   return 'mutate';
@@ -98,6 +127,44 @@ async function defaultLoadClient(target: ApiTarget): Promise<Record<string, unkn
   const versioned = mod[target.version] as Record<string, new (opts: unknown) => Record<string, unknown>>;
   const Client = versioned[CLIENT_CLASS[target.service][target.version]];
   return new Client(getAuthClientOptions());
+}
+
+/** Proto JSON accepts enum names and string int64s: convert with fromObject, then verify; unknown keys are typos. */
+function validateBody(method: string, type: ProtoType | undefined, body: Record<string, unknown>): void {
+  if (!type) return;
+  // Static protobufjs classes declare every field (with its default) on the prototype.
+  const fields = Object.getOwnPropertyNames(type.prototype).filter(
+    (n) => n !== 'constructor' && n !== 'toJSON',
+  );
+  const unknown = Object.keys(body).filter((k) => !fields.includes(k));
+  if (unknown.length) {
+    throw new GacliError('usage', `Unknown field(s) for ${method}: ${unknown.join(', ')}`, {
+      hint: `Valid fields: ${fields.join(', ')}`,
+    });
+  }
+  let problem: string | null;
+  try {
+    const message = type.fromObject(body);
+    problem = type.verify(message);
+    const lossy = problem
+      ? undefined
+      : lossyPath(body, type.toObject(message, { enums: String, longs: String }), '');
+    if (lossy) problem = `${lossy}: invalid value`;
+  } catch (e) {
+    problem = e instanceof Error ? e.message : String(e);
+  }
+  if (problem) throw new GacliError('usage', `Invalid request body for ${method}: ${problem}`);
+}
+
+/**
+ * Long-running methods resolve to a gax Operation whose object graph includes the auth client
+ * (tokens, client secret, private key): only its google.longrunning.Operation snapshot is output.
+ */
+function unwrapOperation(result: unknown): unknown {
+  if (result && typeof result === 'object' && 'latestResponse' in result) {
+    return (result as { latestResponse: unknown }).latestResponse;
+  }
+  return result;
 }
 
 export interface ApiCall {
@@ -111,13 +178,15 @@ export interface ApiCall {
 
 export async function executeApiCall(
   call: ApiCall,
-  deps: { loadClient: (t: ApiTarget) => Promise<object> } = { loadClient: defaultLoadClient },
+  deps: { loadClient: (t: ApiTarget) => Promise<object>; ensureCredentials: () => Promise<void> } = {
+    loadClient: defaultLoadClient,
+    ensureCredentials,
+  },
 ): Promise<{ preview?: Record<string, unknown>; result?: unknown }> {
   const target = parseServiceArg(call.service);
   const { names, requestType } = await loadDescriptor(target);
   const method = resolveMethod(call.method, names);
-  const problem = requestType(method)?.verify(call.body);
-  if (problem) throw new GacliError('usage', `Invalid request body for ${method}: ${problem}`);
+  validateBody(method, requestType(method), call.body);
 
   const kind = methodKind(method);
   if (call.dryRun) {
@@ -134,8 +203,9 @@ export async function executeApiCall(
     }
   }
 
+  await deps.ensureCredentials();
   const client = (await deps.loadClient(target)) as Record<string, (req: object) => Promise<unknown>>;
   const invoke = () => client[method](call.body);
   const response = kind === 'read' ? await withRetry(invoke, { label: method }) : await invoke();
-  return { result: Array.isArray(response) ? response[0] : response };
+  return { result: unwrapOperation(Array.isArray(response) ? response[0] : response) };
 }

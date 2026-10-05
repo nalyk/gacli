@@ -43,6 +43,9 @@ describe('methodKind', () => {
     ['createProperty', 'mutate'],
     ['deleteProperty', 'delete'],
     ['archiveCustomDimension', 'delete'],
+    ['batchDeleteAccessBindings', 'delete'],
+    ['submitUserDeletion', 'delete'],
+    ['provisionAccountTicket', 'mutate'],
   ])('%s → %s', (m, k) => {
     expect(methodKind(m)).toBe(k);
   });
@@ -50,7 +53,7 @@ describe('methodKind', () => {
 
 describe('executeApiCall', () => {
   const client = { listProperties: vi.fn(async () => [[{ name: 'properties/1' }]]), deleteProperty: vi.fn() };
-  const deps = { loadClient: vi.fn(async () => client) };
+  const deps = { loadClient: vi.fn(async () => client), ensureCredentials: async () => undefined };
 
   it('calls the resolved method with the body and returns the first response element', async () => {
     const out = await executeApiCall(
@@ -113,5 +116,68 @@ describe('executeApiCall', () => {
     await expect(
       executeApiCall({ service: 'data', method: 'chat', body: {}, interactive: false }, deps),
     ).rejects.toMatchObject({ kind: 'usage' });
+  });
+
+  it('never serialises a long-running Operation (it carries the auth client)', async () => {
+    const operation = {
+      name: 'operations/1',
+      done: false,
+      latestResponse: { name: 'operations/1', done: false, metadata: null },
+      longrunningDescriptor: { operationsClient: { auth: { refresh_token: 'S3CRET' } } },
+      promise: () => new Promise(() => {}),
+    };
+    const lro = { createProperty: vi.fn(async () => [operation]) };
+    const out = await executeApiCall(
+      { service: 'admin', method: 'createProperty', body: {}, interactive: false },
+      { loadClient: async () => lro, ensureCredentials: async () => undefined },
+    );
+    expect(JSON.stringify(out)).not.toContain('S3CRET');
+    expect(out.result).toEqual({ name: 'operations/1', done: false, metadata: null });
+  });
+
+  it('accepts enum names and string int64 values (proto JSON), rejects unknown fields', async () => {
+    const c = { updateDataRetentionSettings: vi.fn(async () => [{}]), runReport: vi.fn(async () => [{}]) };
+    const d = { loadClient: async () => c, ensureCredentials: async () => undefined };
+    await executeApiCall(
+      {
+        service: 'admin',
+        method: 'UpdateDataRetentionSettings',
+        body: {
+          dataRetentionSettings: { eventDataRetention: 'FOURTEEN_MONTHS' },
+          updateMask: { paths: ['event_data_retention'] },
+        },
+        interactive: false,
+      },
+      d,
+    );
+    expect(c.updateDataRetentionSettings).toHaveBeenCalled();
+    await executeApiCall(
+      {
+        service: 'data',
+        method: 'RunReport',
+        body: { property: 'properties/1', limit: '10', metricAggregations: ['TOTAL'] },
+        interactive: false,
+      },
+      d,
+    );
+    expect(c.runReport).toHaveBeenCalled();
+    await expect(
+      executeApiCall(
+        { service: 'admin', method: 'listProperties', body: { bogusField: 1 }, interactive: false },
+        d,
+      ),
+    ).rejects.toMatchObject({ kind: 'usage', message: expect.stringContaining('bogusField') });
+  });
+
+  it('loads credentials before creating a client (auth errors stay on the awaited path)', async () => {
+    const loadClient = vi.fn();
+    const failing = Object.assign(new Error('Cannot load credentials'), { kind: 'auth' });
+    await expect(
+      executeApiCall(
+        { service: 'admin', method: 'listAccounts', body: {}, interactive: false },
+        { loadClient, ensureCredentials: async () => Promise.reject(failing) },
+      ),
+    ).rejects.toBe(failing);
+    expect(loadClient).not.toHaveBeenCalled();
   });
 });

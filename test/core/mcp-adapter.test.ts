@@ -67,6 +67,8 @@ const deleteOp = defineOperation({
 });
 const ops = [listOp, reportOp, notFoundOp, createOp, deleteOp];
 const base = { version: '9.9.9', globals: {} as never };
+const textOf = (r: { result?: Record<string, unknown> }) =>
+  (r.result?.content as { text: string }[] | undefined)?.[0]?.text ?? '';
 
 describe('tool metadata', () => {
   it('names tools ga_<id> with separators as underscores', () => {
@@ -118,7 +120,7 @@ describe('MCP server generated from operations', () => {
     const r = await s.callTool('ga_admin_custom_dimensions_list', { limit: 2 });
     expect(r.result?.isError).toBeFalsy();
     expect(r.result?.structuredContent).toEqual({ rowCount: 1, data: [{ name: 'properties/42/x/1' }] });
-    const text = (r.result?.content as { text: string }[])[0].text;
+    const text = textOf(r);
     expect(JSON.parse(text)).toEqual(r.result?.structuredContent);
     expect(listRun.mock.lastCall?.[0]).toEqual({ limit: 2 });
   });
@@ -134,14 +136,14 @@ describe('MCP server generated from operations', () => {
     const r = await s.callTool('ga_admin_custom_dimensions_list', {});
     // propertyId is required by the tool schema, so the SDK rejects the call before the handler runs
     expect(r.result?.isError).toBe(true);
-    expect((r.result?.content as { text: string }[])[0].text).toContain('propertyId');
+    expect(textOf(r)).toContain('propertyId');
   });
 
   it('maps API errors to isError results and keeps serving', async () => {
     const s = await mcpSession(createServerFactory(ops, base)());
     const r = await s.callTool('ga_admin_things_get', { name: 'n' });
     expect(r.result?.isError).toBe(true);
-    expect(JSON.parse((r.result?.content as { text: string }[])[0].text).error.exitCode).toBe(5);
+    expect(JSON.parse(textOf(r)).error.exitCode).toBe(5);
     expect(
       (await s.callTool('ga_report_run', { metrics: ['sessions'] })).result?.structuredContent,
     ).toMatchObject({
@@ -197,7 +199,7 @@ describe('MCP server generated from operations', () => {
     const s = await mcpSession(createServerFactory([jsonOp], base)());
     const r = await s.callTool('ga_demo_json_get', { steps: '@/etc/hosts' });
     expect(r.result?.isError).toBe(true);
-    expect((r.result?.content as { text: string }[])[0].text).toMatch(/not allowed/);
+    expect(textOf(r)).toMatch(/not allowed/);
     expect(run).not.toHaveBeenCalled();
     const { setFileArgsAllowed } = await import('../../src/operations/json-arg.js');
     setFileArgsAllowed(true);
@@ -221,5 +223,22 @@ describe('MCP server generated from operations', () => {
     expect(tools[0].inputSchema.required).toEqual(expect.arrayContaining(['propertyId', 'confirm']));
     const r = await s.callTool('ga_admin_props_delete', { confirm: true });
     expect(r.result?.isError).toBe(true);
+  });
+
+  it('keeps sensitive read operations out of the read-only default', () => {
+    const secretOp = defineOperation({
+      id: 'admin.secrets.list',
+      summary: 'List secrets',
+      category: 'read',
+      sensitive: true,
+      kind: 'resource',
+      input: z.object({}),
+      output: z.array(z.unknown()),
+      run: async () => [],
+    });
+    expect(exposedOperations([secretOp], {}).map((o) => o.id)).toEqual([]);
+    expect(exposedOperations([secretOp], { allowWrite: true }).map((o) => o.id)).toEqual([
+      'admin.secrets.list',
+    ]);
   });
 });
