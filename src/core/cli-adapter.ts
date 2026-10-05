@@ -5,7 +5,7 @@ import { handleError } from '../utils/error-handler.js';
 import { createSpinner } from '../utils/spinner.js';
 import { validatePropertyId } from '../validation/validators.js';
 import { confirm } from './confirm.js';
-import { GacliError } from './errors.js';
+import { formatZodIssues, GacliError } from './errors.js';
 import { type AnyOperation, cliPath, isMutating } from './operation.js';
 import { renderResult, toPlain } from './render.js';
 
@@ -13,9 +13,20 @@ export const GROUP_DESCRIPTIONS: Record<string, string> = {
   report: 'Google Analytics 4 Data API reporting commands',
   metadata: 'GA4 metadata operations (dimensions, metrics, compatibility)',
   audience: 'Audience export and recurring audience operations',
-  'audience export': 'Audience exports (one-off snapshots of audience members)',
-  'audience recurring': 'Recurring audience lists',
+  'audience export': 'Audience export operations',
+  'audience recurring': 'Recurring audience list operations',
   admin: 'GA4 Admin API operations',
+  'admin accounts': 'Manage GA4 accounts',
+  'admin properties': 'Manage GA4 properties',
+  'admin datastreams': 'Manage GA4 data streams',
+  'admin custom-dimensions': 'Manage GA4 custom dimensions',
+  'admin custom-metrics': 'Manage GA4 custom metrics',
+  'admin key-events': 'Manage GA4 key events',
+  'admin audiences': 'Manage GA4 audiences',
+  'admin access-bindings': 'Manage GA4 access bindings',
+  'admin firebase-links': 'Manage GA4 Firebase links',
+  'admin google-ads-links': 'Manage GA4 Google Ads links',
+  'admin bigquery-links': 'Manage GA4 BigQuery links',
 };
 
 interface FieldInfo {
@@ -66,15 +77,23 @@ export interface FlagSpec {
 }
 
 /** Single source for both commander mounting and `gacli schema`. */
+const RESERVED_KEYS = new Set(['fields', 'dryRun', 'yes', 'force']);
+
 export function describeFlags(op: AnyOperation): FlagSpec[] {
   const specs: FlagSpec[] = inputKeys(op).map((key) => {
+    if (RESERVED_KEYS.has(key))
+      throw new Error(`Input key "${key}" of ${op.id} is reserved for an injected flag`);
     const info = fieldInfo(op.input.shape[key]);
+    // A boolean that defaults to true can only be switched off: expose it as --no-<name> (commander defaults it).
+    const negatable = info.type === 'boolean' && info.defaultValue === true;
     return {
-      flag: (op.flags as Record<string, string> | undefined)?.[key] ?? generatedFlag(key, info),
+      flag:
+        (op.flags as Record<string, string> | undefined)?.[key] ??
+        (negatable ? `--no-${kebab(key)}` : generatedFlag(key, info)),
       key,
-      required: !info.optional && info.defaultValue === undefined && info.type !== 'boolean',
+      required: !info.optional && info.defaultValue === undefined,
       description: info.description ?? '',
-      defaultValue: info.defaultValue,
+      defaultValue: negatable ? undefined : info.defaultValue,
     };
   });
   const inject = (flag: string, key: string, description: string, hidden = false) =>
@@ -180,7 +199,15 @@ async function executeOperation(
   try {
     const globals = resolveGlobalOptions(command);
     const property = op.needsProperty ? validatePropertyId(globals.property) : '';
-    const input = op.input.parse(Object.fromEntries(inputKeys(op).map((k) => [k, opts[k]])));
+    const parsed = op.input.safeParse(Object.fromEntries(inputKeys(op).map((k) => [k, opts[k]])));
+    if (!parsed.success) {
+      const longFlag = new Map(describeFlags(op).map((f) => [f.key, f.flag.match(/--[\w-]+/)?.[0] ?? f.key]));
+      throw new GacliError(
+        'usage',
+        formatZodIssues(parsed.error.issues, (k) => longFlag.get(k) ?? k),
+      );
+    }
+    const input = parsed.data;
     const fields =
       typeof opts.fields === 'string'
         ? opts.fields

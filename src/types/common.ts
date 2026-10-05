@@ -58,6 +58,7 @@ export function resolveGlobalOptions(cmd: Command): GlobalOptions {
   const agent = detectAgent();
   // An explicit bad -f is a usage error; a stale env/config value must not break every command.
   if (opts.format && !isOutputFormat(opts.format)) {
+    setJsonErrors(!(process.stdout.isTTY && !agent && !isCI()));
     throw new GacliError('usage', `Invalid format "${opts.format}". Valid: ${OUTPUT_FORMATS.join(', ')}`);
   }
   const preferred =

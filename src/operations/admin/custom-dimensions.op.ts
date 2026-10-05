@@ -2,8 +2,8 @@ import type { protos } from '@google-analytics/admin';
 import { z } from 'zod';
 import { defineOperation } from '../../core/operation.js';
 import { getAdminClient } from '../../services/admin-api.service.js';
-import { withRetry } from '../../utils/retry.js';
 import { resourceName } from '../shared.js';
+import { adminApi, getOp, listOp, parentOf, removeOp, updateMask } from './_helpers.js';
 
 type ICustomDimension = protos.google.analytics.admin.v1alpha.ICustomDimension;
 
@@ -24,42 +24,23 @@ const columns = [
   { header: 'Scope', path: 'scope' },
 ];
 
-const api = (rpc: string) => ({ service: 'admin' as const, version: 'v1alpha' as const, rpc });
-
-export const listCustomDimensions = defineOperation({
+export const listCustomDimensions = listOp({
   id: 'admin.custom-dimensions.list',
   summary: 'List custom dimensions for a property',
-  category: 'read',
-  kind: 'resource',
-  needsProperty: true,
-  api: api('ListCustomDimensions'),
-  input: z.object({}),
-  output: z.array(customDimension),
+  rpc: 'ListCustomDimensions',
+  item: customDimension,
   columns,
-  run: async (_input, ctx) => {
-    const client = await getAdminClient();
-    const [items] = await withRetry(() =>
-      client.listCustomDimensions({ parent: `properties/${ctx.property}` }),
-    );
-    return (items ?? []) as z.infer<typeof customDimension>[];
-  },
+  call: async (c, ctx) => (await c.listCustomDimensions({ parent: parentOf('property', ctx.property) }))[0],
 });
 
-export const getCustomDimension = defineOperation({
+export const getCustomDimension = getOp({
   id: 'admin.custom-dimensions.get',
   summary: 'Get a custom dimension',
-  category: 'read',
-  kind: 'resource',
-  api: api('GetCustomDimension'),
-  input: z.object({ name: resourceName('Custom dimension') }),
-  flags: { name: '--name <resourceName>' },
-  output: customDimension,
+  rpc: 'GetCustomDimension',
+  label: 'Custom dimension',
+  item: customDimension,
   columns,
-  run: async ({ name }) => {
-    const client = await getAdminClient();
-    const [item] = await withRetry(() => client.getCustomDimension({ name }));
-    return item as z.infer<typeof customDimension>;
-  },
+  call: async (c, name) => (await c.getCustomDimension({ name }))[0],
 });
 
 export const createCustomDimension = defineOperation({
@@ -68,7 +49,7 @@ export const createCustomDimension = defineOperation({
   category: 'create',
   kind: 'resource',
   needsProperty: true,
-  api: api('CreateCustomDimension'),
+  api: adminApi('CreateCustomDimension'),
   input: z.object({
     parameterName: z.string().min(1).describe('Event parameter name'),
     displayName: z.string().min(1).describe('Display name'),
@@ -86,7 +67,7 @@ export const createCustomDimension = defineOperation({
   run: async (input, ctx) => {
     const client = await getAdminClient();
     const [item] = await client.createCustomDimension({
-      parent: `properties/${ctx.property}`,
+      parent: parentOf('property', ctx.property),
       customDimension: {
         parameterName: input.parameterName,
         displayName: input.displayName,
@@ -104,7 +85,7 @@ export const updateCustomDimension = defineOperation({
   summary: 'Update a custom dimension',
   category: 'update',
   kind: 'resource',
-  api: api('UpdateCustomDimension'),
+  api: adminApi('UpdateCustomDimension'),
   input: z.object({
     name: resourceName('Custom dimension'),
     displayName: z.string().optional().describe('New display name'),
@@ -117,41 +98,26 @@ export const updateCustomDimension = defineOperation({
   },
   output: customDimension,
   columns,
-  run: async (input) => {
+  run: async ({ name, ...changes }) => {
     const client = await getAdminClient();
-    const customDimension: ICustomDimension = { name: input.name };
-    const paths: string[] = [];
-    if (input.displayName) {
-      customDimension.displayName = input.displayName;
-      paths.push('display_name');
-    }
-    if (input.description !== undefined) {
-      customDimension.description = input.description;
-      paths.push('description');
-    }
+    // 1.x parity: an empty display name is not sent
+    const { body, paths } = updateMask(
+      { ...changes, displayName: changes.displayName || undefined },
+      { displayName: 'display_name', description: 'description' },
+    );
+    const customDimension: ICustomDimension = { name, ...body };
     const [item] = await client.updateCustomDimension({ customDimension, updateMask: { paths } });
     return item as z.infer<typeof customDimension>;
   },
 });
 
-export const archiveCustomDimension = defineOperation({
+export const archiveCustomDimension = removeOp({
   id: 'admin.custom-dimensions.archive',
   summary: 'Archive a custom dimension',
-  category: 'delete',
-  kind: 'resource',
-  api: api('ArchiveCustomDimension'),
-  input: z.object({ name: resourceName('Custom dimension') }),
-  flags: { name: '--name <resourceName>' },
-  output: z.object({ name: z.string(), archived: z.literal(true) }),
-  columns: [
-    { header: 'Status', path: 'archived', format: () => 'Archived' },
-    { header: 'Custom Dimension', path: 'name' },
-  ],
-  run: async ({ name }) => {
-    const client = await getAdminClient();
-    await client.archiveCustomDimension({ name });
-    return { name, archived: true as const };
-  },
+  rpc: 'ArchiveCustomDimension',
+  label: 'Custom Dimension',
+  verb: 'archive',
+  call: (c, name) => c.archiveCustomDimension({ name }),
 });
 
 export const customDimensionOps = [
