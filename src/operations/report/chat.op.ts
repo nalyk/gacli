@@ -59,6 +59,7 @@ export const reportChat = defineOperation({
       .describe('Session ID from a previous answer, to continue that conversation (omit to start a new one)'),
   }),
   flags: { question: '--question <text>', session: '--session <id>' },
+  positional: 'question',
   output: chatResult,
   columns: [
     { header: 'Response', path: 'text' },

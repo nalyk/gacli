@@ -20,7 +20,7 @@ const streamArg = z
   .regex(/^properties\/\d+\/dataStreams\/\d+$/, 'expected properties/<id>/dataStreams/<id>')
   .describe('Data stream resource name (properties/<id>/dataStreams/<id>)');
 
-export const listMeasurementSecrets = listOp({
+const listMeasurementSecretsBase = listOp({
   id: 'admin.measurement-secrets.list',
   summary: 'List Measurement Protocol secrets for a data stream',
   rpc: 'ListMeasurementProtocolSecrets',
@@ -31,6 +31,9 @@ export const listMeasurementSecrets = listOp({
   flags: { stream: '--stream <dataStreamName>' },
   call: async (c, _ctx, { stream }) => (await c.listMeasurementProtocolSecrets({ parent: stream }))[0],
 });
+
+// secretValue is a write credential for Measurement Protocol ingestion: not in the read-only MCP default.
+export const listMeasurementSecrets = { ...listMeasurementSecretsBase, sensitive: true };
 
 export const createMeasurementSecret = defineOperation({
   id: 'admin.measurement-secrets.create',

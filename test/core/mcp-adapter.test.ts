@@ -224,4 +224,21 @@ describe('MCP server generated from operations', () => {
     const r = await s.callTool('ga_admin_props_delete', { confirm: true });
     expect(r.result?.isError).toBe(true);
   });
+
+  it('keeps sensitive read operations out of the read-only default', () => {
+    const secretOp = defineOperation({
+      id: 'admin.secrets.list',
+      summary: 'List secrets',
+      category: 'read',
+      sensitive: true,
+      kind: 'resource',
+      input: z.object({}),
+      output: z.array(z.unknown()),
+      run: async () => [],
+    });
+    expect(exposedOperations([secretOp], {}).map((o) => o.id)).toEqual([]);
+    expect(exposedOperations([secretOp], { allowWrite: true }).map((o) => o.id)).toEqual([
+      'admin.secrets.list',
+    ]);
+  });
 });

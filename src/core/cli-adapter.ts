@@ -97,7 +97,8 @@ export function describeFlags(op: AnyOperation): FlagSpec[] {
         (op.flags as Record<string, string> | undefined)?.[key] ??
         (negatable ? `--no-${kebab(key)}` : generatedFlag(key, info)),
       key,
-      required: !info.optional && info.defaultValue === undefined,
+      // A positional alternative makes the flag optional for commander; zod still requires a value.
+      required: !info.optional && info.defaultValue === undefined && key !== op.positional,
       description: info.description ?? '',
       defaultValue: negatable ? undefined : info.defaultValue,
     };
@@ -127,6 +128,17 @@ function buildLeaf(op: AnyOperation, name: string): Command {
     if (spec.required) option.makeOptionMandatory();
     if (spec.hidden) option.hideHelp();
     cmd.addOption(option);
+  }
+  if (op.positional) {
+    cmd.argument(`[${kebab(op.positional)}]`, `Same as --${kebab(op.positional)}`);
+    cmd.action(async (value: string | undefined, opts: Record<string, unknown>, command: Command) =>
+      executeOperation(
+        op,
+        { ...opts, [op.positional as string]: opts[op.positional as string] ?? value },
+        command,
+      ),
+    );
+    return cmd;
   }
   cmd.action(async (opts: Record<string, unknown>, command: Command) => executeOperation(op, opts, command));
   return cmd;

@@ -100,7 +100,12 @@ function fromGrpc(code: number, err: Error): GacliError {
       return new GacliError(
         'auth',
         `Unauthenticated: ${msg}`,
-        o('Run `gacli auth login` or check your credentials.'),
+        // An env token wins over every other source, so `auth login` would not help.
+        o(
+          process.env.GACLI_ACCESS_TOKEN
+            ? 'GACLI_ACCESS_TOKEN was rejected (expired?): refresh it, or unset it to use other credentials.'
+            : 'Run `gacli auth login` or check your credentials.',
+        ),
       );
     default:
       return new GacliError('api', `API error (${code}): ${msg}`, o());
@@ -119,7 +124,10 @@ export function toGacliError(err: unknown): GacliError {
   if (err.message.startsWith('Could not load the default credentials')) {
     return new GacliError('auth', 'No credentials configured.', {
       cause: err,
-      hint: 'Run `gacli auth login`, set GOOGLE_APPLICATION_CREDENTIALS / `gacli config set credentials <sa.json>`, export GACLI_ACCESS_TOKEN, or run `gcloud auth application-default login`.',
+      hint:
+        'Run `gacli auth login`, set GOOGLE_APPLICATION_CREDENTIALS / `gacli config set credentials <sa.json>`, export GACLI_ACCESS_TOKEN, ' +
+        'or use gcloud ADC with the analytics scopes: `gcloud auth application-default login --scopes=https://www.googleapis.com/auth/analytics.readonly,https://www.googleapis.com/auth/cloud-platform` ' +
+        'then `gcloud auth application-default set-quota-project <project>`.',
     });
   }
   if (err.message.startsWith('No credentials configured')) {

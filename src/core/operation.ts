@@ -28,6 +28,10 @@ export interface OperationDef<I extends z.ZodObject = z.ZodObject, O = unknown> 
   idempotent?: boolean;
   api?: { service: 'data' | 'admin'; version: 'v1beta' | 'v1alpha'; rpc: string };
   needsProperty?: boolean;
+  /** Read operations that return secrets: kept out of the read-only MCP default. */
+  sensitive?: boolean;
+  /** Input key that may also be given as the command's single positional argument. */
+  positional?: Extract<keyof z.input<I>, string>;
   kind: OutputKind;
   input: I;
   output: z.ZodType<O>;
