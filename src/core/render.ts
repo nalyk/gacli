@@ -1,7 +1,7 @@
 import { formatOutput, formatReports } from '../formatters/index.js';
-import { formatJson } from '../formatters/json.formatter.js';
 import type { OutputFormat, ReportData } from '../types/common.js';
 import { GacliError } from './errors.js';
+import { toEnvelope } from './invoke.js';
 import type { Column, OperationDef } from './operation.js';
 
 export interface RenderOptions {
@@ -45,8 +45,12 @@ function projectReport(data: ReportData, fields?: string[]): ReportData {
   return { ...data, headers: fields, rows: data.rows.map((r) => idx.map((i) => r[i] ?? '')) };
 }
 
+const stringify = (value: unknown, pretty: boolean) => JSON.stringify(value, null, pretty ? 2 : undefined);
+
 function renderReport(data: ReportData, opts: RenderOptions): string {
-  return opts.format === 'json' ? formatJson(data, { pretty: opts.pretty }) : formatOutput(data, opts.format);
+  return opts.format === 'json'
+    ? stringify(toEnvelope({ kind: 'report' }, data), opts.pretty)
+    : formatOutput(data, opts.format);
 }
 
 function renderResource(columns: Column[] | undefined, result: unknown, opts: RenderOptions): string {
@@ -95,8 +99,7 @@ function renderStructured(result: unknown, items: unknown[], opts: RenderOptions
   if (opts.format === 'ndjson') {
     return items.length ? `${items.map((it) => JSON.stringify(it)).join('\n')}\n` : '';
   }
-  const envelope = Array.isArray(result) ? { rowCount: result.length, data: result } : { data: result };
-  return opts.pretty ? JSON.stringify(envelope, null, 2) : JSON.stringify(envelope);
+  return stringify(toEnvelope({ kind: 'resource' }, result), opts.pretty);
 }
 
 export function renderResult(
@@ -107,12 +110,11 @@ export function renderResult(
   switch (op.kind) {
     case 'report':
       return renderReport(projectReport(result as ReportData, opts.fields), opts);
-    case 'reports':
-      return formatReports(
-        (result as ReportData[]).map((r) => projectReport(r, opts.fields)),
-        opts.format,
-        op.reportLabel,
-      );
+    case 'reports': {
+      const reports = (result as ReportData[]).map((r) => projectReport(r, opts.fields));
+      if (opts.format === 'json') return stringify(toEnvelope(op, reports), opts.pretty);
+      return formatReports(reports, opts.format, op.reportLabel);
+    }
     case 'resource':
       return renderResource(op.columns, result, opts);
   }
