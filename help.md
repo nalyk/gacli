@@ -537,7 +537,7 @@ gacli via shell. Full guide and per-CLI install paths in
 
 ## Notes for AI usage
 
-- Auth priority: OAuth tokens > service account (`credentials` config / `GOOGLE_APPLICATION_CREDENTIALS` env var). Use `gacli auth status` to check which method is active.
+- Auth priority: OAuth tokens > `GOOGLE_APPLICATION_CREDENTIALS` env var > `credentials` config. Use `gacli auth status` to check which method is active.
 - Property ID is always numeric (e.g. `371981488`), never with `properties/` prefix on CLI.
 - Resource names in admin commands use full path: `properties/123/dataStreams/456`.
 - `--name` in admin get/update/delete always expects the full resource name.

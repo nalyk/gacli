@@ -110,7 +110,7 @@ Set credentials via one of:
 
 ### Auth priority
 
-OAuth tokens (if present) > service account file > environment variable.
+OAuth tokens (if present) > `GOOGLE_APPLICATION_CREDENTIALS` environment variable > `config set credentials` file.
 
 ### Managing auth
 
@@ -254,7 +254,7 @@ Stored in `~/.gacli/config.json`.
 | Variable | Default | Effect |
 |---|---|---|
 | `GA4_PROPERTY_ID` | — | Default property when neither `--property` nor `config.property` is set |
-| `GOOGLE_APPLICATION_CREDENTIALS` | — | Path to service-account JSON; lowest-priority auth source |
+| `GOOGLE_APPLICATION_CREDENTIALS` | — | Path to service-account JSON; used when no OAuth tokens exist, and takes precedence over `config.credentials` |
 | `GACLI_VERBOSE` | `0` | When `1`, error stack traces are printed alongside the human-readable error |
 | `GACLI_MAX_RETRIES` | `3` | Max retries on retriable gRPC errors (codes 8 quota, 14 unavailable). Other errors never retry |
 | `GACLI_RETRY_BASE_MS` | `500` | Base delay for exponential-backoff-with-jitter; capped at `base * 2^attempt` |
