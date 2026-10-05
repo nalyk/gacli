@@ -309,7 +309,7 @@ gacli admin properties list --account <accountId>
 gacli admin properties get                           # uses -p
 gacli admin properties create [options]
 gacli admin properties update [options]               # uses -p
-gacli admin properties delete                         # uses -p
+gacli admin properties delete --yes                         # uses -p
 ```
 
 **create options:**
@@ -333,7 +333,7 @@ gacli admin datastreams list                          # uses -p
 gacli admin datastreams get --name <resourceName>
 gacli admin datastreams create [options]              # uses -p
 gacli admin datastreams update --name <rn> --display-name <n>
-gacli admin datastreams delete --name <resourceName>
+gacli admin datastreams delete --name <resourceName> --yes
 ```
 
 **create options:**
@@ -355,7 +355,7 @@ gacli admin custom-dimensions list                    # uses -p
 gacli admin custom-dimensions get --name <rn>
 gacli admin custom-dimensions create [options]        # uses -p
 gacli admin custom-dimensions update --name <rn> [options]
-gacli admin custom-dimensions archive --name <rn>
+gacli admin custom-dimensions archive --name <rn> --yes
 ```
 
 **create options:**
@@ -378,7 +378,7 @@ gacli admin custom-metrics list                       # uses -p
 gacli admin custom-metrics get --name <rn>
 gacli admin custom-metrics create [options]           # uses -p
 gacli admin custom-metrics update --name <rn> [options]
-gacli admin custom-metrics archive --name <rn>
+gacli admin custom-metrics archive --name <rn> --yes
 ```
 
 **create options:**
@@ -402,7 +402,7 @@ gacli admin key-events list                           # uses -p
 gacli admin key-events get --name <rn>
 gacli admin key-events create [options]               # uses -p
 gacli admin key-events update --name <rn> [options]
-gacli admin key-events delete --name <rn>
+gacli admin key-events delete --name <rn> --yes
 ```
 
 **create options:**
@@ -425,7 +425,7 @@ gacli admin audiences list                            # uses -p
 gacli admin audiences get --name <rn>
 gacli admin audiences create [options]                # uses -p
 gacli admin audiences update --name <rn> [options]
-gacli admin audiences archive --name <rn>
+gacli admin audiences archive --name <rn> --yes
 ```
 
 **create options:**
@@ -448,7 +448,7 @@ gacli admin access-bindings list --parent <parent>
 gacli admin access-bindings get --name <rn>
 gacli admin access-bindings create --parent <p> --user <email> --roles <r...>
 gacli admin access-bindings update --name <rn> --roles <r...>
-gacli admin access-bindings delete --name <rn>
+gacli admin access-bindings delete --name <rn> --yes
 ```
 
 `--parent`: account or property resource name (e.g. `accounts/123` or `properties/456`).
@@ -462,7 +462,7 @@ Manage Firebase integrations.
 gacli admin firebase-links list                       # uses -p
 gacli admin firebase-links get --name <rn>
 gacli admin firebase-links create --project <projectId>  # uses -p
-gacli admin firebase-links delete --name <rn>
+gacli admin firebase-links delete --name <rn> --yes
 ```
 
 ## admin google-ads-links
@@ -474,7 +474,7 @@ gacli admin google-ads-links list                     # uses -p
 gacli admin google-ads-links get --name <rn>
 gacli admin google-ads-links create --customer-id <id>  # uses -p
 gacli admin google-ads-links update --name <rn> --ads-personalization-enabled <true|false>
-gacli admin google-ads-links delete --name <rn>
+gacli admin google-ads-links delete --name <rn> --yes
 ```
 
 ## admin bigquery-links
@@ -485,7 +485,7 @@ Manage BigQuery integrations.
 gacli admin bigquery-links list                       # uses -p
 gacli admin bigquery-links get --name <rn>
 gacli admin bigquery-links create --project <projectId> [--daily-export-enabled true] [--streaming-export-enabled false]  # uses -p
-gacli admin bigquery-links delete --name <rn>
+gacli admin bigquery-links delete --name <rn> --yes
 ```
 
 ---
