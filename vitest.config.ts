@@ -5,6 +5,8 @@ export default defineConfig({
     include: ['test/**/*.test.ts'],
     environment: 'node',
     globals: false,
+    // Several tests spawn node; under parallel load on slow FS (WSL) 5s is too tight.
+    testTimeout: 20_000,
     clearMocks: true,
     restoreMocks: true,
     mockReset: true,
