@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { Command } from 'commander';
-import { formatOutput } from '../../formatters/index.js';
+import { formatReports } from '../../formatters/index.js';
 import { batchRunReports } from '../../services/data-api.service.js';
 import { resolveGlobalOptions, writeOutput } from '../../types/common.js';
 import { handleError } from '../../utils/error-handler.js';
@@ -27,13 +27,7 @@ export function createBatchCommand(): Command {
         spinner.stop();
 
         const reports = Array.isArray(results) ? results : [results];
-        for (let i = 0; i < reports.length; i++) {
-          const output = formatOutput(reports[i], globalOpts.format);
-          if (reports.length > 1) {
-            console.log(`\n--- Report ${i + 1} ---`);
-          }
-          writeOutput(output, globalOpts);
-        }
+        writeOutput(formatReports(reports, globalOpts.format), globalOpts);
       } catch (error) {
         handleError(error);
       }

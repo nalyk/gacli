@@ -22,6 +22,34 @@ export function formatOutput(data: ReportData, format: OutputFormat): string {
   }
 }
 
+export function formatReports(reports: ReportData[], format: OutputFormat, label = 'Report'): string {
+  if (reports.length === 1) return formatOutput(reports[0], format);
+
+  if (format === 'json') {
+    return JSON.stringify(
+      reports.map((r) => JSON.parse(formatJson(r))),
+      null,
+      2,
+    );
+  }
+
+  if (format === 'ndjson') {
+    return reports
+      .map((r, i) =>
+        formatNdjson(r)
+          .split('\n')
+          .filter(Boolean)
+          .map((line) => JSON.stringify({ report: i + 1, ...JSON.parse(line) }))
+          .join('\n'),
+      )
+      .filter(Boolean)
+      .join('\n')
+      .concat('\n');
+  }
+
+  return reports.map((r, i) => `--- ${label} ${i + 1} ---\n${formatOutput(r, format)}`).join('\n\n');
+}
+
 export { formatChart } from './chart.formatter.js';
 export { formatCsv } from './csv.formatter.js';
 export { formatJson } from './json.formatter.js';

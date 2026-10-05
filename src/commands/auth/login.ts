@@ -52,8 +52,7 @@ async function runLogin(clientSecretFilePath?: string): Promise<void> {
   });
 
   logger.info('Open this URL in your browser to authenticate:\n');
-  console.log(authUrl);
-  console.log();
+  process.stderr.write(`${authUrl}\n\n`);
   logger.info('Waiting for authentication callback (timeout: 120s)...');
 
   try {

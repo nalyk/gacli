@@ -12,8 +12,7 @@ export function createSetCommand(): Command {
     .action((key: string, value: string) => {
       try {
         if (!(key in CONFIG_KEYS)) {
-          logger.error(`Unknown config key: ${key}\nValid keys: ${Object.keys(CONFIG_KEYS).join(', ')}`);
-          process.exit(1);
+          throw new Error(`Unknown config key: ${key}. Valid keys: ${Object.keys(CONFIG_KEYS).join(', ')}`);
         }
 
         setConfigValue(key, value);
