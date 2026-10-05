@@ -38,7 +38,9 @@ export const listProperties = listOp({
   item: property,
   columns: readColumns,
   call: async (c, _ctx, { account }) =>
-    (await c.listProperties({ filter: `parent:${parentOf('account', account)}` }))[0],
+    (
+      await c.listProperties({ filter: `parent:${parentOf('account', account.replace(/^accounts\//, ''))}` })
+    )[0],
 });
 
 export const getProperty = defineOperation({
