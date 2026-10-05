@@ -1,0 +1,7 @@
+Usage: gacli admin properties list [options]
+
+List GA4 properties under an account
+
+Options:
+  --account <accountId>  GA4 account ID
+  -h, --help             display help for command

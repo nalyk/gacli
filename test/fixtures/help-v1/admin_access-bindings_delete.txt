@@ -1,0 +1,7 @@
+Usage: gacli admin access-bindings delete [options]
+
+Delete an access binding
+
+Options:
+  --name <resourceName>  Access binding resource name
+  -h, --help             display help for command

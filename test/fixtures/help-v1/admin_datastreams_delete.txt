@@ -1,0 +1,7 @@
+Usage: gacli admin datastreams delete [options]
+
+Delete a data stream
+
+Options:
+  --name <resourceName>  Data stream resource name
+  -h, --help             display help for command

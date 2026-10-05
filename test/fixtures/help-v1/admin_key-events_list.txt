@@ -1,0 +1,6 @@
+Usage: gacli admin key-events list [options]
+
+List key events for a property
+
+Options:
+  -h, --help  display help for command

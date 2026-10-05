@@ -1,0 +1,7 @@
+Usage: gacli admin audiences get [options]
+
+Get an audience
+
+Options:
+  --name <resourceName>  Audience resource name
+  -h, --help             display help for command

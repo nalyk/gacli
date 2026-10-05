@@ -1,0 +1,9 @@
+Usage: gacli audience export query [options]
+
+Query an audience export to retrieve audience members
+
+Options:
+  --name <name>      Audience export resource name
+  --limit <number>   Maximum number of rows to return
+  --offset <number>  Row offset for pagination
+  -h, --help         display help for command

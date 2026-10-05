@@ -1,0 +1,6 @@
+Usage: gacli admin datastreams list [options]
+
+List data streams for a property
+
+Options:
+  -h, --help  display help for command

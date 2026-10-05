@@ -1,0 +1,11 @@
+Usage: gacli admin key-events create [options]
+
+Create a key event
+
+Options:
+  --event-name <eventName>    Event name
+  --counting-method <method>  Counting method (ONCE_PER_EVENT, ONCE_PER_SESSION)
+                              (default: "ONCE_PER_EVENT")
+  --default-value <value>     Default value for the key event
+  --currency-code <code>      Currency code for the default value
+  -h, --help                  display help for command

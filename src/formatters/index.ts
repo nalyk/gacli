@@ -10,7 +10,7 @@ export function formatOutput(data: ReportData, format: OutputFormat): string {
     case 'table':
       return formatTable(data);
     case 'json':
-      return formatJson(data);
+      return formatJson(data, { pretty: !!process.stdout.isTTY });
     case 'ndjson':
       return formatNdjson(data);
     case 'csv':
@@ -29,7 +29,7 @@ export function formatReports(reports: ReportData[], format: OutputFormat, label
     return JSON.stringify(
       reports.map((r) => JSON.parse(formatJson(r))),
       null,
-      2,
+      process.stdout.isTTY ? 2 : undefined,
     );
   }
 

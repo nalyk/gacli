@@ -1,9 +1,8 @@
 import { spawn } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-
-const BIN = resolve(process.cwd(), 'dist/index.js');
+import { BIN, skipWithoutDist } from '../helpers/dist.js';
 
 interface JsonRpcResponse {
   jsonrpc: '2.0';
@@ -37,9 +36,7 @@ async function rpc(messages: object[]): Promise<JsonRpcResponse[]> {
   });
 }
 
-const builtBin = existsSync(BIN);
-
-describe.skipIf(!builtBin)('mcp serve (stdio smoke)', () => {
+describe.skipIf(skipWithoutDist)('mcp serve (stdio smoke)', () => {
   it('responds to initialize handshake', async () => {
     const [resp] = await rpc([
       {

@@ -1,0 +1,7 @@
+Usage: gacli auth login [options]
+
+Authenticate with Google via OAuth 2.0
+
+Options:
+  --client-secret-file <path>  Path to OAuth client secret JSON file
+  -h, --help                   display help for command

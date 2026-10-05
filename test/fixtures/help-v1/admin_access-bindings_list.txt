@@ -1,0 +1,8 @@
+Usage: gacli admin access-bindings list [options]
+
+List access bindings for an account or property
+
+Options:
+  --parent <parent>  Account or property resource name (e.g., accounts/123 or
+                     properties/456)
+  -h, --help         display help for command

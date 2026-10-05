@@ -1,0 +1,7 @@
+Usage: gacli admin key-events get [options]
+
+Get a key event
+
+Options:
+  --name <resourceName>  Key event resource name
+  -h, --help             display help for command

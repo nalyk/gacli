@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../../src/services/config.service.js', () => ({
   getConfig: vi.fn(),
@@ -20,6 +20,31 @@ function globalsFrom(args: string[]) {
   program.parse(['node', 'gacli', ...args, 'x']);
   return captured;
 }
+
+const AGENT_VARS = [
+  'CLAUDECODE',
+  'CODEX_THREAD_ID',
+  'CURSOR_AGENT',
+  'AI_AGENT',
+  'GACLI_AGENT',
+  'CI',
+  'GACLI_FORMAT',
+];
+
+function setStdoutTTY(value: boolean) {
+  Object.defineProperty(process.stdout, 'isTTY', { value, configurable: true });
+}
+
+const originalTTY = process.stdout.isTTY;
+
+beforeEach(() => {
+  for (const v of AGENT_VARS) vi.stubEnv(v, '');
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+  setStdoutTTY(originalTTY);
+});
 
 describe('resolveGlobalOptions format', () => {
   beforeEach(() => mockedGetConfig.mockReturnValue({}));
@@ -42,13 +67,41 @@ describe('resolveGlobalOptions format', () => {
   it('warns and falls back to table when the configured format is invalid', async () => {
     const { logger } = await import('../../src/utils/logger.js');
     const warn = vi.spyOn(logger, 'warn').mockImplementation(() => {});
+    setStdoutTTY(true);
     mockedGetConfig.mockReturnValue({ format: 'xml' as never });
     expect(globalsFrom([])?.format).toBe('table');
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('Ignoring invalid config format "xml"'));
   });
 
-  it('defaults to table', () => {
+  it('defaults to table on an interactive terminal', () => {
+    setStdoutTTY(true);
     expect(globalsFrom([])?.format).toBe('table');
+  });
+
+  it('defaults to json when stdout is not a TTY', () => {
+    setStdoutTTY(false);
+    expect(globalsFrom([])?.format).toBe('json');
+  });
+
+  it('defaults to json when an agent is detected, even on a TTY', () => {
+    setStdoutTTY(true);
+    vi.stubEnv('CLAUDECODE', '1');
+    const g = globalsFrom([]);
+    expect(g?.format).toBe('json');
+    expect(g?.agent).toBe('claude-code');
+  });
+
+  it('GACLI_FORMAT beats config', () => {
+    vi.stubEnv('GACLI_FORMAT', 'csv');
+    mockedGetConfig.mockReturnValue({ format: 'json' });
+    expect(globalsFrom([])?.format).toBe('csv');
+  });
+
+  it('an explicit -f beats GACLI_FORMAT and records it', () => {
+    vi.stubEnv('GACLI_FORMAT', 'csv');
+    const g = globalsFrom(['-f', 'ndjson']);
+    expect(g?.format).toBe('ndjson');
+    expect(g?.formatExplicit).toBe(true);
   });
 });
 

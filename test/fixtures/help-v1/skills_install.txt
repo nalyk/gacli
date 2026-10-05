@@ -1,0 +1,13 @@
+Usage: gacli skills install [options]
+
+Install the gacli skill into one or more AI CLI agents
+
+Options:
+  --agent <agent>  Target agent: claude, codex, qwen, gemini, or all
+  --scope <scope>  Install scope: user (default), project, or a custom path
+                   (default: "user")
+  --name <name>    Installed skill directory name (default: "gacli")
+  --dry-run        Show what would happen without writing anything
+  --force          Overwrite an existing install
+  --no-detect      Skip auto-detection prompts; require --agent
+  -h, --help       display help for command

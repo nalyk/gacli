@@ -1,0 +1,10 @@
+Usage: gacli admin properties update [options]
+
+Update a GA4 property
+
+Options:
+  --display-name <name>           New display name
+  --time-zone <timeZone>          New reporting time zone
+  --currency-code <code>          New currency code
+  --industry-category <category>  New industry category
+  -h, --help                      display help for command

@@ -1,0 +1,8 @@
+Usage: gacli skills path [options]
+
+Print the install path gacli would use for a given agent + scope
+
+Options:
+  --agent <agent>  Target agent: claude, codex, qwen, gemini
+  --scope <scope>  Scope: user, project, or a custom path (default: "user")
+  -h, --help       display help for command

@@ -1,0 +1,10 @@
+Usage: gacli admin key-events update [options]
+
+Update a key event
+
+Options:
+  --name <resourceName>       Key event resource name
+  --counting-method <method>  Counting method (ONCE_PER_EVENT, ONCE_PER_SESSION)
+  --default-value <value>     Default value for the key event
+  --currency-code <code>      Currency code for the default value
+  -h, --help                  display help for command

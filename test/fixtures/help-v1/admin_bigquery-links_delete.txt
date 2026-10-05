@@ -1,0 +1,7 @@
+Usage: gacli admin bigquery-links delete [options]
+
+Delete a BigQuery link
+
+Options:
+  --name <resourceName>  BigQuery link resource name
+  -h, --help             display help for command

@@ -1,0 +1,6 @@
+Usage: gacli auth status [options]
+
+Show active authentication method
+
+Options:
+  -h, --help  display help for command

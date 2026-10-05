@@ -1,0 +1,7 @@
+Usage: gacli admin firebase-links create [options]
+
+Create a Firebase link
+
+Options:
+  --project <projectId>  Firebase project ID or resource name
+  -h, --help             display help for command

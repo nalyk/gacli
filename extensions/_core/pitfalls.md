@@ -47,9 +47,10 @@ The non-obvious failure modes a fresh AI agent will hit. Read once.
 
 ## Pipeline / shape
 
-14. **Every result is `ReportData`** (`{headers, rows, rowCount}`). Even
-    "Deleted X" responses get coerced into a 1×N row. Formatters depend on
-    this. `gacli ... -f json` always returns this shape.
+14. **JSON shape depends on the operation kind** — check `gacli schema <command>`
+    (`.operations[].output`). Reports: `{rowCount, data: [{<dim/metric>: "<string>"}], metadata?}`.
+    Resource lists: `{rowCount, data: [<API object>]}` (camelCase API fields, typed values);
+    single resources: `{data: <API object>}`. Use `--fields a,b.c` to project.
 15. **`metadata check-compatibility` BEFORE exotic combos.** Mixing
     user-scope dimensions with session-scope metrics often returns sparse
     or empty data. Validate first: `gacli metadata check-compatibility -p <P>

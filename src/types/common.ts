@@ -1,5 +1,7 @@
 import { writeFileSync } from 'node:fs';
 import type { Command } from 'commander';
+import { detectAgent, isCI, isInteractive } from '../core/agent.js';
+import { GacliError, setJsonErrors } from '../core/errors.js';
 import { getConfig } from '../services/config.service.js';
 import { logger } from '../utils/logger.js';
 
@@ -16,6 +18,10 @@ export interface GlobalOptions {
   output?: string;
   noColor: boolean;
   verbose: boolean;
+  /** true when the user chose the format (-f, GACLI_FORMAT or config) rather than auto-detection */
+  formatExplicit: boolean;
+  interactive: boolean;
+  agent?: string;
 }
 
 export interface ReportData {
@@ -28,10 +34,20 @@ export interface ReportData {
 export function addGlobalOptions(program: Command): Command {
   return program
     .option('-p, --property <id>', 'GA4 property ID')
-    .option('-f, --format <format>', 'Output format: table, json, ndjson, csv, chart (default: table)')
+    .option(
+      '-f, --format <format>',
+      'Output format: table, json, ndjson, csv, chart (default: table on a terminal, json when piped or run by an agent)',
+    )
     .option('-o, --output <file>', 'Write output to file')
     .option('--no-color', 'Disable colored output')
     .option('-v, --verbose', 'Enable verbose logging');
+}
+
+function validOrWarn(value: string | undefined, source: string): OutputFormat | undefined {
+  if (!value) return undefined;
+  if (isOutputFormat(value)) return value;
+  logger.warn(`Ignoring invalid ${source} "${value}". Valid: ${OUTPUT_FORMATS.join(', ')}`);
+  return undefined;
 }
 
 export function resolveGlobalOptions(cmd: Command): GlobalOptions {
@@ -39,16 +55,18 @@ export function resolveGlobalOptions(cmd: Command): GlobalOptions {
   const config = getConfig();
 
   const property = opts.property || config.property || process.env.GA4_PROPERTY_ID || '';
-  // An explicit bad -f is a usage error; a stale config value must not break every command.
+  const agent = detectAgent();
+  // An explicit bad -f is a usage error; a stale env/config value must not break every command.
   if (opts.format && !isOutputFormat(opts.format)) {
-    throw new Error(`Invalid format "${opts.format}". Valid: ${OUTPUT_FORMATS.join(', ')}`);
+    throw new GacliError('usage', `Invalid format "${opts.format}". Valid: ${OUTPUT_FORMATS.join(', ')}`);
   }
-  let configFormat = config.format;
-  if (configFormat && !isOutputFormat(configFormat)) {
-    logger.warn(`Ignoring invalid config format "${configFormat}". Valid: ${OUTPUT_FORMATS.join(', ')}`);
-    configFormat = undefined;
-  }
-  const format = opts.format || configFormat || 'table';
+  const preferred =
+    opts.format ||
+    validOrWarn(process.env.GACLI_FORMAT, 'GACLI_FORMAT') ||
+    validOrWarn(config.format, 'config format');
+  // Auto: humans at a terminal get tables; pipes, CI and agents get JSON.
+  const format: OutputFormat = preferred || (process.stdout.isTTY && !agent && !isCI() ? 'table' : 'json');
+  setJsonErrors(format === 'json' || format === 'ndjson');
   // commander stores `--no-color` as `color: false` (default true), never as `noColor`
   const noColor = opts.color === false || (config.noColor ?? false);
   const verbose = opts.verbose ?? config.verbose ?? false;
@@ -61,7 +79,16 @@ export function resolveGlobalOptions(cmd: Command): GlobalOptions {
     logger.setNoColor(true);
   }
 
-  return { property, format: format as OutputFormat, output, noColor, verbose };
+  return {
+    property,
+    format,
+    output,
+    noColor,
+    verbose,
+    formatExplicit: !!preferred,
+    interactive: isInteractive(),
+    agent,
+  };
 }
 
 export function writeOutput(content: string, options: GlobalOptions): void {

@@ -1,0 +1,10 @@
+Usage: gacli metadata get [options]
+
+Get metadata (dimensions and metrics) for a GA4 property
+
+Options:
+  --type <type>    Type of metadata to retrieve (dims, metrics, all) (default:
+                   "all")
+  --search <term>  Filter results by name or description
+  --custom-only    Show only custom dimensions/metrics
+  -h, --help       display help for command

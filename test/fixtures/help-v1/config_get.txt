@@ -1,0 +1,10 @@
+Usage: gacli config get [options] <key>
+
+Get a configuration value
+
+Arguments:
+  key         Config key (credentials, property, format, noColor, verbose,
+              oauthClientSecretFile)
+
+Options:
+  -h, --help  display help for command

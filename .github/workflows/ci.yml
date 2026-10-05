@@ -20,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node: ['22', '24']
+        node: ['22', '24', '26']
     steps:
       - uses: actions/checkout@v6
 
@@ -42,11 +42,12 @@ jobs:
       - name: Type-check
         run: pnpm type-check
 
-      - name: Test
-        run: pnpm test
-
+      # Build first: CLI e2e tests (help-compat, schema, mcp-smoke) run against dist/.
       - name: Build
         run: pnpm build
+
+      - name: Test
+        run: pnpm test
 
       - name: Verify built bin executes
         run: node dist/index.js --version

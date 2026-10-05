@@ -1,0 +1,6 @@
+Usage: gacli admin custom-metrics list [options]
+
+List custom metrics for a property
+
+Options:
+  -h, --help  display help for command

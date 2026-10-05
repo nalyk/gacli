@@ -54,19 +54,19 @@
     "lint:fix": "biome check --write src/ test/",
     "format": "biome format --write src/ test/",
     "verify:skills": "node scripts/verify-skills.mjs",
-    "verify": "pnpm lint && pnpm type-check && pnpm test && pnpm verify:skills && pnpm build",
+    "verify": "pnpm lint && pnpm type-check && pnpm build && pnpm test && pnpm verify:skills",
     "prepublishOnly": "pnpm verify",
     "publint": "pnpm dlx publint"
   },
   "dependencies": {
     "@google-analytics/admin": "^10.1.1",
     "@google-analytics/data": "^7.2.1",
-    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@modelcontextprotocol/sdk": "^1.32.1",
     "cli-table3": "^0.6.5",
-    "commander": "^14.0.0",
+    "commander": "^15.0.0",
     "google-auth-library": "^11.1.0",
     "ora": "^9.4.0",
-    "zod": "^3.23.0"
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.13",
@@ -85,7 +85,7 @@
     "vitest": "^4.1.5"
   },
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=22.12.0"
   },
   "packageManager": "pnpm@10.29.3"
 }

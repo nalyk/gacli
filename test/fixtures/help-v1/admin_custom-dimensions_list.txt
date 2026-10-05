@@ -1,0 +1,6 @@
+Usage: gacli admin custom-dimensions list [options]
+
+List custom dimensions for a property
+
+Options:
+  -h, --help  display help for command

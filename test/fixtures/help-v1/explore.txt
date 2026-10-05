@@ -1,0 +1,6 @@
+Usage: gacli explore [options]
+
+Interactive REPL to browse GA4 metrics and dimensions for a property
+
+Options:
+  -h, --help  display help for command

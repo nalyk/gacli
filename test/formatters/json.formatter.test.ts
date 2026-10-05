@@ -120,3 +120,11 @@ describe('formatJson', () => {
     expect(parsed.data[999]).toEqual({ metric: 'v999', dimension: 'd999' });
   });
 });
+
+describe('formatJson compact mode', () => {
+  it('emits a single line when pretty is false', () => {
+    const out = formatJson({ headers: ['a'], rows: [['1']], rowCount: 1 }, { pretty: false });
+    expect(out).not.toContain('\n');
+    expect(JSON.parse(out).rowCount).toBe(1);
+  });
+});

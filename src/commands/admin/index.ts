@@ -3,7 +3,6 @@ import { createAccessBindingsCommand } from './access-bindings.js';
 import { createAccountsCommand } from './accounts.js';
 import { createAudiencesCommand } from './audiences.js';
 import { createBigQueryLinksCommand } from './bigquery-links.js';
-import { createCustomDimensionsCommand } from './custom-dimensions.js';
 import { createCustomMetricsCommand } from './custom-metrics.js';
 import { createDataStreamsCommand } from './datastreams.js';
 import { createFirebaseLinksCommand } from './firebase-links.js';
@@ -17,7 +16,6 @@ export function createAdminCommand(): Command {
   cmd.addCommand(createAccountsCommand());
   cmd.addCommand(createPropertiesCommand());
   cmd.addCommand(createDataStreamsCommand());
-  cmd.addCommand(createCustomDimensionsCommand());
   cmd.addCommand(createCustomMetricsCommand());
   cmd.addCommand(createKeyEventsCommand());
   cmd.addCommand(createAudiencesCommand());

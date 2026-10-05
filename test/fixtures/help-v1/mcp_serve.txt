@@ -1,0 +1,8 @@
+Usage: gacli mcp serve [options]
+
+Start an MCP server over stdio. Connect from Claude Desktop, Cursor, Cline, etc.
+Tools: gacli_report_run, gacli_report_realtime, gacli_metadata,
+gacli_check_compatibility.
+
+Options:
+  -h, --help  display help for command

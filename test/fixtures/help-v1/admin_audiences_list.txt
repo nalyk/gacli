@@ -1,0 +1,6 @@
+Usage: gacli admin audiences list [options]
+
+List audiences for a property
+
+Options:
+  -h, --help  display help for command

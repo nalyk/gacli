@@ -1,0 +1,12 @@
+Usage: gacli skills uninstall [options]
+
+Remove a previously installed gacli skill
+
+Options:
+  --agent <agent>  Target agent: claude, codex, qwen, gemini, or all
+  --scope <scope>  Scope: user, project, or a custom path (default: "user")
+  --name <name>    Skill directory name (default: "gacli")
+  --all            Uninstall every detected gacli install across all agents and
+                   scopes
+  --dry-run        Show what would happen without removing anything
+  -h, --help       display help for command

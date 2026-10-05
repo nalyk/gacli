@@ -1,0 +1,7 @@
+Usage: gacli audience recurring get [options]
+
+Get details of a recurring audience list
+
+Options:
+  --name <name>  Recurring audience list resource name
+  -h, --help     display help for command

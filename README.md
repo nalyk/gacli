@@ -127,12 +127,14 @@ Scopes: `analytics.readonly`, `analytics.edit`.
 | Flag | Description |
 |------|-------------|
 | `-p, --property <id>` | GA4 property ID (overrides config/env) |
-| `-f, --format <fmt>` | `table` (default), `json`, `ndjson`, `csv`, `chart` |
+| `-f, --format <fmt>` | `table`, `json`, `ndjson`, `csv`, `chart`. Default: `table` on a terminal, compact `json` when piped / in CI / under an AI agent (`GACLI_FORMAT` env overrides) |
 | `-o, --output <file>` | Write output to file |
 | `--no-color` | Disable colors (`NO_COLOR` honoured; colour off when piped unless `FORCE_COLOR`) |
 | `-v, --verbose` | Verbose logging |
 
 Property ID resolution: `--property` > `config.property` > `GA4_PROPERTY_ID` env var.
+
+Every API operation also accepts `--fields a,b.c` (output projection); mutations accept `--dry-run`; deletes/archives need `-y, --yes` when not interactive. Exit codes: `0` ok, `1` API, `2` usage, `3` auth, `4` needs `--yes`, `5` not found, `6` quota. `gacli schema` describes every operation as JSON for scripts and AI agents.
 
 ## Quick start
 

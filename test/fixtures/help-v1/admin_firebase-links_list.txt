@@ -1,0 +1,6 @@
+Usage: gacli admin firebase-links list [options]
+
+List Firebase links for a property
+
+Options:
+  -h, --help  display help for command

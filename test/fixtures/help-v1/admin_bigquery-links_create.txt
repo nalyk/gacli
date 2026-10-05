@@ -1,0 +1,11 @@
+Usage: gacli admin bigquery-links create [options]
+
+Create a BigQuery link
+
+Options:
+  --project <projectId>                 Google Cloud project ID
+  --daily-export-enabled <enabled>      Enable daily export (true/false)
+                                        (default: "true")
+  --streaming-export-enabled <enabled>  Enable streaming export (true/false)
+                                        (default: "false")
+  -h, --help                            display help for command

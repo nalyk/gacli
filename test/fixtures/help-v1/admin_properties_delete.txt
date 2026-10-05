@@ -1,0 +1,6 @@
+Usage: gacli admin properties delete [options]
+
+Delete a GA4 property
+
+Options:
+  -h, --help  display help for command

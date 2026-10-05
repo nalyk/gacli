@@ -1,0 +1,10 @@
+Usage: gacli admin custom-metrics update [options]
+
+Update a custom metric
+
+Options:
+  --name <resourceName>         Custom metric resource name
+  --display-name <displayName>  New display name
+  --description <description>   New description
+  --measurement-unit <unit>     New measurement unit
+  -h, --help                    display help for command

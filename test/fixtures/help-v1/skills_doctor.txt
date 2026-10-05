@@ -1,0 +1,6 @@
+Usage: gacli skills doctor [options]
+
+Detect installed AI CLI agents and report skill-install health
+
+Options:
+  -h, --help  display help for command

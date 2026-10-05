@@ -1,0 +1,7 @@
+Usage: gacli admin google-ads-links get [options]
+
+Get a Google Ads link
+
+Options:
+  --name <resourceName>  Google Ads link resource name
+  -h, --help             display help for command

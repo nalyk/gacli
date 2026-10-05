@@ -1,0 +1,8 @@
+Usage: gacli metadata check-compatibility [options]
+
+Check compatibility of dimensions and metrics
+
+Options:
+  -m, --metrics <metrics...>        Metrics to check compatibility for
+  -d, --dimensions <dimensions...>  Dimensions to check compatibility for
+  -h, --help                        display help for command

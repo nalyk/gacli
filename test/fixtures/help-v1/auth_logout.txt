@@ -1,0 +1,7 @@
+Usage: gacli auth logout [options]
+
+Remove saved OAuth tokens
+
+Options:
+  --revoke    Revoke the token at Google before deleting
+  -h, --help  display help for command

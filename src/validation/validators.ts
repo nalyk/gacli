@@ -1,27 +1,20 @@
-import { ZodError, type ZodSchema } from 'zod';
-import { logger } from '../utils/logger.js';
+import type { z } from 'zod';
+import { GacliError } from '../core/errors.js';
 
-export function validate<T>(schema: ZodSchema<T>, data: unknown): T {
-  try {
-    return schema.parse(data);
-  } catch (err) {
-    if (err instanceof ZodError) {
-      const messages = err.errors.map((e) => `  ${e.path.join('.')}: ${e.message}`);
-      logger.error('Validation failed:');
-      for (const m of messages) {
-        console.error(m);
-      }
-      process.exit(1);
-    }
-    throw err;
-  }
+// Throws ZodError; handleError maps it to a usage error (exit 2).
+export function validate<T>(schema: z.ZodType<T>, data: unknown): T {
+  return schema.parse(data);
 }
 
 export function validatePropertyId(property: string): string {
   if (!property) {
-    logger.error('Property ID is required. Use -p <id> or set via: gacli config set property <id>');
-    process.exit(1);
+    throw new GacliError('usage', 'Property ID is required.', {
+      hint: 'Use -p <id> or set it via: gacli config set property <id>',
+    });
   }
-  // Strip "properties/" prefix if present
-  return property.replace(/^properties\//, '');
+  const id = property.replace(/^properties\//, '');
+  if (!/^\d+$/.test(id)) {
+    throw new GacliError('usage', `Invalid property ID "${property}": expected digits`);
+  }
+  return id;
 }

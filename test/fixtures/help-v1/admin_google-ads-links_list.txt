@@ -1,0 +1,6 @@
+Usage: gacli admin google-ads-links list [options]
+
+List Google Ads links for a property
+
+Options:
+  -h, --help  display help for command

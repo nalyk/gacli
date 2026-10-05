@@ -1,0 +1,10 @@
+Usage: gacli admin custom-dimensions create [options]
+
+Create a custom dimension
+
+Options:
+  --parameter-name <parameterName>  Event parameter name
+  --display-name <displayName>      Display name
+  --description <description>       Description of the custom dimension
+  --scope <scope>                   Dimension scope (EVENT, USER, ITEM)
+  -h, --help                        display help for command

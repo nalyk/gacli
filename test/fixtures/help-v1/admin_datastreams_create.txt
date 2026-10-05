@@ -1,0 +1,13 @@
+Usage: gacli admin datastreams create [options]
+
+Create a data stream
+
+Options:
+  --type <streamType>           Data stream type (WEB_DATA_STREAM,
+                                ANDROID_APP_DATA_STREAM, IOS_APP_DATA_STREAM)
+  --display-name <name>         Display name for the data stream
+  --uri <uri>                   Web stream URI (for WEB_DATA_STREAM)
+  --package-name <packageName>  Android package name (for
+                                ANDROID_APP_DATA_STREAM)
+  --bundle-id <bundleId>        iOS bundle ID (for IOS_APP_DATA_STREAM)
+  -h, --help                    display help for command
