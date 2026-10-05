@@ -10,7 +10,7 @@ import type {
   RunReportParams,
 } from '../types/data-api.js';
 import { withRetry } from '../utils/retry.js';
-import { getAuthClientOptions } from './auth.service.js';
+import { ensureCredentials, getAuthClientOptions } from './auth.service.js';
 
 // Path aliases — protos namespace is deeply nested; alias for readability at use sites.
 type IRunReportRequest = protos.google.analytics.data.v1beta.IRunReportRequest;
@@ -54,6 +54,7 @@ let alphaClient: v1alpha.AlphaAnalyticsDataClient | null = null;
 // SDKs are imported on first use so `--help`, `config`, `auth` etc. never pay the gRPC load cost.
 async function getClient(): Promise<BetaAnalyticsDataClient> {
   if (!betaClient) {
+    await ensureCredentials();
     const { BetaAnalyticsDataClient } = await import('@google-analytics/data');
     betaClient = new BetaAnalyticsDataClient(getAuthClientOptions() as unknown as ClientCtor);
   }
@@ -62,6 +63,7 @@ async function getClient(): Promise<BetaAnalyticsDataClient> {
 
 async function getAlphaClient(): Promise<v1alpha.AlphaAnalyticsDataClient> {
   if (!alphaClient) {
+    await ensureCredentials();
     const { v1alpha } = await import('@google-analytics/data');
     alphaClient = new v1alpha.AlphaAnalyticsDataClient(getAuthClientOptions() as unknown as AlphaClientCtor);
   }

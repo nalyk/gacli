@@ -1,4 +1,5 @@
 import { GoogleAuth, OAuth2Client } from 'google-auth-library';
+import { GacliError } from '../core/errors.js';
 import { getConfig } from './config.service.js';
 import { loadOAuthTokens, saveOAuthTokens } from './oauth.service.js';
 
@@ -67,6 +68,44 @@ export function getActiveAuthMode(): 'oauth' | 'service-account' {
   return tokens ? 'oauth' : 'service-account';
 }
 
+let credentialsReady: Promise<void> | null = null;
+
+/**
+ * Load key files / ADC up front. gax builds one promise per RPC from a shared setup promise and only
+ * the called one is awaited, so a credential failure inside the SDK becomes an unhandled rejection
+ * (which kills a long-running MCP server). Failing here keeps it on the awaited path.
+ */
+export function ensureCredentials(): Promise<void> {
+  if (!credentialsReady) {
+    const opts = getAuthClientOptions();
+    const ready =
+      'auth' in opts
+        ? opts.auth.getClient().then(
+            () => undefined,
+            (err: unknown) => {
+              // ADC's own "Could not load the default credentials" keeps its dedicated mapping in toGacliError.
+              if (err instanceof Error && err.message.startsWith('Could not load the default credentials'))
+                throw err;
+              throw new GacliError(
+                'auth',
+                `Cannot load credentials: ${err instanceof Error ? err.message : String(err)}`,
+                {
+                  cause: err,
+                  hint: 'Check GOOGLE_APPLICATION_CREDENTIALS / `gacli config get credentials`, or run `gacli auth login`.',
+                },
+              );
+            },
+          )
+        : Promise.resolve();
+    credentialsReady = ready;
+    ready.catch(() => {
+      if (credentialsReady === ready) credentialsReady = null;
+    });
+  }
+  return credentialsReady;
+}
+
 export function resetAuth(): void {
+  credentialsReady = null;
   cachedAuthOptions = null;
 }
