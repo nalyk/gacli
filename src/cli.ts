@@ -8,6 +8,7 @@ import { createMcpCommand } from './commands/mcp/index.js';
 import { createMetadataCommand } from './commands/metadata/index.js';
 import { createReportCommand } from './commands/report/index.js';
 import { createSkillsCommand } from './commands/skills/index.js';
+import { finalizeProgram, runProgram } from './core/cli-adapter.js';
 import { addGlobalOptions } from './types/common.js';
 import { VERSION } from './version.js';
 
@@ -26,4 +27,5 @@ program.addCommand(createExploreCommand());
 program.addCommand(createMcpCommand());
 program.addCommand(createSkillsCommand());
 
-program.parse();
+finalizeProgram(program);
+await runProgram(program);
