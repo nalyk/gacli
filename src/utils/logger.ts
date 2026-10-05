@@ -7,6 +7,10 @@ class Logger {
     this.verbose = v;
   }
 
+  isVerbose(): boolean {
+    return this.verbose;
+  }
+
   setNoColor(noColor: boolean): void {
     setColorEnabled(!noColor);
   }

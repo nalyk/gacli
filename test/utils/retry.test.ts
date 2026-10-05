@@ -73,4 +73,14 @@ describe('withRetry', () => {
     await assertion;
     expect(fn).toHaveBeenCalledTimes(3); // initial + 2 retries
   });
+
+  it('does NOT retry daily-quota exhaustion', async () => {
+    const fn = vi
+      .fn()
+      .mockRejectedValue(
+        new Error('8 RESOURCE_EXHAUSTED: Exhausted property tokens per day for a project per property'),
+      );
+    await expect(withRetry(fn, { maxRetries: 3, baseDelayMs: 0 })).rejects.toThrow(/per day/);
+    expect(fn).toHaveBeenCalledTimes(1);
+  });
 });

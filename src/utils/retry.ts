@@ -1,3 +1,4 @@
+import { getGrpcCode, isDailyQuotaError } from './grpc-error.js';
 import { logger } from './logger.js';
 
 const RETRYABLE_GRPC_CODES = new Set([
@@ -14,12 +15,6 @@ export interface RetryOptions {
   label?: string;
 }
 
-function extractGrpcCode(err: unknown): number | undefined {
-  if (!(err instanceof Error)) return undefined;
-  const m = err.message.match(/^(\d+)\s/);
-  return m ? Number.parseInt(m[1], 10) : undefined;
-}
-
 const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
 
 export async function withRetry<T>(fn: () => Promise<T>, opts: RetryOptions = {}): Promise<T> {
@@ -33,8 +28,8 @@ export async function withRetry<T>(fn: () => Promise<T>, opts: RetryOptions = {}
       return await fn();
     } catch (err) {
       lastErr = err;
-      const code = extractGrpcCode(err);
-      const retriable = code !== undefined && RETRYABLE_GRPC_CODES.has(code);
+      const code = getGrpcCode(err);
+      const retriable = code !== undefined && RETRYABLE_GRPC_CODES.has(code) && !isDailyQuotaError(err);
       if (!retriable || attempt === maxRetries) {
         throw err;
       }
