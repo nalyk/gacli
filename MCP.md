@@ -6,14 +6,35 @@ queryable in natural language by an LLM.
 
 ## Tools exposed
 
-All read-only. No admin/audience write surface — by design.
+Every gacli operation is a tool, generated from the same catalogue as the CLI (`gacli schema`
+lists them). Tool name = `ga_` + the command path with `_` separators:
 
-| Tool | Purpose |
+| CLI | MCP tool |
 |---|---|
-| `gacli_report_run` | Standard GA4 Data API report (the workhorse). |
-| `gacli_report_realtime` | Last-30-minutes data. |
-| `gacli_metadata` | Dimension/metric catalog for a property, with search + custom-only filter. |
-| `gacli_check_compatibility` | Verify a metric+dimension combination is queryable. |
+| `gacli report run` | `ga_report_run` |
+| `gacli metadata get` | `ga_metadata_get` |
+| `gacli admin custom-dimensions list` | `ga_admin_custom_dimensions_list` |
+
+- **Read-only by default** (35 tools: every report, metadata, audience-export read and admin list/get).
+- `gacli mcp serve --allow-write` adds create/update tools.
+- `gacli mcp serve --allow-delete` also adds delete/archive tools. Those require the argument
+  `confirm: true`, and carry `destructiveHint: true` so clients can ask the user first.
+- Every mutating tool accepts `dryRun: true`, which returns `{ dryRun: true, preview: { operation, rpc, property, input } }`
+  instead of calling the API.
+- `outputSchema` is the same JSON envelope `gacli … -f json` prints (`{rowCount, data, metadata?}` for reports,
+  `{rowCount, data}` for lists, `{data}` for single resources, `{reports: [...]}` for batches), returned as
+  `structuredContent` plus a text copy.
+- Errors are `isError` results whose text is `{"error":{"code","message","hint","exitCode"}}` (same codes as the CLI).
+- Protocol: MCP TypeScript SDK v2; negotiates 2025-11-25 down to 2024-11-05.
+
+### HTTP (local)
+
+```bash
+gacli mcp serve --http 8765          # http://127.0.0.1:8765/mcp
+```
+
+Streamable HTTP bound to 127.0.0.1 only, with Host/Origin validation (DNS-rebinding protection) and
+**no authentication** — do not expose it beyond your machine.
 
 ## Auth
 
@@ -48,7 +69,7 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) o
 }
 ```
 
-Restart Claude Desktop. The four `gacli_*` tools will appear in the tool picker.
+Restart Claude Desktop. The `ga_*` tools appear in the tool picker. Add `"--allow-write"` to `args` to let the model change GA4 configuration.
 
 ### Cursor
 
@@ -114,7 +135,7 @@ Two reasons:
    boundary. Add write tools later behind explicit gates if needed.
 2. **LLM ergonomics**. Tool surface area is a discoverability cost. Four tools with
    clear semantics outperform thirty tools with overlapping responsibilities. The
-   `gacli_metadata` tool lets the LLM self-discover which fields exist for any
+   `ga_metadata_get` tool lets the LLM self-discover which fields exist for any
    report; the others execute. That's the whole productive surface for analytics
    Q&A.
 

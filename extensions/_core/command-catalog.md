@@ -135,7 +135,7 @@ scope. `--name` ALWAYS takes the full resource name (e.g.
 
 | Command | Purpose |
 |---|---|
-| `gacli mcp serve` | Stdio MCP server exposing 4 typed tools (`gacli_report_run`, `gacli_report_realtime`, `gacli_metadata`, `gacli_check_compatibility`). Useful when an AI host CLI prefers MCP — but skills shell out to gacli, so you rarely need this in skill workflows. |
+| `gacli mcp serve [--allow-write] [--allow-delete] [--http <port>]` | MCP server exposing every operation as a `ga_<command>` tool (read-only by default). Useful when an AI host prefers MCP — but skills shell out to gacli, so you rarely need this in skill workflows. |
 
 ## skills
 

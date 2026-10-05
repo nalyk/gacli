@@ -267,9 +267,11 @@ Stored in `~/.gacli/config.json`.
 gacli mcp serve
 ```
 
-Starts a stdio MCP server exposing four read-only tools — `gacli_report_run`,
-`gacli_report_realtime`, `gacli_metadata`, `gacli_check_compatibility` — to any MCP client. The
-server reuses gacli's existing auth chain, retry policy, and property resolution.
+Starts an MCP server (stdio, or local HTTP with `--http <port>`) that exposes **every gacli
+operation as a typed tool** (`ga_report_run`, `ga_admin_custom_dimensions_list`, …) with
+`outputSchema`/`structuredContent` and read-only/destructive annotations. Read-only by default;
+`--allow-write` adds create/update tools and `--allow-delete` adds delete/archive (which require
+`confirm: true`). The server reuses gacli's auth chain, retry policy, and property resolution.
 
 Wire-up examples for Claude Desktop, Cursor, Cline, and Zed are in [MCP.md](./MCP.md), including
 how to pin different properties per client via the env block.
