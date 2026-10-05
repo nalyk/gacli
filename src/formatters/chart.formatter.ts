@@ -1,11 +1,10 @@
-import boxen from 'boxen';
-import chalk from 'chalk';
 import type { ReportData } from '../types/common.js';
+import { style } from '../utils/style.js';
 
 const MAX_BAR_WIDTH = 40;
 const BAR_CHAR = '\u2588'; // Full block character
 
-const BAR_COLORS = [chalk.green, chalk.blue, chalk.magenta, chalk.cyan, chalk.yellow, chalk.red];
+const BAR_COLORS = ['green', 'blue', 'magenta', 'cyan', 'yellow', 'red'] as const;
 
 /**
  * Format ReportData as a horizontal ASCII bar chart.
@@ -16,11 +15,11 @@ const BAR_COLORS = [chalk.green, chalk.blue, chalk.magenta, chalk.cyan, chalk.ye
  */
 export function formatChart(data: ReportData): string {
   if (data.rows.length === 0) {
-    return chalk.yellow('No data to chart.');
+    return style('yellow', 'No data to chart.');
   }
 
   if (data.headers.length < 2) {
-    return chalk.red('Chart requires at least two columns (dimension + metric).');
+    return style('red', 'Chart requires at least two columns (dimension + metric).');
   }
 
   const metricIndex = data.headers.length - 1;
@@ -45,34 +44,26 @@ export function formatChart(data: ReportData): string {
   const lines: string[] = [];
 
   // Title
-  const title = chalk.bold.white(`${metricHeader} by ${dimensionHeaders.join(', ')}`);
+  const title = style(['bold', 'white'], `${metricHeader} by ${dimensionHeaders.join(', ')}`);
   lines.push(title);
   lines.push('');
 
   for (let i = 0; i < entries.length; i++) {
     const { label, value } = entries[i];
     const barWidth = Math.round((value / maxValue) * MAX_BAR_WIDTH);
-    const colorFn = BAR_COLORS[i % BAR_COLORS.length];
+    const color = BAR_COLORS[i % BAR_COLORS.length];
 
     const paddedLabel = label.padEnd(maxLabelWidth);
-    const bar = colorFn(BAR_CHAR.repeat(Math.max(barWidth, 1)));
-    const formattedValue = chalk.white.bold(formatNumber(value));
+    const bar = style(color, BAR_CHAR.repeat(Math.max(barWidth, 1)));
+    const formattedValue = style(['white', 'bold'], formatNumber(value));
 
-    lines.push(`  ${chalk.gray(paddedLabel)}  ${bar} ${formattedValue}`);
+    lines.push(`  ${style('gray', paddedLabel)}  ${bar} ${formattedValue}`);
   }
 
   lines.push('');
-  lines.push(chalk.gray(`${data.rowCount} row(s)`));
+  lines.push(style('gray', `${data.rowCount} row(s)`));
 
-  const content = lines.join('\n');
-
-  return boxen(content, {
-    padding: 1,
-    borderColor: 'gray',
-    borderStyle: 'round',
-    title: 'Chart',
-    titleAlignment: 'left',
-  });
+  return lines.join('\n');
 }
 
 /**

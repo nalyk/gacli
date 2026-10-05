@@ -1,40 +1,35 @@
-import chalk from 'chalk';
+import { setColorEnabled, style } from './style.js';
 
 class Logger {
   private verbose = false;
-  private colorEnabled = true;
 
   setVerbose(v: boolean): void {
     this.verbose = v;
   }
 
   setNoColor(noColor: boolean): void {
-    this.colorEnabled = !noColor;
-  }
-
-  private c(fn: (s: string) => string, text: string): string {
-    return this.colorEnabled ? fn(text) : text;
+    setColorEnabled(!noColor);
   }
 
   info(msg: string): void {
-    console.error(`${this.c(chalk.blue, 'ℹ')} ${msg}`);
+    console.error(`${style('blue', 'ℹ')} ${msg}`);
   }
 
   success(msg: string): void {
-    console.error(`${this.c(chalk.green, '✔')} ${msg}`);
+    console.error(`${style('green', '✔')} ${msg}`);
   }
 
   warn(msg: string): void {
-    console.error(`${this.c(chalk.yellow, '⚠')} ${msg}`);
+    console.error(`${style('yellow', '⚠')} ${msg}`);
   }
 
   error(msg: string): void {
-    console.error(`${this.c(chalk.red, '✖')} ${msg}`);
+    console.error(`${style('red', '✖')} ${msg}`);
   }
 
   debug(msg: string): void {
     if (this.verbose) {
-      console.error(`${this.c(chalk.gray, '⬡')} ${msg}`);
+      console.error(`${style('gray', '⬡')} ${msg}`);
     }
   }
 }
