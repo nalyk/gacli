@@ -13,6 +13,7 @@ import { createMcpCommand } from './commands/mcp/index.js';
 import { createMetadataCommand } from './commands/metadata/index.js';
 import { createReportCommand } from './commands/report/index.js';
 import { createSkillsCommand } from './commands/skills/index.js';
+import { addGlobalOptions } from './types/common.js';
 
 // Single source of truth for the version: read from package.json at runtime.
 // In dev (tsx src/index.ts) and prod (dist/index.js) the package.json is at ../.
@@ -26,15 +27,8 @@ const pkgVersion = (() => {
 
 const program = new Command();
 
-program
-  .name('gacli')
-  .description('Google Analytics 4 CLI tool')
-  .version(pkgVersion)
-  .option('-p, --property <id>', 'GA4 property ID')
-  .option('-f, --format <format>', 'Output format: table, json, ndjson, csv, chart', 'table')
-  .option('-o, --output <file>', 'Write output to file')
-  .option('--no-color', 'Disable colored output')
-  .option('-v, --verbose', 'Enable verbose logging');
+program.name('gacli').description('Google Analytics 4 CLI tool').version(pkgVersion);
+addGlobalOptions(program);
 
 program.addCommand(createReportCommand());
 program.addCommand(createMetadataCommand());

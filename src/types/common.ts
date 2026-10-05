@@ -3,7 +3,8 @@ import type { Command } from 'commander';
 import { getConfig } from '../services/config.service.js';
 import { logger } from '../utils/logger.js';
 
-export type OutputFormat = 'table' | 'json' | 'ndjson' | 'csv' | 'chart';
+export const OUTPUT_FORMATS = ['table', 'json', 'ndjson', 'csv', 'chart'] as const;
+export type OutputFormat = (typeof OUTPUT_FORMATS)[number];
 
 export interface GlobalOptions {
   property: string;
@@ -20,12 +21,24 @@ export interface ReportData {
   metadata?: Record<string, unknown>;
 }
 
+export function addGlobalOptions(program: Command): Command {
+  return program
+    .option('-p, --property <id>', 'GA4 property ID')
+    .option('-f, --format <format>', 'Output format: table, json, ndjson, csv, chart (default: table)')
+    .option('-o, --output <file>', 'Write output to file')
+    .option('--no-color', 'Disable colored output')
+    .option('-v, --verbose', 'Enable verbose logging');
+}
+
 export function resolveGlobalOptions(cmd: Command): GlobalOptions {
   const opts = cmd.optsWithGlobals();
   const config = getConfig();
 
   const property = opts.property || config.property || process.env.GA4_PROPERTY_ID || '';
   const format = opts.format || config.format || 'table';
+  if (!(OUTPUT_FORMATS as readonly string[]).includes(format)) {
+    throw new Error(`Invalid format "${format}". Valid: ${OUTPUT_FORMATS.join(', ')}`);
+  }
   const noColor = opts.noColor ?? config.noColor ?? false;
   const verbose = opts.verbose ?? config.verbose ?? false;
   const output = opts.output;

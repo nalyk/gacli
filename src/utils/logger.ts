@@ -16,24 +16,24 @@ class Logger {
   }
 
   info(msg: string): void {
-    console.error(`${style('blue', 'ℹ')} ${msg}`);
+    console.error(`${style('blue', 'ℹ', process.stderr)} ${msg}`);
   }
 
   success(msg: string): void {
-    console.error(`${style('green', '✔')} ${msg}`);
+    console.error(`${style('green', '✔', process.stderr)} ${msg}`);
   }
 
   warn(msg: string): void {
-    console.error(`${style('yellow', '⚠')} ${msg}`);
+    console.error(`${style('yellow', '⚠', process.stderr)} ${msg}`);
   }
 
   error(msg: string): void {
-    console.error(`${style('red', '✖')} ${msg}`);
+    console.error(`${style('red', '✖', process.stderr)} ${msg}`);
   }
 
   debug(msg: string): void {
     if (this.verbose) {
-      console.error(`${style('gray', '⬡')} ${msg}`);
+      console.error(`${style('gray', '⬡', process.stderr)} ${msg}`);
     }
   }
 }

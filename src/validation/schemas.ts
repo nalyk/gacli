@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { OUTPUT_FORMATS } from '../types/common.js';
 
 export const dateRangeSchema = z.object({
   startDate: z.string(),
@@ -49,7 +50,7 @@ export const pivotSchema = z.object({
 
 export const propertyIdSchema = z.string().regex(/^\d+$/, 'Property ID must be numeric');
 
-export const outputFormatSchema = z.enum(['table', 'json', 'csv', 'chart']);
+export const outputFormatSchema = z.enum(OUTPUT_FORMATS);
 
 export const runReportOptsSchema = z.object({
   metrics: z.array(z.string()).min(1, 'At least one metric is required'),
