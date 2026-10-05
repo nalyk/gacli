@@ -26,6 +26,10 @@ export function createMcpCommand(): Command {
           const globals = resolveGlobalOptions(command);
           // stdout is the protocol channel: keep every other byte off it.
           logger.setVerbose(false);
+          // Backstop: a stray SDK rejection must not kill a long-running server (logged to stderr).
+          process.on('unhandledRejection', (reason) => {
+            logger.error(`Unhandled rejection: ${reason instanceof Error ? reason.message : String(reason)}`);
+          });
           const port = opts.http === undefined ? undefined : Number(opts.http);
           if (port !== undefined && !(Number.isInteger(port) && port >= 0 && port <= 65535)) {
             throw new GacliError('usage', `Invalid --http port "${opts.http}"`);
