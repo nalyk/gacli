@@ -2,9 +2,9 @@
 name: gacli
 description: "This skill should be used when the user asks anything about Google Analytics 4 via the gacli CLI: 'show me last week's traffic', 'audit my GA4 property', 'list custom dimensions', 'compare last 7d vs prior 7d', 'set up a key event', 'create an audience', 'analyze conversion funnel', 'what's happening live in GA4', 'find pages with high bounce', 'export an audience', 'link BigQuery', or 'run a cohort report'. Activates on GA4, Google Analytics, traffic, sessions, users, conversion, property, dimension, metric, audience, funnel, cohort, real-time, key event."
 metadata:
-  version: "1.1.0"
+  version: "2.0.0"
   author: "nalyk"
-  min_gacli_version: "1.1.0"
+  min_gacli_version: "2.0.0"
   homepage: "https://github.com/nalyk/gacli"
 ---
 

@@ -4,7 +4,7 @@
 [![CI](https://github.com/nalyk/gacli/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/nalyk/gacli/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/@nalyk/gacli?color=cb3837&logo=npm)](https://www.npmjs.com/package/@nalyk/gacli)
 [![License: MIT](https://img.shields.io/github/license/nalyk/gacli?color=blue)](./LICENSE)
-![Node](https://img.shields.io/badge/node-%E2%89%A522-brightgreen)
+![Node](https://img.shields.io/badge/node-%E2%89%A522.12-brightgreen)
 
 Full-featured CLI for Google Analytics 4 — Data API + Admin API. Reports, realtime, funnels,
 cohorts, audience exports, property management, streams, custom dimensions/metrics, key events,
@@ -23,6 +23,25 @@ gacli skills install --agent claude --scope user
 ```
 
 Full guide: [extensions/README.md](extensions/README.md).
+
+## What's new in 2.0
+
+gacli 2.0 is built for **humans and AI agents alike**. Every GA4 command is a typed operation, and
+one catalogue drives the CLI, `gacli schema`, the MCP server and these docs.
+
+- **Agent-friendly by default:** compact JSON when piped or run by an agent, stable exit codes
+  (`2` usage, `3` auth, `4` needs `--yes`, `5` not found, `6` quota), JSON errors on stderr,
+  `--fields` projection, and `--dry-run` / `--yes` on every write.
+- **Self-describing:** `gacli schema [command…]` returns flags plus input/output JSON Schema;
+  `llms.txt` is generated from the catalogue.
+- **MCP:** every operation is an MCP tool with `outputSchema`, read-only by default, over stdio or
+  local HTTP.
+- **Full API reach:** new quota, report tasks, chat, annotations, change history, access reports,
+  measurement secrets and data retention commands, plus `gacli api <service> <Method>` for any RPC.
+- **Auth for automation:** `GACLI_ACCESS_TOKEN`, Application Default Credentials fallback, `auth token`.
+- **Fast:** `--help` in about 70 ms (bundled; GA SDKs load only when a command needs them).
+
+Upgrading scripts from 1.x: see **[MIGRATION.md](./MIGRATION.md)**. Try it with `npm i -g @nalyk/gacli@next`.
 
 ## Setup
 
@@ -349,10 +368,12 @@ bypass required PRs and required status checks. Without that, the
 | File | Purpose |
 |---|---|
 | [`README.md`](./README.md) | This file — user setup and quick reference |
-| [`help.md`](./help.md) | Verbose human-readable command reference (every flag, every example) |
+| [`MIGRATION.md`](./MIGRATION.md) | Upgrading from 1.x: output, exit codes, safety, MCP tool names |
+| [`help.md`](./help.md) | Command reference — operation sections generated from the catalogue (`pnpm docs`) |
+| [`llms.txt`](./llms.txt) | Compact operation reference for LLMs (generated) |
 | [`MCP.md`](./MCP.md) | MCP server setup for Claude Desktop, Cursor, Cline, Zed |
 | [`PUBLISHING.md`](./PUBLISHING.md) | npm release process — OIDC trusted publishing, bootstrap, ongoing flow |
-| [`DISTRIBUTION.md`](./DISTRIBUTION.md) | Single-binary (Node SEA) build notes; multi-platform release tradeoffs |
+| [`DISTRIBUTION.md`](./DISTRIBUTION.md) | npm channels (latest / next) and experimental single-executable binaries |
 | [`CONTRIBUTING.md`](./CONTRIBUTING.md) | How to contribute, the verify gate, architectural rules |
 | [`SECURITY.md`](./SECURITY.md) | Security policy, vulnerability disclosure, hardening notes |
 | [`LICENSE`](./LICENSE) | MIT |
@@ -360,6 +381,7 @@ bypass required PRs and required status checks. Without that, the
 
 ## Tech stack
 
-Node 22+, ESM-only TypeScript 6, Commander 14, `@google-analytics/data` v5 + `/admin` v9,
-`google-auth-library` v9, `@modelcontextprotocol/sdk` 1.x, zod, ora, chalk, cli-table3, boxen.
-Dev: Vitest, Biome, tsx.
+Node ≥ 22.12, ESM TypeScript 6 bundled with tsdown, Commander 15, zod 4,
+`@google-analytics/data` 7 + `/admin` 10, `google-auth-library` 11, MCP TypeScript SDK v2
+(`@modelcontextprotocol/server` + `/node`), ora and cli-table3 (loaded on demand), `node:util`
+`styleText` for colour. Dev: Vitest 5, Biome 2.5, tsx.

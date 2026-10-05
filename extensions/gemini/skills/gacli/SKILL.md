@@ -39,7 +39,7 @@ bash ./scripts/property-snapshot.sh
 
 Output structure:
 ```json
-{ "property_id": "<id>|null", "auth": "ok|unauthenticated", "user": "<email>|null" }
+{ "property_id": "<id>|null", "auth": "ok|unauthenticated", "credential_source": "oauth|access-token|env-credentials|config-credentials|adc|null" }
 ```
 
 If `property_id: null`:

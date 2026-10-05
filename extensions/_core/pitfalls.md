@@ -40,12 +40,18 @@ The non-obvious failure modes a fresh AI agent will hit. Read once.
 
 11. **`--name` in admin commands expects the full resource name**, e.g.
     `properties/123/keyEvents/456`. Numeric ID alone fails. Get the full
-    name from a `list` call (`-f json | jq -r '.rows[0].name'`).
+    name from a `list` call (`-f json | jq -r '.data[0].name'`).
 12. **Custom dimension `--scope` is immutable** after create (EVENT/USER/ITEM).
     Wrong scope = delete and recreate.
 13. **Realtime ignores `--start-date`/`--end-date`** — always last 30 minutes.
 
 ## Pipeline / shape
+
+0. **Agents get JSON by default.** Under an AI agent (or when piped) gacli prints compact JSON and
+   never prompts: destructive commands exit `4` until you re-run with `--yes` (confirm with the user
+   first). Errors arrive as one JSON line on stderr with an `exitCode` and often a `hint`.
+   For CI/agents without a browser, export `GACLI_ACCESS_TOKEN`. Discover flags with
+   `gacli schema <command>` instead of guessing.
 
 14. **JSON shape depends on the operation kind** — check `gacli schema <command>`
     (`.operations[].output`). Reports: `{rowCount, data: [{<dim/metric>: "<string>"}], metadata?}`.
