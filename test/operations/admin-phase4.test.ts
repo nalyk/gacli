@@ -293,7 +293,7 @@ describe('admin change-history search', () => {
     const out = await op.run(
       op.input.parse({
         account: '42',
-        property: 'properties/123',
+        filterProperty: 'properties/123',
         resourceType: ['CUSTOM_DIMENSION', 'PROPERTY'],
         action: ['CREATED'],
         earliest: '2026-01-01T00:00:00Z',
@@ -332,18 +332,14 @@ describe('admin change-history search', () => {
     expect(col('Changes')?.format?.(event.changes)).toBe('3');
   });
 
-  it('account-wide search: no property, all pages, falls back to the global property', async () => {
+  it('account-wide search: no property filter unless --filter-property is given (global -p is ignored)', async () => {
     const op = changeHistory.searchChangeHistory;
     client.searchChangeHistoryEvents.mockResolvedValue([[event]]);
     await op.run(op.input.parse({ account: 'accounts/42' }), noPropCtx);
     expect(client.searchChangeHistoryEvents).toHaveBeenLastCalledWith({ account: 'accounts/42' }, undefined);
 
-    // On the CLI the global -p/--property swallows --property, so the global value is the filter.
     await op.run(op.input.parse({ account: '42' }), ctx);
-    expect(client.searchChangeHistoryEvents).toHaveBeenLastCalledWith(
-      { account: 'accounts/42', property: 'properties/123' },
-      undefined,
-    );
+    expect(client.searchChangeHistoryEvents).toHaveBeenLastCalledWith({ account: 'accounts/42' }, undefined);
   });
 
   it('rejects bad account, enums and datetimes', () => {

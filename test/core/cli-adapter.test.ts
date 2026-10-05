@@ -295,4 +295,17 @@ describe('mountOperations flag generation edge cases', () => {
     expect(message.match(/--steps/g)).toHaveLength(1);
     expect(message).toContain('--steps.0.name');
   });
+
+  it('rejects input keys that collide with global options (they would be swallowed by -p etc.)', () => {
+    const bad = defineOperation({
+      id: 'demo.global.list',
+      summary: 'x',
+      category: 'read',
+      kind: 'resource',
+      input: z.object({ property: z.string().optional() }),
+      output: z.unknown(),
+      run: async () => [],
+    });
+    expect(() => mountOperations(addGlobalOptions(new Command('gacli')), [bad])).toThrow(/global option/);
+  });
 });

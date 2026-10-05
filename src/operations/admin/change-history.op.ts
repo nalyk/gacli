@@ -88,12 +88,10 @@ export const searchChangeHistory = listOp({
       .regex(/^(accounts\/)?\d+$/, 'expected an account ID (123) or resource name (accounts/123)')
       .transform((s) => (s.startsWith('accounts/') ? s : `accounts/${s}`))
       .describe('Account to search (accounts/<id> or bare numeric ID)'),
-    property: z
+    filterProperty: z
       .string()
       .optional()
-      .describe(
-        'Only changes to this property (properties/<id> or numeric ID). On the CLI this is the global -p/--property, so a configured default property applies',
-      ),
+      .describe('Only changes to this property (properties/<id> or numeric ID)'),
     resourceType: z
       .array(z.enum(RESOURCE_TYPES))
       .optional()
@@ -114,7 +112,7 @@ export const searchChangeHistory = listOp({
   }),
   flags: {
     account: '--account <id>',
-    property: '--property <id>',
+    filterProperty: '--filter-property <id>',
     resourceType: '--resource-type <types...>',
     action: '--action <actions...>',
     earliest: '--earliest <datetime>',
@@ -138,9 +136,8 @@ export const searchChangeHistory = listOp({
     { header: 'Resource(s)', path: 'changes', format: (v) => unique(changesOf(v).map((c) => c.resource)) },
     { header: 'Changes', path: 'changes', format: (v) => String(changesOf(v).length) },
   ],
-  call: async (c, ctx, input) => {
-    // commander hands --property to the global -p, so the CLI value arrives via ctx.globals
-    const property = input.property || ctx.globals.property || undefined;
+  call: async (c, _ctx, input) => {
+    const property = input.filterProperty;
     const request: ISearchRequest = {
       account: input.account,
       ...(property && { property: `properties/${validatePropertyId(property)}` }),
