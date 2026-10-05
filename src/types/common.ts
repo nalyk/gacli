@@ -39,7 +39,8 @@ export function resolveGlobalOptions(cmd: Command): GlobalOptions {
   if (!(OUTPUT_FORMATS as readonly string[]).includes(format)) {
     throw new Error(`Invalid format "${format}". Valid: ${OUTPUT_FORMATS.join(', ')}`);
   }
-  const noColor = opts.noColor ?? config.noColor ?? false;
+  // commander stores `--no-color` as `color: false` (default true), never as `noColor`
+  const noColor = opts.color === false || (config.noColor ?? false);
   const verbose = opts.verbose ?? config.verbose ?? false;
   const output = opts.output;
 

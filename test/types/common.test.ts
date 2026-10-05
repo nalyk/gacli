@@ -43,3 +43,20 @@ describe('resolveGlobalOptions format', () => {
     expect(globalsFrom([])?.format).toBe('table');
   });
 });
+
+describe('resolveGlobalOptions noColor', () => {
+  beforeEach(() => mockedGetConfig.mockReturnValue({}));
+
+  it('--no-color sets noColor', () => {
+    expect(globalsFrom(['--no-color'])?.noColor).toBe(true);
+  });
+
+  it('falls back to config noColor when the flag is absent', () => {
+    mockedGetConfig.mockReturnValue({ noColor: true });
+    expect(globalsFrom([])?.noColor).toBe(true);
+  });
+
+  it('defaults to colour on', () => {
+    expect(globalsFrom([])?.noColor).toBe(false);
+  });
+});
