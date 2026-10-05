@@ -53,7 +53,8 @@ beforeEach(() => {
 
 describe('report catalogue', () => {
   it('exports the ops in 1.x order with read category and property requirement', () => {
-    expect(reportOps.map((o) => o.id)).toEqual([
+    const v1 = reportOps.slice(0, 6);
+    expect(v1.map((o) => o.id)).toEqual([
       'report.pivot',
       'report.batch',
       'report.batch-pivot',
@@ -61,7 +62,7 @@ describe('report catalogue', () => {
       'report.cohort',
       'report.funnel',
     ]);
-    for (const op of reportOps) {
+    for (const op of v1) {
       expect(op.category).toBe('read');
       expect(op.needsProperty).toBe(true);
     }

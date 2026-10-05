@@ -58,6 +58,27 @@ export interface RunReportParams {
   returnPropertyQuota?: boolean;
 }
 
+export interface ConversionSpec {
+  conversionActions?: string[];
+  attributionModel?: 'ATTRIBUTION_MODEL_UNSPECIFIED' | 'DATA_DRIVEN' | 'LAST_CLICK';
+}
+
+/** v1alpha RunReport: the v1beta request plus alpha-only fields. */
+export interface RunReportAlphaParams extends RunReportParams {
+  conversionSpec?: ConversionSpec;
+}
+
+export interface ReportTaskInput {
+  reportDefinition: {
+    metrics: Metric[];
+    dimensions?: Dimension[];
+    dateRanges: DateRange[];
+    dimensionFilter?: FilterExpression;
+    metricFilter?: FilterExpression;
+    limit?: number;
+  };
+}
+
 export interface PivotDefinition {
   fieldNames: string[];
   orderBys?: OrderBy[];
