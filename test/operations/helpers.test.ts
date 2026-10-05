@@ -18,41 +18,39 @@ const ctx = { property: '42', globals: {} as never, interactive: false };
 
 describe('jsonArg', () => {
   it('parses inline JSON and validates it', () => {
-    expect(jsonArg(steps, '--steps').parse('[{"name":"a"}]')).toEqual([{ name: 'a' }]);
+    expect(jsonArg(steps).parse('[{"name":"a"}]')).toEqual([{ name: 'a' }]);
   });
 
   it('reads @file', () => {
     const f = join(mkdtempSync(join(tmpdir(), 'gacli-json-')), 'steps.json');
     writeFileSync(f, '[{"name":"b"}]');
-    expect(jsonArg(steps, '--steps').parse(`@${f}`)).toEqual([{ name: 'b' }]);
+    expect(jsonArg(steps).parse(`@${f}`)).toEqual([{ name: 'b' }]);
   });
 
   it('reads @- from stdin via the reader', () => {
     const read = vi.fn(() => '[{"name":"c"}]');
-    expect(jsonArg(steps, '--steps', read).parse('@-')).toEqual([{ name: 'c' }]);
+    expect(jsonArg(steps, read).parse('@-')).toEqual([{ name: 'c' }]);
     expect(read).toHaveBeenCalledWith(0);
   });
 
   it('reports invalid JSON naming the flag', () => {
-    const r = jsonArg(steps, '--steps').safeParse('[{');
+    const r = jsonArg(steps).safeParse('[{');
     expect(r.success).toBe(false);
-    expect(r.error?.issues[0].message).toMatch(/Invalid JSON for --steps/);
+    expect(r.error?.issues[0].message).toMatch(/^Invalid JSON: /);
   });
 
   it('reports a missing file naming the path', () => {
-    const r = jsonArg(steps, '--steps').safeParse('@/nope/x.json');
+    const r = jsonArg(steps).safeParse('@/nope/x.json');
     expect(r.error?.issues[0].message).toContain('/nope/x.json');
   });
 
-  it('reports schema mismatches naming the flag', () => {
-    const r = jsonArg(steps, '--steps').safeParse('[{"nam":"a"}]');
-    expect(r.error?.issues[0].message).toContain('--steps');
+  it('reports schema mismatches with the path inside the JSON', () => {
+    const r = jsonArg(steps).safeParse('[{"nam":"a"}]');
+    expect(r.error?.issues[0].path).toEqual([0, 'name']);
   });
 
   it('is a plain string in input JSON Schema', () => {
-    expect(
-      z.toJSONSchema(z.object({ s: jsonArg(steps, '--steps') }), { io: 'input' }).properties?.s,
-    ).toMatchObject({
+    expect(z.toJSONSchema(z.object({ s: jsonArg(steps) }), { io: 'input' }).properties?.s).toMatchObject({
       type: 'string',
     });
   });

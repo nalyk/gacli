@@ -134,7 +134,8 @@ describe('admin audiences ops', () => {
     const op = au.createAudience;
     const bad = op.input.safeParse({ displayName: 'B', filterClauses: '[{' });
     expect(bad.success).toBe(false);
-    expect(bad.error?.issues[0].message).toMatch(/--filter-clauses/);
+    expect(bad.error?.issues[0].path[0]).toBe('filterClauses');
+    expect(bad.error?.issues[0].message).toMatch(/^Invalid JSON/);
     expect(op.input.safeParse({ displayName: 'B', filterClauses: '{"clauseType":"INCLUDE"}' }).success).toBe(
       false,
     );

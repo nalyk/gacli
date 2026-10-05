@@ -130,3 +130,24 @@ describe('renderResult: reports label', () => {
     expect(out).toContain('--- Pivot Report 2 ---');
   });
 });
+
+describe('table cells for protobuf shapes', () => {
+  const op = { kind: 'resource' as const };
+  it('renders Timestamp, wrapper and Long values readably', () => {
+    const out = renderResult(
+      op,
+      [
+        {
+          createTime: { seconds: '1700000000', nanos: 0 },
+          enabled: { value: true },
+          count: { low: 5, high: 0, unsigned: false },
+        },
+      ],
+      { format: 'csv', pretty: false },
+    );
+    expect(out).toContain('2023-11-14T22:13:20.000Z');
+    expect(out).toContain('true');
+    expect(out.split('\n')[1]).toContain(',5');
+    expect(out).not.toContain('seconds');
+  });
+});

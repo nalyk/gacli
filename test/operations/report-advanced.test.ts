@@ -360,6 +360,28 @@ describe('report.funnel', () => {
   it('rejects malformed --steps JSON', () => {
     const r = reportFunnel.input.safeParse({ steps: '[{' });
     expect(r.success).toBe(false);
-    expect(r.error?.issues[0].message).toMatch(/--steps/);
+    expect(r.error?.issues[0].path[0]).toBe('steps');
+    expect(r.error?.issues[0].message).toMatch(/^Invalid JSON/);
+  });
+});
+
+describe('report.pivot --pivots parsing', () => {
+  it('coerces numeric strings and wraps a single object', () => {
+    const r = reportPivot.input.parse({
+      metrics: ['m'],
+      dimensions: ['d'],
+      pivots: '{"fieldNames":["d"],"limit":"5","offset":"1"}',
+    });
+    expect(r.pivots).toEqual([expect.objectContaining({ limit: 5, offset: 1 })]);
+  });
+
+  it('reports the failing field inside an array', () => {
+    const r = reportPivot.input.safeParse({
+      metrics: ['m'],
+      dimensions: ['d'],
+      pivots: '[{"fieldNames":["d"]}]',
+    });
+    expect(r.success).toBe(false);
+    expect(r.error?.issues[0].path).toEqual(['pivots', 0, 'limit']);
   });
 });

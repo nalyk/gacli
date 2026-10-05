@@ -6,6 +6,6 @@ export function requestsFile(what: string) {
   return z
     .string()
     .transform((v) => (v.startsWith('@') ? v : `@${v}`))
-    .pipe(jsonArg(z.array(z.looseObject({})).min(1), '--requests'))
+    .pipe(jsonArg(z.array(z.looseObject({})).min(1)))
     .describe(what);
 }

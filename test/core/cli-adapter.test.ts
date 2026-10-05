@@ -260,4 +260,39 @@ describe('mountOperations flag generation edge cases', () => {
     });
     expect(describeFlags(op).find((f) => f.key === 'acknowledge')?.required).toBe(true);
   });
+
+  it('names a JSON flag exactly once in its error', async () => {
+    const { jsonArg } = await import('../../src/operations/json-arg.js');
+    const op = defineOperation({
+      id: 'demo.json.run',
+      summary: 'x',
+      category: 'read',
+      kind: 'resource',
+      input: z.object({ steps: jsonArg(z.array(z.object({ name: z.string() }))) }),
+      flags: { steps: '--steps <json>' },
+      output: z.unknown(),
+      run: async () => ({}),
+    });
+    const program = addGlobalOptions(new Command('gacli'));
+    mountOperations(program, [op]);
+    finalizeProgram(program);
+    try {
+      await runProgram(program, [
+        'node',
+        'gacli',
+        '-f',
+        'json',
+        'demo',
+        'json',
+        'run',
+        '--steps',
+        '[{"nam":1}]',
+      ]);
+    } catch {
+      // stubbed exit
+    }
+    const message = JSON.parse(stderr[0]).error.message as string;
+    expect(message.match(/--steps/g)).toHaveLength(1);
+    expect(message).toContain('--steps.0.name');
+  });
 });
