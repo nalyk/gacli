@@ -6,13 +6,29 @@ Google Analytics 4 CLI. Covers Data API (reports, realtime, funnels, cohorts, au
 
 ```
 -p, --property <id>       GA4 property ID (numeric, e.g. 371981488)
--f, --format <format>     Output: table|json|ndjson|csv|chart (default: table, or config `format`); unknown values exit 1
+-f, --format <format>     Output: table|json|ndjson|csv|chart; unknown values exit 2
 -o, --output <file>       Write to file instead of stdout
 --no-color                Disable colors (also honours NO_COLOR; colour is off when not a TTY unless FORCE_COLOR is set)
 -v, --verbose             Debug logging
 ```
 
 Property resolution: --property flag > config.property > GA4_PROPERTY_ID env var.
+
+Format resolution: `-f` > `GACLI_FORMAT` env > config `format` > auto. Auto is `table` on an interactive terminal and **`json` (compact) when stdout is piped, in CI, or when an AI agent is detected** (`CLAUDECODE`, `CODEX_THREAD_ID`, `CURSOR_AGENT`, `AI_AGENT`, `GACLI_AGENT`).
+
+Per-operation flags (on every catalogue operation):
+
+```
+--fields <paths>          Comma-separated output fields; dot paths for nested values (e.g. name,displayName). Unknown field exits 2
+--dry-run                 (create/update/delete/action only) print the request instead of calling the API
+-y, --yes                 (delete/archive only) confirm; required when not interactive, otherwise exit 4
+```
+
+Exit codes: `0` ok · `1` API/internal · `2` usage/validation · `3` auth (unauthenticated, permission denied, no credentials) · `4` confirmation required (`--yes`) · `5` not found · `6` quota exhausted.
+
+With `-f json|ndjson` (or when piped), errors are one JSON line on stderr: `{"error":{"code":"NOT_FOUND","message":"…","hint":"…","grpcStatus":5,"exitCode":5}}`.
+
+Introspection: `gacli schema [command...]` prints every operation (flags, category, input/output JSON Schema) as JSON; `gacli schema --llms` prints a Markdown reference.
 
 ---
 
