@@ -129,7 +129,7 @@ Scopes: `analytics.readonly`, `analytics.edit`.
 | `-p, --property <id>` | GA4 property ID (overrides config/env) |
 | `-f, --format <fmt>` | `table` (default), `json`, `ndjson`, `csv`, `chart` |
 | `-o, --output <file>` | Write output to file |
-| `--no-color` | Disable colors |
+| `--no-color` | Disable colors (`NO_COLOR` honoured; colour off when piped unless `FORCE_COLOR`) |
 | `-v, --verbose` | Verbose logging |
 
 Property ID resolution: `--property` > `config.property` > `GA4_PROPERTY_ID` env var.
@@ -222,7 +222,7 @@ gacli
 | `json` | `{rowCount, data:[{...}]}` shape — pipe to `jq` |
 | `ndjson` | One JSON object per line, newline-separated — clean piping into `jq -c`, ClickHouse, BigQuery loads |
 | `csv` | Properly escaped CSV, import into spreadsheets |
-| `chart` | ASCII bar chart in terminal |
+| `chart` | ASCII bar chart in terminal (unframed title + bars) |
 
 ## Filters
 

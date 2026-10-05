@@ -12,11 +12,11 @@ or a path-scoped `.claude/rules/*.md` instead.
 3. **Service results return `ReportData` (`{headers, rows, rowCount}`)** — even single-value or `"Deleted X"` responses get coerced into a 1×N row. Formatters depend on it.
 4. **`handleError(err)` is terminal (`: never`)** — never wrap, never rethrow, never `try`-around it. It is the leaf of every action.
 5. **Pipeline order is inviolable**: Commander → `resolveGlobalOptions` + `validate` → service → `ReportData` → `formatOutput` → `writeOutput`. No layer-skipping.
-6. **API clients only via `getClient()` / `getAdminClient()`** — direct `new BetaAnalyticsDataClient()` / `new AnalyticsAdminServiceClient()` bypasses the auth resolution chain and cache.
+6. **API clients only via each service's private async `getClient()`** (`await getClient()`; data service also has `getAlphaClient()`) — they lazy-import the SDK and apply the auth chain. Direct `new BetaAnalyticsDataClient()` / `new AnalyticsAdminServiceClient()` bypasses both, and a static SDK import slows every command's startup.
 7. **`validate(schema, opts)` is terminal** — `process.exit(1)` on `ZodError`. Don't catch `ZodError` outside `validate`. New options need a schema in `src/validation/schemas.ts`.
 8. **New CLI config key = update BOTH `CLIConfig` interface AND `CONFIG_KEYS` map** in `src/types/config.ts`, or `setConfigValue` rejects them.
 9. **stderr = status (`logger`/ora). stdout = data (`writeOutput`)**. Mixing breaks `--format json | jq` piping.
-10. **New top-level command = `program.addCommand(createXxxCommand())` in `src/index.ts`** or it's invisible at the CLI surface.
+10. **New top-level command = `program.addCommand(createXxxCommand())` in `src/cli.ts`** or it's invisible at the CLI surface. (`src/index.ts` is only the bootstrap: compile cache + dynamic import of `cli.js`.)
 
 ## Workflow skills — invoke, do not duplicate
 

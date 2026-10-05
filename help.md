@@ -6,9 +6,9 @@ Google Analytics 4 CLI. Covers Data API (reports, realtime, funnels, cohorts, au
 
 ```
 -p, --property <id>       GA4 property ID (numeric, e.g. 371981488)
--f, --format <format>     Output: table|json|csv|chart (default: table)
+-f, --format <format>     Output: table|json|ndjson|csv|chart (default: table, or config `format`); unknown values exit 1
 -o, --output <file>       Write to file instead of stdout
---no-color                Disable colors
+--no-color                Disable colors (also honours NO_COLOR; colour is off when not a TTY unless FORCE_COLOR is set)
 -v, --verbose             Debug logging
 ```
 
@@ -90,6 +90,8 @@ gacli report batch --requests <path>
 | `--requests <path>` | YES | Path to JSON file with array of report request objects |
 
 JSON file format: array of objects with same structure as runReport params (dateRanges, dimensions, metrics, etc.).
+
+Output with several reports: `-f json` emits one JSON array (one envelope per report), `-f ndjson` tags every row with `"report": <n>`, and table/csv/chart print `--- Report N ---` sections. `-o` writes all reports to the one file.
 
 ## report pivot
 
@@ -478,7 +480,7 @@ gacli admin bigquery-links delete --name <rn>
 gacli config set <key> <value>
 ```
 
-Keys: `credentials` (path to service account JSON), `property` (numeric ID), `format` (table|json|csv|chart), `noColor` (true|false), `verbose` (true|false), `oauthClientSecretFile` (path to OAuth client secret JSON).
+Keys: `credentials` (path to service account JSON), `property` (numeric ID), `format` (table|json|ndjson|csv|chart), `noColor` (true|false), `verbose` (true|false), `oauthClientSecretFile` (path to OAuth client secret JSON).
 
 ## config get
 
