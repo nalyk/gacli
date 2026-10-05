@@ -1,61 +1,35 @@
 # Distribution channels for gacli
 
-## 1. npm (recommended for developers)
-
-See `PUBLISHING.md`. Once shipped, install with `pnpm install -g gacli` or
-`npx gacli ...`.
-
-## 2. Single-executable application (SEA) — for end-users without Node
-
-Node 22+ ships a stable single-executable feature. `scripts/build-sea.sh` produces a
-self-contained binary that bundles your gacli build + the Node runtime, so users don't
-need Node installed.
-
-### Build locally
+## 1. npm (supported)
 
 ```bash
-pnpm build
-./scripts/build-sea.sh
-# produces dist/gacli-<platform>-<arch>
+npm install -g @nalyk/gacli        # or: pnpm add -g @nalyk/gacli / npx @nalyk/gacli
+npm install -g @nalyk/gacli@next   # 2.x pre-releases from the `next` branch
 ```
 
-### What this DOESN'T solve
+`dist/` is a tsdown bundle of `src/` (a handful of chunks); every runtime dependency stays an
+ordinary npm dependency. Startup budget (enforced in CI): `--version` / `--help` < 150 ms.
 
-- **Cross-platform binaries.** Each platform (linux-x64, linux-arm64, darwin-x64,
-  darwin-arm64, win-x64) requires building on that exact platform. You cannot build
-  a darwin binary from linux. Use a GitHub Actions matrix:
+## 2. Single-executable binaries (experimental)
 
-  ```yaml
-  strategy:
-    matrix:
-      include:
-        - { os: ubuntu-latest, target: linux-x64 }
-        - { os: ubuntu-24.04-arm, target: linux-arm64 }
-        - { os: macos-13, target: darwin-x64 }
-        - { os: macos-14, target: darwin-arm64 }
-        - { os: windows-latest, target: win-x64 }
-  ```
+`.github/workflows/sea.yml` builds standalone binaries (no Node install needed) for Linux, macOS and
+Windows on Node 26 (`node --build-sea`, ESM main) and attaches them to GitHub releases. The job is
+`continue-on-error`: a failed SEA build never blocks an npm release.
 
-- **Code signing.** macOS Gatekeeper will reject unsigned binaries; users will see
-  "cannot verify developer." Real distribution needs an Apple Developer ID signing
-  certificate ($99/year) and notarization. Windows SmartScreen has the same friction
-  without an Authenticode cert.
+```bash
+# locally (Node >= 26)
+pnpm build:sea        # → dist-sea/gacli-<platform>-<arch>
+```
 
-- **Installer UX.** SEA produces one binary, not an installer. For Homebrew taps,
-  Scoop manifests, or `.deb`/`.rpm` packages, additional tooling is required.
+Known limits:
 
-### Why I scaffolded this and didn't build it
+- Binaries are large (~160 MB: the Node runtime plus the GA SDKs).
+- `gacli skills install` needs the bundled `extensions/` tree: use the npm package, or point
+  `GACLI_EXTENSIONS_DIR` at a checkout's `extensions/`.
+- macOS binaries are ad-hoc signed only (`codesign --sign -`); Gatekeeper may require
+  `xattr -d com.apple.quarantine gacli-darwin-arm64`.
+- Verified on Linux (version, schema, MCP, auth error paths). macOS/Windows are built by CI only.
 
-Multi-platform binaries require:
-1. Build runners I don't have access to (macOS / Windows hosts).
-2. Decisions you should make: which platforms to ship, signing strategy, hosting.
-3. A non-trivial GH Actions workflow that's better authored once you've made (1)
-   and (2).
+## 3. MCP
 
-Ship `gacli` to npm first. Add SEA only when end-user feedback shows Node-install
-friction is a real distribution problem.
-
-## 3. Homebrew tap (later)
-
-Once binaries exist, a tap formula is ~30 lines. Skip until you have signed
-binaries and a release workflow producing them with stable URLs.
+`gacli mcp serve` (stdio) or `gacli mcp serve --http <port>` (local) — see `MCP.md`.

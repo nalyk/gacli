@@ -8,7 +8,9 @@ the bar is "the change is well-scoped, type-safe, tested, and explained."
 ```bash
 pnpm install
 pnpm dev <args>     # run from source — no build step
-pnpm verify         # lint + type-check + test + build (the gate before any commit)
+pnpm verify         # lint + type-check + build (tsdown) + test + skill-lint (the gate before any commit)
+GACLI_STARTUP_BUDGET=1 pnpm vitest run test/startup/budget.test.ts   # startup budget (idle machine)
+./scripts/pack-smoke.sh   # install the packed tarball into a temp prefix and run it
 pnpm test:watch     # vitest in watch mode while iterating
 ```
 
