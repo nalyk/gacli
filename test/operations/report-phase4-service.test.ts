@@ -18,7 +18,10 @@ vi.mock('@google-analytics/data', () => ({
     }),
   },
 }));
-vi.mock('../../src/services/auth.service.js', () => ({ getAuthClientOptions: vi.fn(() => ({})) }));
+vi.mock('../../src/services/auth.service.js', () => ({
+  getAuthClientOptions: vi.fn(() => ({})),
+  ensureCredentials: vi.fn(async () => undefined),
+}));
 
 const svc = await import('../../src/services/data-api.service.js');
 

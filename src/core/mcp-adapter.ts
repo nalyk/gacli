@@ -1,5 +1,6 @@
 import { fromJsonSchema, McpServer, type ToolAnnotations } from '@modelcontextprotocol/server';
 import { z } from 'zod';
+import { setFileArgsAllowed } from '../operations/json-arg.js';
 import type { GlobalOptions } from '../types/common.js';
 import { jsonOutputSchema, reportEnvelope } from './catalog.js';
 import { toGacliError } from './errors.js';
@@ -50,7 +51,8 @@ export function toolInputSchema(op: AnyOperation, defaultProperty?: string): z.Z
       .string()
       .regex(/^(properties\/)?\d+$/)
       .describe('GA4 property ID (numeric)');
-    extra.propertyId = defaultProperty ? id.optional() : id;
+    // A destructive call must name its property: never act on the server's default implicitly.
+    extra.propertyId = defaultProperty && op.category !== 'delete' ? id.optional() : id;
   }
   if (isMutating(op.category))
     extra.dryRun = z.boolean().optional().describe('Return the request instead of calling the API');
@@ -97,48 +99,60 @@ const json = (schema: z.ZodType, io: 'input' | 'output') =>
     z.toJSONSchema(schema, { io, unrepresentable: 'any' }) as Parameters<typeof fromJsonSchema>[0],
   );
 
-function register(server: McpServer, op: AnyOperation, opts: ServerFactoryOptions): void {
-  server.registerTool(
-    toolName(op),
-    {
-      title: op.summary,
-      description: [op.summary, op.description].filter(Boolean).join('\n\n'),
-      inputSchema: json(toolInputSchema(op, opts.defaultProperty), 'input'),
-      outputSchema: json(toolOutputSchema(op), 'output'),
-      annotations: toolAnnotations(op),
-    },
-    async (rawArgs: unknown) => {
-      try {
-        const { propertyId, dryRun, confirm: _confirm, ...args } = (rawArgs ?? {}) as Record<string, unknown>;
-        const property = resolveProperty(op, (propertyId as string | undefined) ?? opts.defaultProperty);
-        const input = parseOperationInput(op, args);
-        if (dryRun && isMutating(op.category)) {
-          const { dryRun: _flag, ...preview } = dryRunPreview(op, property, input);
-          const content = { dryRun: true as const, preview };
-          return {
-            content: [{ type: 'text' as const, text: JSON.stringify(content) }],
-            structuredContent: content,
-          };
-        }
-        const result = await op.run(input, { property, globals: opts.globals, interactive: false });
-        const content = structured(op, result);
+type ToolConfig = {
+  title: string;
+  description: string;
+  inputSchema: ReturnType<typeof json>;
+  outputSchema: ReturnType<typeof json>;
+  annotations: ToolAnnotations;
+};
+
+function toolConfig(op: AnyOperation, opts: ServerFactoryOptions): ToolConfig {
+  return {
+    title: op.summary,
+    description: [op.summary, op.description].filter(Boolean).join('\n\n'),
+    inputSchema: json(toolInputSchema(op, opts.defaultProperty), 'input'),
+    outputSchema: json(toolOutputSchema(op), 'output'),
+    annotations: toolAnnotations(op),
+  };
+}
+
+function register(server: McpServer, op: AnyOperation, config: ToolConfig, opts: ServerFactoryOptions): void {
+  server.registerTool(toolName(op), config, async (rawArgs: unknown) => {
+    try {
+      const { propertyId, dryRun, confirm: _confirm, ...args } = (rawArgs ?? {}) as Record<string, unknown>;
+      const candidate =
+        (propertyId as string | undefined) ?? (op.category === 'delete' ? undefined : opts.defaultProperty);
+      const property = resolveProperty(op, candidate);
+      const input = parseOperationInput(op, args);
+      if (dryRun && isMutating(op.category)) {
+        const { dryRun: _flag, ...preview } = dryRunPreview(op, property, input);
+        const content = { dryRun: true as const, preview };
         return {
           content: [{ type: 'text' as const, text: JSON.stringify(content) }],
           structuredContent: content,
         };
-      } catch (error) {
-        const e = toGacliError(error);
-        return { isError: true, content: [{ type: 'text' as const, text: JSON.stringify(e.toJSON()) }] };
       }
-    },
-  );
+      const result = await op.run(input, { property, globals: opts.globals, interactive: false });
+      const content = structured(op, result);
+      return {
+        content: [{ type: 'text' as const, text: JSON.stringify(content) }],
+        structuredContent: content,
+      };
+    } catch (error) {
+      const e = toGacliError(error);
+      return { isError: true, content: [{ type: 'text' as const, text: JSON.stringify(e.toJSON()) }] };
+    }
+  });
 }
 
 export function createServerFactory(ops: AnyOperation[], opts: ServerFactoryOptions): () => McpServer {
-  const exposed = exposedOperations(ops, opts);
+  setFileArgsAllowed(false);
+  // Schema conversion is the expensive part; HTTP builds a server per request, so do it once.
+  const tools = exposedOperations(ops, opts).map((op) => ({ op, config: toolConfig(op, opts) }));
   return () => {
     const server = new McpServer({ name: 'gacli', version: opts.version });
-    for (const op of exposed) register(server, op, opts);
+    for (const { op, config } of tools) register(server, op, config, opts);
     return server;
   };
 }

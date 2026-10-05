@@ -386,3 +386,10 @@ describe('report.pivot --pivots parsing', () => {
     expect(r.error?.issues[0].path).toEqual(['pivots', 0, 'limit']);
   });
 });
+
+describe('report.batch --requests inline JSON', () => {
+  it('accepts an inline JSON array as well as a path', () => {
+    const parsed = reportBatch.input.parse({ requests: '[{"metrics":[{"name":"sessions"}]}]' });
+    expect(parsed.requests).toEqual([{ metrics: [{ name: 'sessions' }] }]);
+  });
+});
