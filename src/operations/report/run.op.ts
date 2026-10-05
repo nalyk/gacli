@@ -1,9 +1,16 @@
 import { z } from 'zod';
 import { defineOperation } from '../../core/operation.js';
-import { runReport } from '../../services/data-api.service.js';
+import { runReport, runReportAlpha } from '../../services/data-api.service.js';
+import type { RunReportParams } from '../../types/data-api.js';
 import { resolveDate } from '../../utils/date-helpers.js';
 import { buildFilterExpression } from '../../utils/filter-builder.js';
+import { jsonArg } from '../json-arg.js';
 import { parseOrderBys, reportDataSchema } from '../shared.js';
+
+const conversionSpec = z.looseObject({
+  conversionActions: z.array(z.string().min(1)).optional(),
+  attributionModel: z.enum(['ATTRIBUTION_MODEL_UNSPECIFIED', 'DATA_DRIVEN', 'LAST_CLICK']).optional(),
+});
 
 export const reportRun = defineOperation({
   id: 'report.run',
@@ -29,6 +36,16 @@ export const reportRun = defineOperation({
     dimensionFilter: z.array(z.string()).optional().describe('Dimension filters (e.g. "country==Romania")'),
     metricFilter: z.array(z.string()).optional().describe('Metric filters (e.g. "sessions>100")'),
     keepEmptyRows: z.boolean().optional().describe('Include rows with all zero metric values'),
+    returnPropertyQuota: z
+      .boolean()
+      .optional()
+      .describe('Also return the property quota state; it lands in the report metadata as propertyQuota'),
+    conversionSpec: jsonArg(conversionSpec)
+      .optional()
+      .describe(
+        'Conversion report spec as JSON (inline, @file or @-): {"conversionActions":["conversionActions/1234"],' +
+          '"attributionModel":"DATA_DRIVEN"|"LAST_CLICK"}. When set the report runs on the v1alpha API',
+      ),
   }),
   flags: {
     metrics: '-m, --metrics <metrics...>',
@@ -40,10 +57,12 @@ export const reportRun = defineOperation({
     orderBy: '--order-by <orderBys...>',
     dimensionFilter: '--dimension-filter <filters...>',
     metricFilter: '--metric-filter <filters...>',
+    returnPropertyQuota: '--return-property-quota',
+    conversionSpec: '--conversion-spec <json>',
   },
   output: reportDataSchema,
-  run: async (input, ctx) =>
-    runReport({
+  run: async (input, ctx) => {
+    const params: RunReportParams = {
       property: `properties/${ctx.property}`,
       dateRanges: [{ startDate: resolveDate(input.startDate), endDate: resolveDate(input.endDate) }],
       metrics: input.metrics.map((name) => ({ name })),
@@ -54,5 +73,11 @@ export const reportRun = defineOperation({
       limit: input.limit,
       offset: input.offset,
       keepEmptyRows: input.keepEmptyRows ?? false,
-    }),
+      ...(input.returnPropertyQuota && { returnPropertyQuota: true }),
+    };
+    // conversionSpec exists only on the v1alpha RunReport
+    return input.conversionSpec
+      ? runReportAlpha({ ...params, conversionSpec: input.conversionSpec })
+      : runReport(params);
+  },
 });

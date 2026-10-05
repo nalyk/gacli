@@ -25,7 +25,7 @@ export const reportRealtime = defineOperation({
   input: z.object({
     metrics: z.array(z.string().min(1)).min(1).describe('Metrics to include in the report'),
     dimensions: z.array(z.string().min(1)).optional().describe('Dimensions to include in the report'),
-    minuteRanges: jsonArg(minuteRanges, '--minute-ranges')
+    minuteRanges: jsonArg(minuteRanges)
       .optional()
       .describe('Minute ranges as a JSON string (e.g. \'[{"startMinutesAgo":10,"endMinutesAgo":0}]\')'),
     dimensionFilter: z.array(z.string()).optional().describe('Dimension filters'),

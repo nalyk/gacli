@@ -27,6 +27,12 @@ export const GROUP_DESCRIPTIONS: Record<string, string> = {
   'admin firebase-links': 'Manage GA4 Firebase links',
   'admin google-ads-links': 'Manage GA4 Google Ads links',
   'admin bigquery-links': 'Manage GA4 BigQuery links',
+  'report tasks': 'Asynchronous report tasks (create, poll, query)',
+  'admin annotations': 'Manage reporting data annotations',
+  'admin change-history': 'Search account change history',
+  'admin access-report': 'Run data access reports',
+  'admin measurement-secrets': 'Manage Measurement Protocol secrets',
+  'admin data-retention': 'Manage property data retention settings',
 };
 
 interface FieldInfo {
@@ -91,7 +97,8 @@ export function describeFlags(op: AnyOperation): FlagSpec[] {
         (op.flags as Record<string, string> | undefined)?.[key] ??
         (negatable ? `--no-${kebab(key)}` : generatedFlag(key, info)),
       key,
-      required: !info.optional && info.defaultValue === undefined,
+      // A positional alternative makes the flag optional for commander; zod still requires a value.
+      required: !info.optional && info.defaultValue === undefined && key !== op.positional,
       description: info.description ?? '',
       defaultValue: negatable ? undefined : info.defaultValue,
     };
@@ -122,12 +129,30 @@ function buildLeaf(op: AnyOperation, name: string): Command {
     if (spec.hidden) option.hideHelp();
     cmd.addOption(option);
   }
+  if (op.positional) {
+    cmd.argument(`[${kebab(op.positional)}]`, `Same as --${kebab(op.positional)}`);
+    cmd.action(async (value: string | undefined, opts: Record<string, unknown>, command: Command) =>
+      executeOperation(
+        op,
+        { ...opts, [op.positional as string]: opts[op.positional as string] ?? value },
+        command,
+      ),
+    );
+    return cmd;
+  }
   cmd.action(async (opts: Record<string, unknown>, command: Command) => executeOperation(op, opts, command));
   return cmd;
 }
 
 export function mountOperations(program: Command, ops: AnyOperation[]): void {
+  // A leaf flag spelled like a global one (-p, --property, -f, ...) is swallowed by the global.
+  const globalFlags = new Set(program.options.flatMap((o) => [o.short, o.long]).filter(Boolean));
   for (const op of ops) {
+    for (const spec of describeFlags(op)) {
+      const option = new Option(spec.flag);
+      const clash = [option.short, option.long].find((f) => f && globalFlags.has(f));
+      if (clash) throw new Error(`Flag ${clash} of ${op.id} collides with a global option`);
+    }
     const path = cliPath(op);
     let parent = program;
     for (let i = 0; i < path.length - 1; i++) {

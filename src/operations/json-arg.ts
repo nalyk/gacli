@@ -19,7 +19,8 @@ const errMsg = (e: unknown) => (e instanceof Error ? e.message : String(e));
  * A flag that carries JSON: inline (`'[{"a":1}]'`), from a file (`@steps.json`) or stdin (`@-`).
  * Read/parse/shape problems become zod issues, so they surface as usage errors (exit 2).
  */
-export function jsonArg<T extends z.ZodType>(schema: T, what: string, read: SourceReader = defaultRead) {
+/** The flag name is added by the caller (CLI adapter / MCP), so messages here never repeat it. */
+export function jsonArg<T extends z.ZodType>(schema: T, read: SourceReader = defaultRead) {
   return z.string().transform((raw, ctx): z.output<T> => {
     let text = raw;
     let from = '';
@@ -36,7 +37,7 @@ export function jsonArg<T extends z.ZodType>(schema: T, what: string, read: Sour
       try {
         text = read(src === '-' ? 0 : src);
       } catch (e) {
-        ctx.addIssue({ code: 'custom', message: `Cannot read ${what} from ${from}: ${errMsg(e)}` });
+        ctx.addIssue({ code: 'custom', message: `Cannot read ${from}: ${errMsg(e)}` });
         return z.NEVER;
       }
     }
@@ -46,15 +47,14 @@ export function jsonArg<T extends z.ZodType>(schema: T, what: string, read: Sour
     } catch (e) {
       ctx.addIssue({
         code: 'custom',
-        message: `Invalid JSON for ${what}${from ? ` in ${from}` : ''}: ${errMsg(e)}`,
+        message: `Invalid JSON${from ? ` in ${from}` : ''}: ${errMsg(e)}`,
       });
       return z.NEVER;
     }
     const result = schema.safeParse(parsed);
     if (!result.success) {
       for (const issue of result.error.issues) {
-        const at = issue.path.length ? ` at ${issue.path.join('.')}` : '';
-        ctx.addIssue({ code: 'custom', message: `${what}${at}: ${issue.message}` });
+        ctx.addIssue({ code: 'custom', message: issue.message, path: issue.path });
       }
       return z.NEVER;
     }

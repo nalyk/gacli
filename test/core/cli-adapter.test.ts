@@ -260,4 +260,76 @@ describe('mountOperations flag generation edge cases', () => {
     });
     expect(describeFlags(op).find((f) => f.key === 'acknowledge')?.required).toBe(true);
   });
+
+  it('names a JSON flag exactly once in its error', async () => {
+    const { jsonArg } = await import('../../src/operations/json-arg.js');
+    const op = defineOperation({
+      id: 'demo.json.run',
+      summary: 'x',
+      category: 'read',
+      kind: 'resource',
+      input: z.object({ steps: jsonArg(z.array(z.object({ name: z.string() }))) }),
+      flags: { steps: '--steps <json>' },
+      output: z.unknown(),
+      run: async () => ({}),
+    });
+    const program = addGlobalOptions(new Command('gacli'));
+    mountOperations(program, [op]);
+    finalizeProgram(program);
+    try {
+      await runProgram(program, [
+        'node',
+        'gacli',
+        '-f',
+        'json',
+        'demo',
+        'json',
+        'run',
+        '--steps',
+        '[{"nam":1}]',
+      ]);
+    } catch {
+      // stubbed exit
+    }
+    const message = JSON.parse(stderr[0]).error.message as string;
+    expect(message.match(/--steps/g)).toHaveLength(1);
+    expect(message).toContain('--steps.0.name');
+  });
+
+  it('rejects input keys that collide with global options (they would be swallowed by -p etc.)', () => {
+    const bad = defineOperation({
+      id: 'demo.global.list',
+      summary: 'x',
+      category: 'read',
+      kind: 'resource',
+      input: z.object({ property: z.string().optional() }),
+      output: z.unknown(),
+      run: async () => [],
+    });
+    expect(() => mountOperations(addGlobalOptions(new Command('gacli')), [bad])).toThrow(/global option/);
+  });
+
+  it('accepts a positional argument for an operation that declares one, or the flag', async () => {
+    const run = vi.fn(async () => ({ ok: true }));
+    const op = defineOperation({
+      id: 'demo.ask.run',
+      summary: 'Ask',
+      category: 'read',
+      kind: 'resource',
+      positional: 'question',
+      input: z.object({ question: z.string().min(1).describe('The question') }),
+      output: z.unknown(),
+      run,
+    });
+    const make = () => {
+      const program = addGlobalOptions(new Command('gacli'));
+      mountOperations(program, [op]);
+      finalizeProgram(program);
+      return program;
+    };
+    await runProgram(make(), ['node', 'gacli', '-f', 'json', 'demo', 'ask', 'run', 'how many users']);
+    expect(run.mock.calls[0][0]).toEqual({ question: 'how many users' });
+    await runProgram(make(), ['node', 'gacli', '-f', 'json', 'demo', 'ask', 'run', '--question', 'via flag']);
+    expect(run.mock.calls[1][0]).toEqual({ question: 'via flag' });
+  });
 });

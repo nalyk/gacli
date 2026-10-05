@@ -1,4 +1,5 @@
 import { Command } from 'commander';
+import { createApiCommand } from './commands/api/index.js';
 import { createAuthCommand } from './commands/auth/index.js';
 import { createConfigCommand } from './commands/config/index.js';
 import { createExploreCommand } from './commands/explore/index.js';
@@ -22,6 +23,7 @@ program.addCommand(createExploreCommand());
 program.addCommand(createMcpCommand());
 program.addCommand(createSkillsCommand());
 program.addCommand(createSchemaCommand(OPERATIONS));
+program.addCommand(createApiCommand());
 if (detectAgent()) program.addHelpText('beforeAll', AGENT_HELP);
 
 mountOperations(program, OPERATIONS);

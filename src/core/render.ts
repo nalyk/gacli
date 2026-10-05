@@ -24,10 +24,22 @@ function getPath(obj: unknown, path: string): unknown {
   return cur;
 }
 
+const onlyKeys = (o: object, allowed: string[]) => Object.keys(o).every((k) => allowed.includes(k));
+
+// Protobuf shapes that reach tables as objects: Timestamp, wrapper (BoolValue…), Long.
 function cell(value: unknown): string {
   if (value === null || value === undefined) return '';
-  if (typeof value === 'object') return JSON.stringify(value);
-  return String(value);
+  if (typeof value !== 'object') return String(value);
+  const o = value as Record<string, unknown>;
+  if ('seconds' in o && onlyKeys(o, ['seconds', 'nanos'])) {
+    const ms = Number(o.seconds) * 1000 + Math.floor(Number(o.nanos ?? 0) / 1e6);
+    if (Number.isFinite(ms)) return new Date(ms).toISOString();
+  }
+  if ('value' in o && onlyKeys(o, ['value'])) return cell(o.value);
+  if ('low' in o && 'high' in o && onlyKeys(o, ['low', 'high', 'unsigned'])) {
+    return String(Number(o.high) * 2 ** 32 + (Number(o.low) >>> 0));
+  }
+  return JSON.stringify(value);
 }
 
 function unknownFields(missing: string[], available: string[]): GacliError {

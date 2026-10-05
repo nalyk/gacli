@@ -72,9 +72,7 @@ export const createAudience = defineOperation({
       .positive()
       .default(30)
       .describe('Membership duration in days'),
-    filterClauses: jsonArg(z.array(filterClause), '--filter-clauses')
-      .optional()
-      .describe('Filter clauses as JSON string'),
+    filterClauses: jsonArg(z.array(filterClause)).optional().describe('Filter clauses as JSON string'),
   }),
   flags: {
     displayName: '--display-name <displayName>',

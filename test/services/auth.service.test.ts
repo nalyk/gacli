@@ -22,11 +22,15 @@ describe('auth.service resolution chain', () => {
     mockedGetConfig.mockReset();
     mockedGetConfig.mockReturnValue({});
     delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
+    delete process.env.GACLI_ACCESS_TOKEN;
+    delete process.env.GACLI_SCOPES;
   });
 
   afterEach(() => {
     auth.resetAuth();
     delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
+    delete process.env.GACLI_ACCESS_TOKEN;
+    delete process.env.GACLI_SCOPES;
   });
 
   it('priority 1: OAuth tokens win even when service-account env+config are present', () => {
@@ -75,12 +79,59 @@ describe('auth.service resolution chain', () => {
     expect(auth.resolveCredentialsPath()).toBe('/config/sa.json');
   });
 
-  it('throws with actionable message when no credentials configured at all', () => {
+  it('falls back to Application Default Credentials when nothing is configured', () => {
     mockedLoadTokens.mockReturnValue(null);
     mockedGetConfig.mockReturnValue({});
 
-    expect(() => auth.getAuthClientOptions()).toThrow(/No credentials configured/);
-    expect(() => auth.getAuthClientOptions()).toThrow(/gacli auth login/);
+    const opts = auth.getAuthClientOptions() as { auth: { keyFilename?: string } };
+    expect(opts).toHaveProperty('auth');
+    expect(opts.auth.keyFilename).toBeUndefined();
+    expect(auth.describeAuth().source).toBe('adc');
+  });
+
+  it('priority 0: GACLI_ACCESS_TOKEN beats OAuth tokens and service accounts', async () => {
+    process.env.GACLI_ACCESS_TOKEN = 'ya29.token';
+    mockedLoadTokens.mockReturnValue({
+      access_token: 'a',
+      refresh_token: 'r',
+      client_id: 'cid',
+      client_secret: 'csec',
+      expiry_date: 9999999999999,
+      token_type: 'Bearer',
+      scope: '',
+    });
+    const opts = auth.getAuthClientOptions() as {
+      authClient: { credentials: { access_token?: string; refresh_token?: string } };
+    };
+    expect(opts.authClient.credentials.access_token).toBe('ya29.token');
+    expect(opts.authClient.credentials.refresh_token).toBeUndefined();
+    expect(auth.describeAuth().source).toBe('access-token');
+    expect(await auth.getAccessToken()).toBe('ya29.token');
+  });
+
+  it('describes each credential source', () => {
+    mockedLoadTokens.mockReturnValue(null);
+    mockedGetConfig.mockReturnValue({ credentials: '/config/sa.json' });
+    expect(auth.describeAuth()).toEqual({ source: 'config-credentials', detail: '/config/sa.json' });
+    process.env.GOOGLE_APPLICATION_CREDENTIALS = '/env/sa.json';
+    expect(auth.describeAuth()).toEqual({ source: 'env-credentials', detail: '/env/sa.json' });
+  });
+
+  it('maps scope presets', () => {
+    const R = 'https://www.googleapis.com/auth/analytics.readonly';
+    const E = 'https://www.googleapis.com/auth/analytics.edit';
+    const C = 'https://www.googleapis.com/auth/analytics.chatbot.read';
+    expect(auth.scopesFor('readonly')).toEqual([R]);
+    expect(auth.scopesFor('edit')).toEqual([R, E]);
+    expect(auth.scopesFor('chat')).toEqual([R, E, C]);
+  });
+
+  it('adds the chatbot scope for service accounts when GACLI_SCOPES=chat', () => {
+    mockedLoadTokens.mockReturnValue(null);
+    process.env.GOOGLE_APPLICATION_CREDENTIALS = '/env/sa.json';
+    process.env.GACLI_SCOPES = 'chat';
+    const opts = auth.getAuthClientOptions() as { auth: { scopes: string[] } };
+    expect(opts.auth.scopes).toContain('https://www.googleapis.com/auth/analytics.chatbot.read');
   });
 
   it('caches resolved options across calls (singleton)', () => {

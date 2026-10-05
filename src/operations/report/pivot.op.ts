@@ -10,13 +10,13 @@ import { reportDataSchema } from '../shared.js';
 const pivot = z.looseObject({
   fieldNames: z.array(z.string()).min(1),
   orderBys: z.array(z.looseObject({})).optional(),
-  offset: z.number().int().min(0).optional(),
-  limit: z.number().int().min(1),
+  offset: z.coerce.number().int().min(0).optional(),
+  limit: z.coerce.number().int().min(1),
   metricAggregations: z.array(z.enum(['TOTAL', 'MINIMUM', 'MAXIMUM', 'COUNT'])).optional(),
 });
 
-// 1.x validated a single object but the API wants an array; accept both.
-const pivots = z.union([z.array(pivot).min(1), pivot.transform((p) => [p])]);
+// 1.x validated a single object but the API wants an array; accept both (preprocess keeps per-field errors).
+const pivots = z.preprocess((v) => (Array.isArray(v) ? v : [v]), z.array(pivot).min(1));
 
 export const reportPivot = defineOperation({
   id: 'report.pivot',
@@ -28,7 +28,7 @@ export const reportPivot = defineOperation({
   input: z.object({
     metrics: z.array(z.string().min(1)).min(1).describe('Metrics to include in the report'),
     dimensions: z.array(z.string().min(1)).min(1).describe('Dimensions to include in the report'),
-    pivots: jsonArg(pivots, '--pivots').describe('Pivot definitions as a JSON string'),
+    pivots: jsonArg(pivots).describe('Pivot definitions as a JSON string'),
     startDate: z.string().default('7daysAgo').describe('Start date for the report'),
     endDate: z.string().default('today').describe('End date for the report'),
     dimensionFilter: z.array(z.string()).optional().describe('Dimension filters'),

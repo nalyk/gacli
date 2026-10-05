@@ -23,7 +23,7 @@ export const reportCohort = defineOperation({
   // 1.x applied DAILY / endOffset 5 in code rather than as commander defaults; kept so help is unchanged.
   input: z.object({
     metrics: z.array(z.string().min(1)).min(1).describe('Metrics to include in the report'),
-    cohorts: jsonArg(cohorts, '--cohorts').describe('Cohort definitions as a JSON string'),
+    cohorts: jsonArg(cohorts).describe('Cohort definitions as a JSON string'),
     cohortGranularity: z
       .enum(['DAILY', 'WEEKLY', 'MONTHLY'])
       .optional()

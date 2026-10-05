@@ -1,9 +1,9 @@
 import { randomBytes } from 'node:crypto';
 import { createServer } from 'node:http';
 import { URL } from 'node:url';
-import { Command } from 'commander';
+import { Command, Option } from 'commander';
 import { CodeChallengeMethod, OAuth2Client } from 'google-auth-library';
-import { GA4_SCOPES, resetAuth } from '../../services/auth.service.js';
+import { resetAuth, type ScopePreset, scopesFor } from '../../services/auth.service.js';
 import { getConfig } from '../../services/config.service.js';
 import { loadClientSecrets, saveOAuthTokens } from '../../services/oauth.service.js';
 import { handleError } from '../../utils/error-handler.js';
@@ -13,16 +13,24 @@ export function createLoginCommand(): Command {
   return new Command('login')
     .description('Authenticate with Google via OAuth 2.0')
     .option('--client-secret-file <path>', 'Path to OAuth client secret JSON file')
-    .action(async (opts) => {
+    .addOption(
+      new Option(
+        '--scopes <preset>',
+        'Access to request: readonly, edit (read + write) or chat (adds analytics.chatbot.read)',
+      )
+        .choices(['readonly', 'edit', 'chat'])
+        .default('edit'),
+    )
+    .action(async (opts: { clientSecretFile?: string; scopes: ScopePreset }) => {
       try {
-        await runLogin(opts.clientSecretFile);
+        await runLogin(opts.clientSecretFile, scopesFor(opts.scopes));
       } catch (error) {
         handleError(error);
       }
     });
 }
 
-async function runLogin(clientSecretFilePath?: string): Promise<void> {
+async function runLogin(clientSecretFilePath: string | undefined, scopes: string[]): Promise<void> {
   const secretPath = clientSecretFilePath ?? getConfig().oauthClientSecretFile;
   if (!secretPath) {
     logger.error(
@@ -45,7 +53,7 @@ async function runLogin(clientSecretFilePath?: string): Promise<void> {
   const authUrl = oauth2Client.generateAuthUrl({
     access_type: 'offline',
     prompt: 'consent',
-    scope: GA4_SCOPES,
+    scope: scopes,
     state,
     code_challenge: codeChallenge,
     code_challenge_method: CodeChallengeMethod.S256,
@@ -65,7 +73,7 @@ async function runLogin(clientSecretFilePath?: string): Promise<void> {
       refresh_token: tokens.refresh_token!,
       expiry_date: tokens.expiry_date!,
       token_type: tokens.token_type ?? 'Bearer',
-      scope: tokens.scope ?? GA4_SCOPES.join(' '),
+      scope: tokens.scope ?? scopes.join(' '),
       client_id,
       client_secret,
     });

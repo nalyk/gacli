@@ -92,3 +92,37 @@ describe('GacliError', () => {
     });
   });
 });
+
+describe('toGacliError: ADC', () => {
+  it('maps missing default credentials to auth with setup hints', () => {
+    const e = toGacliError(
+      new Error(
+        'Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication',
+      ),
+    );
+    expect(e.kind).toBe('auth');
+    expect(e.hint).toContain('gacli auth login');
+    expect(e.hint).toContain('gcloud auth application-default login');
+  });
+});
+
+describe('toGacliError: credential hints', () => {
+  it('ADC hint includes analytics scopes and the quota project', () => {
+    const e = toGacliError(new Error('Could not load the default credentials.'));
+    expect(e.hint).toContain('--scopes=');
+    expect(e.hint).toContain('set-quota-project');
+  });
+
+  it('an UNAUTHENTICATED error under GACLI_ACCESS_TOKEN points at the token, not auth login', () => {
+    const before = process.env.GACLI_ACCESS_TOKEN;
+    process.env.GACLI_ACCESS_TOKEN = 'ya29.x';
+    try {
+      const e = toGacliError(Object.assign(new Error('16 UNAUTHENTICATED: bad'), { code: 16 }));
+      expect(e.hint).toContain('GACLI_ACCESS_TOKEN');
+      expect(e.hint).not.toContain('auth login');
+    } finally {
+      if (before === undefined) delete process.env.GACLI_ACCESS_TOKEN;
+      else process.env.GACLI_ACCESS_TOKEN = before;
+    }
+  });
+});

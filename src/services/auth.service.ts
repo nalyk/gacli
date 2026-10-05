@@ -3,10 +3,35 @@ import { GacliError } from '../core/errors.js';
 import { getConfig } from './config.service.js';
 import { loadOAuthTokens, saveOAuthTokens } from './oauth.service.js';
 
-export const GA4_SCOPES = [
-  'https://www.googleapis.com/auth/analytics.readonly',
-  'https://www.googleapis.com/auth/analytics.edit',
-];
+const READONLY_SCOPE = 'https://www.googleapis.com/auth/analytics.readonly';
+const EDIT_SCOPE = 'https://www.googleapis.com/auth/analytics.edit';
+const CHAT_SCOPE = 'https://www.googleapis.com/auth/analytics.chatbot.read';
+
+export const GA4_SCOPES = [READONLY_SCOPE, EDIT_SCOPE];
+
+export type ScopePreset = 'readonly' | 'edit' | 'chat';
+
+export function scopesFor(preset: ScopePreset): string[] {
+  if (preset === 'readonly') return [READONLY_SCOPE];
+  return preset === 'chat' ? [...GA4_SCOPES, CHAT_SCOPE] : GA4_SCOPES;
+}
+
+// Service accounts have no consent screen, so the chatbot scope is opt-in via env.
+const serviceScopes = () => scopesFor(process.env.GACLI_SCOPES === 'chat' ? 'chat' : 'edit');
+
+export type AuthSource = 'access-token' | 'oauth' | 'env-credentials' | 'config-credentials' | 'adc';
+
+/** Which credential the resolution chain will use, without touching the network. */
+export function describeAuth(): { source: AuthSource; detail?: string } {
+  if (process.env.GACLI_ACCESS_TOKEN) return { source: 'access-token' };
+  if (loadOAuthTokens()) return { source: 'oauth' };
+  if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+    return { source: 'env-credentials', detail: process.env.GOOGLE_APPLICATION_CREDENTIALS };
+  }
+  const configured = getConfig().credentials;
+  if (configured) return { source: 'config-credentials', detail: configured };
+  return { source: 'adc' };
+}
 
 export function resolveCredentialsPath(): string | undefined {
   if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
@@ -23,6 +48,15 @@ let cachedAuthOptions: { authClient: OAuth2Client } | { auth: GoogleAuth } | nul
 
 export function getAuthClientOptions(): { authClient: OAuth2Client } | { auth: GoogleAuth } {
   if (cachedAuthOptions) return cachedAuthOptions;
+
+  // Agents/CI: a pre-obtained access token, used as-is (no refresh; expiry surfaces as exit 3).
+  const accessToken = process.env.GACLI_ACCESS_TOKEN;
+  if (accessToken) {
+    const client = new OAuth2Client();
+    client.setCredentials({ access_token: accessToken });
+    cachedAuthOptions = { authClient: client };
+    return cachedAuthOptions;
+  }
 
   const tokens = loadOAuthTokens();
   if (tokens) {
@@ -52,13 +86,10 @@ export function getAuthClientOptions(): { authClient: OAuth2Client } | { auth: G
   }
 
   const keyFile = resolveCredentialsPath();
-  if (!keyFile) {
-    throw new Error(
-      'No credentials configured. Run `gacli auth login` for OAuth or set a service account via:\n' +
-        '  gacli config set credentials /path/to/service-account.json',
-    );
-  }
-  const auth = new GoogleAuth({ keyFile, scopes: GA4_SCOPES });
+  // No keyFile → Application Default Credentials (gcloud auth application-default login, GCE/GKE metadata).
+  const auth = keyFile
+    ? new GoogleAuth({ keyFile, scopes: serviceScopes() })
+    : new GoogleAuth({ scopes: serviceScopes() });
   cachedAuthOptions = { auth };
   return cachedAuthOptions;
 }
@@ -66,6 +97,15 @@ export function getAuthClientOptions(): { authClient: OAuth2Client } | { auth: G
 export function getActiveAuthMode(): 'oauth' | 'service-account' {
   const tokens = loadOAuthTokens();
   return tokens ? 'oauth' : 'service-account';
+}
+
+export async function getAccessToken(): Promise<string> {
+  const opts = getAuthClientOptions();
+  const result =
+    'authClient' in opts ? await opts.authClient.getAccessToken() : await opts.auth.getAccessToken();
+  const token = typeof result === 'string' ? result : result?.token;
+  if (!token) throw new Error('No credentials configured: could not obtain an access token');
+  return token;
 }
 
 let credentialsReady: Promise<void> | null = null;

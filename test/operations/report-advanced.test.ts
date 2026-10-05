@@ -53,7 +53,8 @@ beforeEach(() => {
 
 describe('report catalogue', () => {
   it('exports the ops in 1.x order with read category and property requirement', () => {
-    expect(reportOps.map((o) => o.id)).toEqual([
+    const v1 = reportOps.slice(0, 6);
+    expect(v1.map((o) => o.id)).toEqual([
       'report.pivot',
       'report.batch',
       'report.batch-pivot',
@@ -61,7 +62,7 @@ describe('report catalogue', () => {
       'report.cohort',
       'report.funnel',
     ]);
-    for (const op of reportOps) {
+    for (const op of v1) {
       expect(op.category).toBe('read');
       expect(op.needsProperty).toBe(true);
     }
@@ -360,7 +361,29 @@ describe('report.funnel', () => {
   it('rejects malformed --steps JSON', () => {
     const r = reportFunnel.input.safeParse({ steps: '[{' });
     expect(r.success).toBe(false);
-    expect(r.error?.issues[0].message).toMatch(/--steps/);
+    expect(r.error?.issues[0].path[0]).toBe('steps');
+    expect(r.error?.issues[0].message).toMatch(/^Invalid JSON/);
+  });
+});
+
+describe('report.pivot --pivots parsing', () => {
+  it('coerces numeric strings and wraps a single object', () => {
+    const r = reportPivot.input.parse({
+      metrics: ['m'],
+      dimensions: ['d'],
+      pivots: '{"fieldNames":["d"],"limit":"5","offset":"1"}',
+    });
+    expect(r.pivots).toEqual([expect.objectContaining({ limit: 5, offset: 1 })]);
+  });
+
+  it('reports the failing field inside an array', () => {
+    const r = reportPivot.input.safeParse({
+      metrics: ['m'],
+      dimensions: ['d'],
+      pivots: '[{"fieldNames":["d"]}]',
+    });
+    expect(r.success).toBe(false);
+    expect(r.error?.issues[0].path).toEqual(['pivots', 0, 'limit']);
   });
 });
 

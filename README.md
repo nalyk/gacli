@@ -257,6 +257,9 @@ Stored in `~/.gacli/config.json`.
 |---|---|---|
 | `GA4_PROPERTY_ID` | — | Default property when neither `--property` nor `config.property` is set |
 | `GOOGLE_APPLICATION_CREDENTIALS` | — | Path to service-account JSON; used when no OAuth tokens exist, and takes precedence over `config.credentials` |
+| `GACLI_ACCESS_TOKEN` | — | Pre-obtained OAuth access token (agents/CI); wins over every other credential source |
+| `GACLI_SCOPES` | — | `chat` adds `analytics.chatbot.read` for service accounts / ADC |
+| `GACLI_FORMAT` | — | Default output format (overrides config, overridden by `-f`) |
 | `GACLI_VERBOSE` | `0` | When `1`, error stack traces are printed alongside the human-readable error |
 | `GACLI_MAX_RETRIES` | `3` | Max retries on retriable gRPC errors (codes 8 quota, 14 unavailable). Other errors never retry |
 | `GACLI_RETRY_BASE_MS` | `500` | Base delay for exponential-backoff-with-jitter; capped at `base * 2^attempt` |
