@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -8,7 +8,7 @@ const BIN = resolve(process.cwd(), 'dist/index.js');
 interface JsonRpcResponse {
   jsonrpc: '2.0';
   id: number;
-  result?: { tools?: Array<{ name: string }> };
+  result?: { tools?: Array<{ name: string }>; serverInfo?: { version: string } };
   error?: { message: string };
 }
 
@@ -55,6 +55,8 @@ describe.skipIf(!builtBin)('mcp serve (stdio smoke)', () => {
     ]);
     expect(resp.result).toBeDefined();
     expect(resp.error).toBeUndefined();
+    const { version } = JSON.parse(readFileSync(resolve(process.cwd(), 'package.json'), 'utf-8'));
+    expect(resp.result?.serverInfo?.version).toBe(version);
   });
 
   it('lists exactly the 4 expected tools', async () => {

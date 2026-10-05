@@ -1,4 +1,4 @@
-import { AnalyticsAdminServiceClient } from '@google-analytics/admin';
+import type { AnalyticsAdminServiceClient } from '@google-analytics/admin';
 import type {
   CreateAccessBindingParams,
   CreateAudienceParams,
@@ -23,8 +23,10 @@ import { getAuthClientOptions } from './auth.service.js';
 
 let adminClient: AnalyticsAdminServiceClient | null = null;
 
-function getClient(): AnalyticsAdminServiceClient {
+// SDK is imported on first use so non-admin commands never pay the gRPC load cost.
+async function getClient(): Promise<AnalyticsAdminServiceClient> {
   if (!adminClient) {
+    const { AnalyticsAdminServiceClient } = await import('@google-analytics/admin');
     adminClient = new AnalyticsAdminServiceClient({ ...getAuthClientOptions() } as any);
   }
   return adminClient;
@@ -32,14 +34,14 @@ function getClient(): AnalyticsAdminServiceClient {
 
 // Accounts
 export async function listAccounts(): Promise<any[]> {
-  const c = getClient();
+  const c = await getClient();
   const [accounts] = await c.listAccounts({});
   return accounts || [];
 }
 
 // Properties
 export async function listProperties(accountId: string): Promise<any[]> {
-  const c = getClient();
+  const c = await getClient();
   const [properties] = await c.listProperties({
     filter: `parent:accounts/${accountId}`,
   });
@@ -47,13 +49,13 @@ export async function listProperties(accountId: string): Promise<any[]> {
 }
 
 export async function getProperty(propertyId: string): Promise<any> {
-  const c = getClient();
+  const c = await getClient();
   const [property] = await c.getProperty({ name: `properties/${propertyId}` });
   return property;
 }
 
 export async function createProperty(params: CreatePropertyParams): Promise<any> {
-  const c = getClient();
+  const c = await getClient();
   const [property] = await c.createProperty({
     property: {
       displayName: params.displayName,
@@ -67,7 +69,7 @@ export async function createProperty(params: CreatePropertyParams): Promise<any>
 }
 
 export async function updateProperty(params: UpdatePropertyParams): Promise<any> {
-  const c = getClient();
+  const c = await getClient();
   const updateMask: string[] = [];
   const property: any = { name: params.name };
 
@@ -96,25 +98,25 @@ export async function updateProperty(params: UpdatePropertyParams): Promise<any>
 }
 
 export async function deleteProperty(propertyId: string): Promise<void> {
-  const c = getClient();
+  const c = await getClient();
   await c.deleteProperty({ name: `properties/${propertyId}` });
 }
 
 // Data Streams
 export async function listDataStreams(propertyId: string): Promise<any[]> {
-  const c = getClient();
+  const c = await getClient();
   const [streams] = await c.listDataStreams({ parent: `properties/${propertyId}` });
   return streams || [];
 }
 
 export async function getDataStream(name: string): Promise<any> {
-  const c = getClient();
+  const c = await getClient();
   const [stream] = await c.getDataStream({ name });
   return stream;
 }
 
 export async function createDataStream(params: CreateDataStreamParams): Promise<any> {
-  const c = getClient();
+  const c = await getClient();
   const [stream] = await c.createDataStream({
     parent: params.parent,
     dataStream: {
@@ -129,7 +131,7 @@ export async function createDataStream(params: CreateDataStreamParams): Promise<
 }
 
 export async function updateDataStream(params: UpdateDataStreamParams): Promise<any> {
-  const c = getClient();
+  const c = await getClient();
   const [stream] = await c.updateDataStream({
     dataStream: { name: params.name, displayName: params.displayName },
     updateMask: { paths: ['display_name'] },
@@ -138,25 +140,25 @@ export async function updateDataStream(params: UpdateDataStreamParams): Promise<
 }
 
 export async function deleteDataStream(name: string): Promise<void> {
-  const c = getClient();
+  const c = await getClient();
   await c.deleteDataStream({ name });
 }
 
 // Custom Dimensions
 export async function listCustomDimensions(propertyId: string): Promise<any[]> {
-  const c = getClient();
+  const c = await getClient();
   const [dimensions] = await c.listCustomDimensions({ parent: `properties/${propertyId}` });
   return dimensions || [];
 }
 
 export async function getCustomDimension(name: string): Promise<any> {
-  const c = getClient();
+  const c = await getClient();
   const [dimension] = await (c as any).getCustomDimension({ name });
   return dimension;
 }
 
 export async function createCustomDimension(params: CreateCustomDimensionParams): Promise<any> {
-  const c = getClient();
+  const c = await getClient();
   const [dimension] = await c.createCustomDimension({
     parent: params.parent,
     customDimension: {
@@ -171,7 +173,7 @@ export async function createCustomDimension(params: CreateCustomDimensionParams)
 }
 
 export async function updateCustomDimension(params: UpdateCustomDimensionParams): Promise<any> {
-  const c = getClient();
+  const c = await getClient();
   const updateMask: string[] = [];
   const cd: any = { name: params.name };
   if (params.displayName) {
@@ -194,25 +196,25 @@ export async function updateCustomDimension(params: UpdateCustomDimensionParams)
 }
 
 export async function archiveCustomDimension(name: string): Promise<void> {
-  const c = getClient();
+  const c = await getClient();
   await c.archiveCustomDimension({ name });
 }
 
 // Custom Metrics
 export async function listCustomMetrics(propertyId: string): Promise<any[]> {
-  const c = getClient();
+  const c = await getClient();
   const [metrics] = await c.listCustomMetrics({ parent: `properties/${propertyId}` });
   return metrics || [];
 }
 
 export async function getCustomMetric(name: string): Promise<any> {
-  const c = getClient();
+  const c = await getClient();
   const [metric] = await (c as any).getCustomMetric({ name });
   return metric;
 }
 
 export async function createCustomMetric(params: CreateCustomMetricParams): Promise<any> {
-  const c = getClient();
+  const c = await getClient();
   const [metric] = await c.createCustomMetric({
     parent: params.parent,
     customMetric: {
@@ -228,7 +230,7 @@ export async function createCustomMetric(params: CreateCustomMetricParams): Prom
 }
 
 export async function updateCustomMetric(params: UpdateCustomMetricParams): Promise<any> {
-  const c = getClient();
+  const c = await getClient();
   const updateMask: string[] = [];
   const cm: any = { name: params.name };
   if (params.displayName) {
@@ -251,25 +253,25 @@ export async function updateCustomMetric(params: UpdateCustomMetricParams): Prom
 }
 
 export async function archiveCustomMetric(name: string): Promise<void> {
-  const c = getClient();
+  const c = await getClient();
   await c.archiveCustomMetric({ name });
 }
 
 // Key Events
 export async function listKeyEvents(propertyId: string): Promise<any[]> {
-  const c = getClient();
+  const c = await getClient();
   const [events] = await (c as any).listKeyEvents({ parent: `properties/${propertyId}` });
   return events || [];
 }
 
 export async function getKeyEvent(name: string): Promise<any> {
-  const c = getClient();
+  const c = await getClient();
   const [event] = await (c as any).getKeyEvent({ name });
   return event;
 }
 
 export async function createKeyEvent(params: CreateKeyEventParams): Promise<any> {
-  const c = getClient();
+  const c = await getClient();
   const [event] = await (c as any).createKeyEvent({
     parent: params.parent,
     keyEvent: {
@@ -282,7 +284,7 @@ export async function createKeyEvent(params: CreateKeyEventParams): Promise<any>
 }
 
 export async function updateKeyEvent(params: UpdateKeyEventParams): Promise<any> {
-  const c = getClient();
+  const c = await getClient();
   const updateMask: string[] = [];
   const ke: any = { name: params.name };
   if (params.countingMethod) {
@@ -301,25 +303,25 @@ export async function updateKeyEvent(params: UpdateKeyEventParams): Promise<any>
 }
 
 export async function deleteKeyEvent(name: string): Promise<void> {
-  const c = getClient();
+  const c = await getClient();
   await (c as any).deleteKeyEvent({ name });
 }
 
 // Audiences
 export async function listAudiences(propertyId: string): Promise<any[]> {
-  const c = getClient();
+  const c = await getClient();
   const [audiences] = await (c as any).listAudiences({ parent: `properties/${propertyId}` });
   return audiences || [];
 }
 
 export async function getAudience(name: string): Promise<any> {
-  const c = getClient();
+  const c = await getClient();
   const [audience] = await (c as any).getAudience({ name });
   return audience;
 }
 
 export async function createAudience(params: CreateAudienceParams): Promise<any> {
-  const c = getClient();
+  const c = await getClient();
   const [audience] = await (c as any).createAudience({
     parent: params.parent,
     audience: {
@@ -334,7 +336,7 @@ export async function createAudience(params: CreateAudienceParams): Promise<any>
 }
 
 export async function updateAudience(params: UpdateAudienceParams): Promise<any> {
-  const c = getClient();
+  const c = await getClient();
   const updateMask: string[] = [];
   const aud: any = { name: params.name };
   if (params.displayName) {
@@ -357,25 +359,25 @@ export async function updateAudience(params: UpdateAudienceParams): Promise<any>
 }
 
 export async function archiveAudience(name: string): Promise<void> {
-  const c = getClient();
+  const c = await getClient();
   await (c as any).archiveAudience({ name });
 }
 
 // Access Bindings
 export async function listAccessBindings(parent: string): Promise<any[]> {
-  const c = getClient();
+  const c = await getClient();
   const [bindings] = await (c as any).listAccessBindings({ parent });
   return bindings || [];
 }
 
 export async function getAccessBinding(name: string): Promise<any> {
-  const c = getClient();
+  const c = await getClient();
   const [binding] = await (c as any).getAccessBinding({ name });
   return binding;
 }
 
 export async function createAccessBinding(params: CreateAccessBindingParams): Promise<any> {
-  const c = getClient();
+  const c = await getClient();
   const [binding] = await (c as any).createAccessBinding({
     parent: params.parent,
     accessBinding: {
@@ -387,7 +389,7 @@ export async function createAccessBinding(params: CreateAccessBindingParams): Pr
 }
 
 export async function updateAccessBinding(params: UpdateAccessBindingParams): Promise<any> {
-  const c = getClient();
+  const c = await getClient();
   const [binding] = await (c as any).updateAccessBinding({
     accessBinding: {
       name: params.name,
@@ -398,25 +400,25 @@ export async function updateAccessBinding(params: UpdateAccessBindingParams): Pr
 }
 
 export async function deleteAccessBinding(name: string): Promise<void> {
-  const c = getClient();
+  const c = await getClient();
   await (c as any).deleteAccessBinding({ name });
 }
 
 // Firebase Links
 export async function listFirebaseLinks(propertyId: string): Promise<any[]> {
-  const c = getClient();
+  const c = await getClient();
   const [links] = await (c as any).listFirebaseLinks({ parent: `properties/${propertyId}` });
   return links || [];
 }
 
 export async function getFirebaseLink(name: string): Promise<any> {
-  const c = getClient();
+  const c = await getClient();
   const [link] = await (c as any).getFirebaseLink({ name });
   return link;
 }
 
 export async function createFirebaseLink(params: CreateFirebaseLinkParams): Promise<any> {
-  const c = getClient();
+  const c = await getClient();
   const [link] = await (c as any).createFirebaseLink({
     parent: params.parent,
     firebaseLink: { project: params.project },
@@ -425,25 +427,25 @@ export async function createFirebaseLink(params: CreateFirebaseLinkParams): Prom
 }
 
 export async function deleteFirebaseLink(name: string): Promise<void> {
-  const c = getClient();
+  const c = await getClient();
   await (c as any).deleteFirebaseLink({ name });
 }
 
 // Google Ads Links
 export async function listGoogleAdsLinks(propertyId: string): Promise<any[]> {
-  const c = getClient();
+  const c = await getClient();
   const [links] = await (c as any).listGoogleAdsLinks({ parent: `properties/${propertyId}` });
   return links || [];
 }
 
 export async function getGoogleAdsLink(name: string): Promise<any> {
-  const c = getClient();
+  const c = await getClient();
   const [link] = await (c as any).getGoogleAdsLink({ name });
   return link;
 }
 
 export async function createGoogleAdsLink(params: CreateGoogleAdsLinkParams): Promise<any> {
-  const c = getClient();
+  const c = await getClient();
   const [link] = await (c as any).createGoogleAdsLink({
     parent: params.parent,
     googleAdsLink: {
@@ -455,7 +457,7 @@ export async function createGoogleAdsLink(params: CreateGoogleAdsLinkParams): Pr
 }
 
 export async function updateGoogleAdsLink(params: UpdateGoogleAdsLinkParams): Promise<any> {
-  const c = getClient();
+  const c = await getClient();
   const [link] = await (c as any).updateGoogleAdsLink({
     googleAdsLink: {
       name: params.name,
@@ -467,25 +469,25 @@ export async function updateGoogleAdsLink(params: UpdateGoogleAdsLinkParams): Pr
 }
 
 export async function deleteGoogleAdsLink(name: string): Promise<void> {
-  const c = getClient();
+  const c = await getClient();
   await (c as any).deleteGoogleAdsLink({ name });
 }
 
 // BigQuery Links
 export async function listBigQueryLinks(propertyId: string): Promise<any[]> {
-  const c = getClient();
+  const c = await getClient();
   const [links] = await (c as any).listBigQueryLinks({ parent: `properties/${propertyId}` });
   return links || [];
 }
 
 export async function getBigQueryLink(name: string): Promise<any> {
-  const c = getClient();
+  const c = await getClient();
   const [link] = await (c as any).getBigQueryLink({ name });
   return link;
 }
 
 export async function createBigQueryLink(params: CreateBigQueryLinkParams): Promise<any> {
-  const c = getClient();
+  const c = await getClient();
   const [link] = await (c as any).createBigQueryLink({
     parent: params.parent,
     bigqueryLink: {
@@ -498,6 +500,6 @@ export async function createBigQueryLink(params: CreateBigQueryLinkParams): Prom
 }
 
 export async function deleteBigQueryLink(name: string): Promise<void> {
-  const c = getClient();
+  const c = await getClient();
   await (c as any).deleteBigQueryLink({ name });
 }

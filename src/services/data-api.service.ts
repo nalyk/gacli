@@ -1,4 +1,4 @@
-import { BetaAnalyticsDataClient, type protos, v1alpha } from '@google-analytics/data';
+import type { BetaAnalyticsDataClient, protos, v1alpha } from '@google-analytics/data';
 import type { ReportData } from '../types/common.js';
 import type {
   BatchRunPivotReportsRequest,
@@ -51,15 +51,18 @@ type AlphaClientCtor = ConstructorParameters<typeof v1alpha.AlphaAnalyticsDataCl
 let betaClient: BetaAnalyticsDataClient | null = null;
 let alphaClient: v1alpha.AlphaAnalyticsDataClient | null = null;
 
-function getClient(): BetaAnalyticsDataClient {
+// SDKs are imported on first use so `--help`, `config`, `auth` etc. never pay the gRPC load cost.
+async function getClient(): Promise<BetaAnalyticsDataClient> {
   if (!betaClient) {
+    const { BetaAnalyticsDataClient } = await import('@google-analytics/data');
     betaClient = new BetaAnalyticsDataClient(getAuthClientOptions() as unknown as ClientCtor);
   }
   return betaClient;
 }
 
-function getAlphaClient(): v1alpha.AlphaAnalyticsDataClient {
+async function getAlphaClient(): Promise<v1alpha.AlphaAnalyticsDataClient> {
   if (!alphaClient) {
+    const { v1alpha } = await import('@google-analytics/data');
     alphaClient = new v1alpha.AlphaAnalyticsDataClient(getAuthClientOptions() as unknown as AlphaClientCtor);
   }
   return alphaClient;
@@ -91,7 +94,7 @@ export function toReportData(response: ReportLike): ReportData {
 // Cast at the SDK boundary — single line per call, isolates drift to one site.
 
 export async function runReport(params: RunReportParams): Promise<ReportData> {
-  const [response] = await withRetry(() => getClient().runReport(params as IRunReportRequest), {
+  const [response] = await withRetry(async () => (await getClient()).runReport(params as IRunReportRequest), {
     label: 'runReport',
   });
   return toReportData(response as IRunReportResponse);
@@ -102,8 +105,8 @@ export async function batchRunReports(
   req: BatchRunReportsRequest,
 ): Promise<ReportData[]> {
   const [response] = await withRetry(
-    () =>
-      getClient().batchRunReports({
+    async () =>
+      (await getClient()).batchRunReports({
         property: `properties/${propertyId}`,
         requests: req.requests as IRunReportRequest[],
       }),
@@ -114,9 +117,12 @@ export async function batchRunReports(
 }
 
 export async function runPivotReport(params: RunPivotReportParams): Promise<ReportData> {
-  const [response] = await withRetry(() => getClient().runPivotReport(params as IRunPivotReportRequest), {
-    label: 'runPivotReport',
-  });
+  const [response] = await withRetry(
+    async () => (await getClient()).runPivotReport(params as IRunPivotReportRequest),
+    {
+      label: 'runPivotReport',
+    },
+  );
   return toReportData(response as IRunPivotReportResponse);
 }
 
@@ -125,8 +131,8 @@ export async function batchRunPivotReports(
   req: BatchRunPivotReportsRequest,
 ): Promise<ReportData[]> {
   const [response] = await withRetry(
-    () =>
-      getClient().batchRunPivotReports({
+    async () =>
+      (await getClient()).batchRunPivotReports({
         property: `properties/${propertyId}`,
         requests: req.requests as IRunPivotReportRequest[],
       }),
@@ -138,7 +144,7 @@ export async function batchRunPivotReports(
 
 export async function runRealtimeReport(params: RunRealtimeReportParams): Promise<ReportData> {
   const [response] = await withRetry(
-    () => getClient().runRealtimeReport(params as IRunRealtimeReportRequest),
+    async () => (await getClient()).runRealtimeReport(params as IRunRealtimeReportRequest),
     { label: 'runRealtimeReport' },
   );
   return toReportData(response as IRunRealtimeReportResponse);
@@ -146,7 +152,7 @@ export async function runRealtimeReport(params: RunRealtimeReportParams): Promis
 
 export async function runFunnelReport(params: RunFunnelReportParams): Promise<ReportData> {
   const [response] = await withRetry(
-    () => getAlphaClient().runFunnelReport(params as IRunFunnelReportRequest),
+    async () => (await getAlphaClient()).runFunnelReport(params as IRunFunnelReportRequest),
     { label: 'runFunnelReport' },
   );
   const funnelTable = (response as IRunFunnelReportResponse).funnelTable;
@@ -158,8 +164,8 @@ export async function runFunnelReport(params: RunFunnelReportParams): Promise<Re
 
 export async function runCohortReport(params: RunCohortReportParams): Promise<ReportData> {
   const [response] = await withRetry(
-    () =>
-      getClient().runReport({
+    async () =>
+      (await getClient()).runReport({
         property: params.property,
         cohortSpec: params.cohortSpec,
         metrics: params.metrics,
@@ -172,7 +178,7 @@ export async function runCohortReport(params: RunCohortReportParams): Promise<Re
 
 export async function getMetadata(propertyId: string): Promise<IMetadata> {
   const [response] = await withRetry(
-    () => getClient().getMetadata({ name: `properties/${propertyId}/metadata` }),
+    async () => (await getClient()).getMetadata({ name: `properties/${propertyId}/metadata` }),
     { label: 'getMetadata' },
   );
   return response as IMetadata;
@@ -184,8 +190,8 @@ export async function checkCompatibility(
   dimensions: string[],
 ): Promise<ICheckCompatibilityResponse> {
   const [response] = await withRetry(
-    () =>
-      getClient().checkCompatibility({
+    async () =>
+      (await getClient()).checkCompatibility({
         property: `properties/${propertyId}`,
         metrics: metrics.map((name) => ({ name })),
         dimensions: dimensions.map((name) => ({ name })),
@@ -208,7 +214,7 @@ export async function createAudienceExport(
   audienceName: string,
   dimensions?: string[],
 ): Promise<AudienceExportOperation> {
-  const [operation] = await getClient().createAudienceExport({
+  const [operation] = await (await getClient()).createAudienceExport({
     parent: `properties/${propertyId}`,
     audienceExport: {
       audience: audienceName,
@@ -219,12 +225,12 @@ export async function createAudienceExport(
 }
 
 export async function getAudienceExport(name: string): Promise<IAudienceExport> {
-  const [response] = await getClient().getAudienceExport({ name });
+  const [response] = await (await getClient()).getAudienceExport({ name });
   return response as IAudienceExport;
 }
 
 export async function listAudienceExports(propertyId: string): Promise<IAudienceExport[]> {
-  const [response] = await getClient().listAudienceExports({
+  const [response] = await (await getClient()).listAudienceExports({
     parent: `properties/${propertyId}`,
   });
   return response ?? [];
@@ -235,7 +241,7 @@ export async function queryAudienceExport(
   limit?: number,
   offset?: number,
 ): Promise<ReportData> {
-  const [response] = await getClient().queryAudienceExport({
+  const [response] = await (await getClient()).queryAudienceExport({
     name,
     ...(limit !== undefined && { limit }),
     ...(offset !== undefined && { offset }),
@@ -248,7 +254,7 @@ export async function createRecurringAudienceList(
   audienceName: string,
   dimensions?: string[],
 ): Promise<IRecurringAudienceList> {
-  const [response] = await getAlphaClient().createRecurringAudienceList({
+  const [response] = await (await getAlphaClient()).createRecurringAudienceList({
     parent: `properties/${propertyId}`,
     recurringAudienceList: {
       audience: audienceName,
@@ -259,12 +265,12 @@ export async function createRecurringAudienceList(
 }
 
 export async function getRecurringAudienceList(name: string): Promise<IRecurringAudienceList> {
-  const [response] = await getAlphaClient().getRecurringAudienceList({ name });
+  const [response] = await (await getAlphaClient()).getRecurringAudienceList({ name });
   return response as IRecurringAudienceList;
 }
 
 export async function listRecurringAudienceLists(propertyId: string): Promise<IRecurringAudienceList[]> {
-  const [response] = await getAlphaClient().listRecurringAudienceLists({
+  const [response] = await (await getAlphaClient()).listRecurringAudienceLists({
     parent: `properties/${propertyId}`,
   });
   return response ?? [];
