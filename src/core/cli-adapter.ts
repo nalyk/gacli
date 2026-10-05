@@ -54,31 +54,54 @@ function inputKeys(op: AnyOperation): string[] {
   return Object.keys(op.input.shape);
 }
 
+export interface FlagSpec {
+  flag: string;
+  /** commander attribute / input key; injected flags use fields, dryRun, yes */
+  key: string;
+  required: boolean;
+  description: string;
+  defaultValue?: unknown;
+  injected?: boolean;
+  hidden?: boolean;
+}
+
+/** Single source for both commander mounting and `gacli schema`. */
+export function describeFlags(op: AnyOperation): FlagSpec[] {
+  const specs: FlagSpec[] = inputKeys(op).map((key) => {
+    const info = fieldInfo(op.input.shape[key]);
+    return {
+      flag: (op.flags as Record<string, string> | undefined)?.[key] ?? generatedFlag(key, info),
+      key,
+      required: !info.optional && info.defaultValue === undefined && info.type !== 'boolean',
+      description: info.description ?? '',
+      defaultValue: info.defaultValue,
+    };
+  });
+  const inject = (flag: string, key: string, description: string, hidden = false) =>
+    specs.push({ flag, key, required: false, description, injected: true, hidden });
+  inject('--fields <paths>', 'fields', 'Comma-separated fields to output (dot paths for nested values)');
+  if (isMutating(op.category))
+    inject('--dry-run', 'dryRun', 'Print the request that would be sent, without calling the API');
+  if (op.category === 'delete') {
+    inject('-y, --yes', 'yes', 'Confirm this destructive operation (required when not interactive)');
+    inject('--force', 'force', 'Alias of --yes', true);
+  }
+  return specs;
+}
+
 function buildLeaf(op: AnyOperation, name: string): Command {
   const cmd = new CommandCtor(name).description(op.summary);
-  for (const key of inputKeys(op)) {
-    const info = fieldInfo(op.input.shape[key]);
-    const flags = (op.flags as Record<string, string> | undefined)?.[key] ?? generatedFlag(key, info);
-    const option = new Option(flags, info.description ?? '');
-    if (option.attributeName() !== key) {
-      throw new Error(`Flag "${flags}" of ${op.id} maps to "${option.attributeName()}", expected "${key}"`);
+  for (const spec of describeFlags(op)) {
+    const option = new Option(spec.flag, spec.description);
+    if (option.attributeName() !== spec.key) {
+      throw new Error(
+        `Flag "${spec.flag}" of ${op.id} maps to "${option.attributeName()}", expected "${spec.key}"`,
+      );
     }
-    if (info.defaultValue !== undefined) option.default(info.defaultValue);
-    if (!info.optional && info.defaultValue === undefined && info.type !== 'boolean')
-      option.makeOptionMandatory();
+    if (spec.defaultValue !== undefined) option.default(spec.defaultValue);
+    if (spec.required) option.makeOptionMandatory();
+    if (spec.hidden) option.hideHelp();
     cmd.addOption(option);
-  }
-  cmd.addOption(
-    new Option('--fields <paths>', 'Comma-separated fields to output (dot paths for nested values)'),
-  );
-  if (isMutating(op.category)) {
-    cmd.addOption(new Option('--dry-run', 'Print the request that would be sent, without calling the API'));
-  }
-  if (op.category === 'delete') {
-    cmd.addOption(
-      new Option('-y, --yes', 'Confirm this destructive operation (required when not interactive)'),
-    );
-    cmd.addOption(new Option('--force', 'Alias of --yes').hideHelp());
   }
   cmd.action(async (opts: Record<string, unknown>, command: Command) => executeOperation(op, opts, command));
   return cmd;

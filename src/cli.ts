@@ -7,7 +7,9 @@ import { createExploreCommand } from './commands/explore/index.js';
 import { createMcpCommand } from './commands/mcp/index.js';
 import { createMetadataCommand } from './commands/metadata/index.js';
 import { createReportCommand } from './commands/report/index.js';
+import { AGENT_HELP, createSchemaCommand } from './commands/schema/index.js';
 import { createSkillsCommand } from './commands/skills/index.js';
+import { detectAgent } from './core/agent.js';
 import { finalizeProgram, mountOperations, runProgram } from './core/cli-adapter.js';
 import { OPERATIONS } from './operations/index.js';
 import { addGlobalOptions } from './types/common.js';
@@ -27,6 +29,8 @@ program.addCommand(createAuthCommand());
 program.addCommand(createExploreCommand());
 program.addCommand(createMcpCommand());
 program.addCommand(createSkillsCommand());
+program.addCommand(createSchemaCommand(OPERATIONS));
+if (detectAgent()) program.addHelpText('beforeAll', AGENT_HELP);
 
 mountOperations(program, OPERATIONS);
 finalizeProgram(program);
