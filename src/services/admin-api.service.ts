@@ -23,6 +23,8 @@ import { getAuthClientOptions } from './auth.service.js';
 
 let adminClient: AnalyticsAdminServiceClient | null = null;
 
+export { getClient as getAdminClient };
+
 // SDK is imported on first use so non-admin commands never pay the gRPC load cost.
 async function getClient(): Promise<AnalyticsAdminServiceClient> {
   if (!adminClient) {
