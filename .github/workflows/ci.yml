@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, next]
   pull_request:
-    branches: [main]
+    branches: [main, next]
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -51,3 +51,11 @@ jobs:
 
       - name: Verify built bin executes
         run: node dist/index.js --version
+
+      - name: Startup budget (spec: --help < 150ms)
+        if: matrix.node == '24'
+        run: GACLI_STARTUP_BUDGET=1 pnpm vitest run test/startup/budget.test.ts
+
+      - name: Packed install smoke test
+        if: matrix.node == '24'
+        run: ./scripts/pack-smoke.sh

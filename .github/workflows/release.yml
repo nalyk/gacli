@@ -26,7 +26,8 @@ name: release
 
 on:
   push:
-    branches: [main]
+    # main → latest; next → x.y.z-next.N on the @next dist-tag (see release.config.js)
+    branches: [main, next]
   workflow_dispatch:   # manual fallback (emergency, smoke-test, force-replay)
 
 permissions:

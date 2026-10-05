@@ -1,0 +1,46 @@
+name: sea
+
+# EXPERIMENTAL single-executable binaries (Node 26 `--build-sea`, everything bundled).
+# Never blocks a release: the npm package is the supported distribution.
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: sea (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10
+          run_install: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '26'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: ./scripts/build-sea.sh
+      - uses: actions/upload-artifact@v5
+        with:
+          name: gacli-${{ matrix.os }}
+          path: dist-sea/gacli-*
+      - name: Attach to release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" dist-sea/gacli-* --clobber
