@@ -171,6 +171,26 @@ describe('report.pivot', () => {
   });
 });
 
+describe('report.realtime minute ranges', () => {
+  it('accepts up to 59 minutes ago (Analytics 360)', () => {
+    expect(
+      reportRealtime.input.safeParse({
+        metrics: ['activeUsers'],
+        minuteRanges: JSON.stringify([{ startMinutesAgo: 59, endMinutesAgo: 0 }]),
+      }).success,
+    ).toBe(true);
+  });
+
+  it('rejects 60 minutes ago', () => {
+    expect(
+      reportRealtime.input.safeParse({
+        metrics: ['a'],
+        minuteRanges: JSON.stringify([{ startMinutesAgo: 60 }]),
+      }).success,
+    ).toBe(false);
+  });
+});
+
 describe('report.realtime', () => {
   it('builds the RunRealtimeReport request like 1.x', async () => {
     const minuteRanges = [{ startMinutesAgo: 10, endMinutesAgo: 0 }];
@@ -274,6 +294,34 @@ describe('report.cohort', () => {
 
 describe('report.funnel', () => {
   const steps = [{ name: 'view' }, { name: 'buy', isDirectlyFollowedBy: true }];
+
+  it('passes a Duration object for withinDurationFromPriorStep and converts "Ns" strings', () => {
+    const parsed = reportFunnel.input.parse({
+      steps: JSON.stringify([
+        { name: 'a' },
+        { name: 'b', withinDurationFromPriorStep: { seconds: 10 } },
+        { name: 'c', withinDurationFromPriorStep: '90s' },
+        { name: 'd', withinDurationFromPriorStep: '1.5s' },
+      ]),
+    });
+    const durations = (parsed.steps as { withinDurationFromPriorStep?: unknown }[]).map(
+      (s) => s.withinDurationFromPriorStep,
+    );
+    expect(durations).toEqual([
+      undefined,
+      { seconds: 10 },
+      { seconds: 90 },
+      { seconds: 1, nanos: 500_000_000 },
+    ]);
+  });
+
+  it('rejects a malformed duration string', () => {
+    expect(
+      reportFunnel.input.safeParse({
+        steps: JSON.stringify([{ name: 'a', withinDurationFromPriorStep: 'ten' }]),
+      }).success,
+    ).toBe(false);
+  });
 
   it('builds the funnel request like 1.x', async () => {
     const out = await reportFunnel.run(

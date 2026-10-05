@@ -6,13 +6,30 @@ import { resolveDate } from '../../utils/date-helpers.js';
 import { jsonArg } from '../json-arg.js';
 import { reportDataSchema } from '../shared.js';
 
+// google.protobuf.Duration: the gRPC client needs { seconds, nanos }; "90s" (proto JSON form) is converted.
+const duration = z.union([
+  z.object({
+    seconds: z.coerce.number().int().min(0),
+    nanos: z.number().int().min(0).max(999_999_999).optional(),
+  }),
+  z
+    .string()
+    .regex(/^\d+(\.\d+)?s$/, 'expected a duration like "90s" or {"seconds":90}')
+    .transform((s) => {
+      const value = Number(s.slice(0, -1));
+      const seconds = Math.floor(value);
+      const nanos = Math.round((value - seconds) * 1e9);
+      return nanos ? { seconds, nanos } : { seconds };
+    }),
+]);
+
 const steps = z
   .array(
     z.looseObject({
       name: z.string().min(1),
       isDirectlyFollowedBy: z.boolean().optional(),
       filterExpression: z.looseObject({}).optional(),
-      withinDurationFromPriorStep: z.string().optional(),
+      withinDurationFromPriorStep: duration.optional(),
     }),
   )
   .min(1);

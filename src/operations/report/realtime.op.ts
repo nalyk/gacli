@@ -9,8 +9,9 @@ import { reportDataSchema } from '../shared.js';
 const minuteRanges = z.array(
   z.looseObject({
     name: z.string().optional(),
-    startMinutesAgo: z.number().int().min(0).max(29).optional(),
-    endMinutesAgo: z.number().int().min(0).max(29).optional(),
+    // 29 for standard properties, 59 for Analytics 360; the API enforces the per-property limit.
+    startMinutesAgo: z.number().int().min(0).max(59).optional(),
+    endMinutesAgo: z.number().int().min(0).max(59).optional(),
   }),
 );
 

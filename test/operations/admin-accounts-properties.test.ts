@@ -73,6 +73,8 @@ describe('admin.properties', () => {
     adminClient.listProperties.mockResolvedValue([[prop]]);
     const out = await p.listProperties.run(p.listProperties.input.parse({ account: '9' }), ctxNoProp);
     expect(adminClient.listProperties).toHaveBeenCalledWith({ filter: 'parent:accounts/9' });
+    await p.listProperties.run(p.listProperties.input.parse({ account: 'accounts/9' }), ctxNoProp);
+    expect(adminClient.listProperties).toHaveBeenLastCalledWith({ filter: 'parent:accounts/9' });
     expect(p.listProperties.output.safeParse(out).success).toBe(true);
     expect(p.listProperties.columns?.map((c) => c.header)).toEqual([
       'Name',
