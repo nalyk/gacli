@@ -1,6 +1,7 @@
-import { execFileSync } from 'node:child_process';
+import { execFile } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { promisify } from 'node:util';
 import { describe, expect, it } from 'vitest';
 
 // Every flag string a 1.x leaf command accepted must still be accepted (new flags are fine).
@@ -16,6 +17,22 @@ export function flagTokens(help: string): string[] {
     .split('\n')
     .map((l) => l.match(/^ {2}(-\S.*?)(?: {2,}|$)/)?.[1])
     .filter((t): t is string => !!t && t !== '-h, --help');
+}
+
+const run = promisify(execFile);
+
+// Bounded parallelism: spawning all leaves at once starves other spawn-based test files.
+async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+  const out: R[] = new Array(items.length);
+  let next = 0;
+  const worker = async () => {
+    while (next < items.length) {
+      const i = next++;
+      out[i] = await fn(items[i]);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return out;
 }
 
 const env = {
@@ -37,14 +54,15 @@ describe.skipIf(!existsSync(BIN))('1.x help surface is preserved', () => {
     expect(runFlags).toContain('-m, --metrics <metrics...>');
   });
 
-  for (const file of files) {
-    const path = file.replace(/\.txt$/, '').split('_');
-    it(`gacli ${path.join(' ')}`, () => {
+  it('every 1.x flag string is still accepted by every leaf command', async () => {
+    const missing = await mapLimit(files, 8, async (file) => {
+      const path = file.replace(/\.txt$/, '').split('_');
       const before = flagTokens(readFileSync(join(FIXTURES, file), 'utf-8'));
-      const after = flagTokens(
-        execFileSync(process.execPath, [BIN, ...path, '--help'], { encoding: 'utf-8', env }),
-      );
-      expect(after).toEqual(expect.arrayContaining(before));
+      const { stdout } = await run(process.execPath, [BIN, ...path, '--help'], { encoding: 'utf-8', env });
+      const after = new Set(flagTokens(stdout));
+      const lost = before.filter((f) => !after.has(f));
+      return lost.length ? `gacli ${path.join(' ')}: ${lost.join(' | ')}` : null;
     });
-  }
+    expect(missing.filter(Boolean)).toEqual([]);
+  }, 60_000);
 });
