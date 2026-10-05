@@ -116,6 +116,12 @@ export function toGacliError(err: unknown): GacliError {
   if (!(err instanceof Error)) return new GacliError('internal', String(err));
   const code = getGrpcCode(err);
   if (code !== undefined) return fromGrpc(code, err);
+  if (err.message.startsWith('Could not load the default credentials')) {
+    return new GacliError('auth', 'No credentials configured.', {
+      cause: err,
+      hint: 'Run `gacli auth login`, set GOOGLE_APPLICATION_CREDENTIALS / `gacli config set credentials <sa.json>`, export GACLI_ACCESS_TOKEN, or run `gcloud auth application-default login`.',
+    });
+  }
   if (err.message.startsWith('No credentials configured')) {
     return new GacliError('auth', err.message, { cause: err });
   }

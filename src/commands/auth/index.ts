@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import { createLoginCommand } from './login.js';
 import { createLogoutCommand } from './logout.js';
 import { createStatusCommand } from './status.js';
+import { createTokenCommand } from './token.js';
 
 export function createAuthCommand(): Command {
   const cmd = new Command('auth').description('Manage authentication');
@@ -9,6 +10,7 @@ export function createAuthCommand(): Command {
   cmd.addCommand(createLoginCommand());
   cmd.addCommand(createLogoutCommand());
   cmd.addCommand(createStatusCommand());
+  cmd.addCommand(createTokenCommand());
 
   return cmd;
 }

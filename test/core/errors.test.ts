@@ -92,3 +92,16 @@ describe('GacliError', () => {
     });
   });
 });
+
+describe('toGacliError: ADC', () => {
+  it('maps missing default credentials to auth with setup hints', () => {
+    const e = toGacliError(
+      new Error(
+        'Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication',
+      ),
+    );
+    expect(e.kind).toBe('auth');
+    expect(e.hint).toContain('gacli auth login');
+    expect(e.hint).toContain('gcloud auth application-default login');
+  });
+});
