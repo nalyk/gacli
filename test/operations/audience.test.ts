@@ -69,17 +69,18 @@ describe('operation metadata', () => {
     [rec.recurringAudienceList, 'audience.recurring.list', 'read', true, 'audience_recurring_list.txt'],
   ] as const;
 
-  it.each(
-    table,
-  )('%#: id, category, needsProperty, summary and 1.x flags', (op, id, category, needs, fixture) => {
-    expect(op.id).toBe(id);
-    expect(op.category).toBe(category);
-    expect(!!op.needsProperty).toBe(needs);
-    const help = readFileSync(join(FIXTURES, fixture), 'utf-8');
-    expect(help.split('\n')[2]).toBe(op.summary);
-    const flags = new Set(describeFlags(op).map((f) => f.flag));
-    for (const flag of fixtureFlags(fixture)) expect(flags).toContain(flag);
-  });
+  it.each(table)(
+    '%#: id, category, needsProperty, summary and 1.x flags',
+    (op, id, category, needs, fixture) => {
+      expect(op.id).toBe(id);
+      expect(op.category).toBe(category);
+      expect(!!op.needsProperty).toBe(needs);
+      const help = readFileSync(join(FIXTURES, fixture), 'utf-8');
+      expect(help.split('\n')[2]).toBe(op.summary);
+      const flags = new Set(describeFlags(op).map((f) => f.flag));
+      for (const flag of fixtureFlags(fixture)) expect(flags).toContain(flag);
+    },
+  );
 
   it('exports the ops arrays in 1.x order', () => {
     expect(ex.audienceExportOps.map((o) => o.id)).toEqual([

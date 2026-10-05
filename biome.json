@@ -6,8 +6,17 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["src/**/*.ts", "test/**/*.ts", "*.ts", "*.json", "*.md"],
-    "experimentalScannerIgnores": ["dist", "node_modules", "coverage", "pnpm-lock.yaml"]
+    "includes": [
+      "src/**/*.ts",
+      "test/**/*.ts",
+      "*.ts",
+      "*.json",
+      "*.md",
+      "!!**/dist",
+      "!!**/node_modules",
+      "!!**/coverage",
+      "!!**/pnpm-lock.yaml"
+    ]
   },
   "formatter": {
     "enabled": true,
@@ -27,15 +36,45 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true,
+      "preset": "recommended",
       "suspicious": {
-        "noExplicitAny": "warn",
+        "noExplicitAny": "error",
         "noConsole": "off"
       },
       "style": {
         "useImportType": "error",
-        "useNodejsImportProtocol": "error"
+        "useNodejsImportProtocol": "error",
+        "noNonNullAssertion": "error"
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": [
+        "src/**"
+      ],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsole": "error"
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/utils/logger.ts",
+        "src/utils/error-handler.ts",
+        "src/types/common.ts",
+        "src/commands/explore/**"
+      ],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsole": "off"
+          }
+        }
+      }
+    }
+  ]
 }
