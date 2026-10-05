@@ -1,22 +1,12 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { type CLIConfig, CONFIG_DIR, CONFIG_FILE, CONFIG_KEYS } from '../types/config.js';
+import { ensureSecureDir, readJsonFile, writeFileAtomic } from '../utils/secure-fs.js';
 
 export function ensureConfigDir(): void {
-  if (!existsSync(CONFIG_DIR)) {
-    mkdirSync(CONFIG_DIR, { recursive: true });
-  }
+  ensureSecureDir(CONFIG_DIR);
 }
 
 export function getConfig(): CLIConfig {
-  try {
-    if (existsSync(CONFIG_FILE)) {
-      const raw = readFileSync(CONFIG_FILE, 'utf-8');
-      return JSON.parse(raw) as CLIConfig;
-    }
-  } catch {
-    // Ignore invalid config
-  }
-  return {};
+  return readJsonFile<CLIConfig>(CONFIG_FILE, 'config') ?? {};
 }
 
 export function setConfigValue(key: string, value: string): void {
@@ -32,7 +22,7 @@ export function setConfigValue(key: string, value: string): void {
     (config as Record<string, unknown>)[key] = value;
   }
 
-  writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), 'utf-8');
+  writeFileAtomic(CONFIG_FILE, JSON.stringify(config, null, 2));
 }
 
 export function getConfigValue(key: string): string | undefined {
