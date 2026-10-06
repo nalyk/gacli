@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { defineOperation } from '../../core/operation.js';
 import { checkCompatibility } from '../../services/data-api.service.js';
+import { nameList } from '../shared.js';
 
 const compatibilityRow = z.object({
   name: z.string(),
@@ -32,8 +33,8 @@ export const metadataCheckCompatibility = defineOperation({
   needsProperty: true,
   api: { service: 'data', version: 'v1beta', rpc: 'CheckCompatibility' },
   input: z.object({
-    metrics: z.array(z.string().min(1)).min(1).describe('Metrics to check compatibility for'),
-    dimensions: z.array(z.string().min(1)).min(1).describe('Dimensions to check compatibility for'),
+    metrics: nameList({ min: 1 }).describe('Metrics to check compatibility for'),
+    dimensions: nameList({ min: 1 }).describe('Dimensions to check compatibility for'),
   }),
   flags: {
     metrics: '-m, --metrics <metrics...>',

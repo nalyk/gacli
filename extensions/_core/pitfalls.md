@@ -7,17 +7,16 @@ The non-obvious failure modes a fresh AI agent will hit. Read once.
 1. **stderr ≠ stdout.** Status messages, spinners, and warnings go to stderr;
    only the data payload goes to stdout. Pipe `gacli ... -f json | jq` works
    correctly. `gacli ... 2>&1 | jq` will fail because spinner ANSI bytes mix in.
-2. **Default `--format` is `table`**, which is human-readable and NOT
-   parseable. Use `-f json` whenever you intend to pipe or parse.
-3. **`-f ndjson` is for `report batch`** — one report per line. For single
-   reports use `-f json`.
+2. **Default `--format` depends on the context**: `table` on an interactive terminal, compact
+   `json` when piped, in CI or under an AI agent. Pass `-f json` explicitly when you parse.
+3. **`-f ndjson` is one row/item per line** (batch reports tag each row with `"report": <n>`).
+   Use `-f json` for one parseable document.
 4. **`-f chart`** renders a sparkline. Visual only; do NOT pipe it.
 
 ## CLI arg syntax
 
-5. **Variadic flags repeat the flag**: `-m sessions -m activeUsers` works.
-   `-m sessions activeUsers` does NOT — Commander interprets the second value
-   as a positional argument.
+5. **Metric/dimension lists**: `-m sessions activeUsers`, `-m sessions,activeUsers` and
+   `-m sessions -m activeUsers` all work. Put list flags after the subcommand.
 6. **JSON-string options need single-quoting in shell**: `--pivots '[{...}]'`.
    Double-quotes require escaping every inner quote.
 7. **Date keywords are case-sensitive**: `7daysAgo` ✓, `7DaysAgo` ✗,
@@ -40,12 +39,18 @@ The non-obvious failure modes a fresh AI agent will hit. Read once.
 
 11. **`--name` in admin commands expects the full resource name**, e.g.
     `properties/123/keyEvents/456`. Numeric ID alone fails. Get the full
-    name from a `list` call (`-f json | jq -r '.rows[0].name'`).
+    name from a `list` call (`-f json | jq -r '.data[0].name'`).
 12. **Custom dimension `--scope` is immutable** after create (EVENT/USER/ITEM).
     Wrong scope = delete and recreate.
 13. **Realtime ignores `--start-date`/`--end-date`** — always last 30 minutes.
 
 ## Pipeline / shape
+
+0. **Agents get JSON by default.** Under an AI agent (or when piped) gacli prints compact JSON and
+   never prompts: destructive commands exit `4` until you re-run with `--yes` (confirm with the user
+   first). Errors arrive as one JSON line on stderr with an `exitCode` and often a `hint`.
+   For CI/agents without a browser, export `GACLI_ACCESS_TOKEN`. Discover flags with
+   `gacli schema <command>` instead of guessing.
 
 14. **JSON shape depends on the operation kind** — check `gacli schema <command>`
     (`.operations[].output`). Reports: `{rowCount, data: [{<dim/metric>: "<string>"}], metadata?}`.

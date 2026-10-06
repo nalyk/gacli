@@ -9,7 +9,7 @@ import {
 import { resolveDate } from '../../utils/date-helpers.js';
 import { buildFilterExpression } from '../../utils/filter-builder.js';
 import { logger } from '../../utils/logger.js';
-import { reportDataSchema, resourceName } from '../shared.js';
+import { nameList, reportDataSchema, resourceName } from '../shared.js';
 
 const dataApi = (rpc: string) => ({ service: 'data' as const, version: 'v1alpha' as const, rpc });
 
@@ -78,10 +78,13 @@ export const reportTasksCreate = defineOperation({
   needsProperty: true,
   api: dataApi('CreateReportTask'),
   input: z.object({
-    metrics: z.array(z.string().min(1)).min(1).describe('Metrics to include in the report'),
-    dimensions: z.array(z.string().min(1)).optional().describe('Dimensions to include in the report'),
-    startDate: z.string().default('7daysAgo').describe('Start date for the report'),
-    endDate: z.string().default('today').describe('End date for the report'),
+    metrics: nameList({ min: 1 }).describe('Metrics to include in the report'),
+    dimensions: nameList().optional().describe('Dimensions to include in the report'),
+    startDate: z
+      .string()
+      .default('7daysAgo')
+      .describe('Start date: YYYY-MM-DD, today, yesterday or NdaysAgo'),
+    endDate: z.string().default('today').describe('End date: YYYY-MM-DD, today, yesterday or NdaysAgo'),
     limit: z.coerce
       .number()
       .int()

@@ -73,4 +73,4 @@ rm -rf ~/.claude/skills/gacli
   explicitly.
 - **`gacli` not found**: confirm `which gacli`; reinstall via
   `npm install -g @nalyk/gacli`.
-- **`gacli auth status` shows unauthenticated**: run `gacli auth login`.
+- **`gacli auth token` exits 3 (not authenticated)**: run `gacli auth login` or export `GACLI_ACCESS_TOKEN`.

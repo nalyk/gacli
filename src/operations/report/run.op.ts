@@ -5,7 +5,7 @@ import type { RunReportParams } from '../../types/data-api.js';
 import { resolveDate } from '../../utils/date-helpers.js';
 import { buildFilterExpression } from '../../utils/filter-builder.js';
 import { jsonArg } from '../json-arg.js';
-import { parseOrderBys, reportDataSchema } from '../shared.js';
+import { nameList, parseOrderBys, reportDataSchema } from '../shared.js';
 
 const conversionSpec = z.looseObject({
   conversionActions: z.array(z.string().min(1)).optional(),
@@ -15,15 +15,20 @@ const conversionSpec = z.looseObject({
 export const reportRun = defineOperation({
   id: 'report.run',
   summary: 'Run a standard GA4 report',
+  description:
+    'Example: gacli report run -p 371981488 -m sessions activeUsers -d date country --start-date 30daysAgo --limit 50 --order-by metric:sessions:desc',
   category: 'read',
   kind: 'report',
   needsProperty: true,
   api: { service: 'data', version: 'v1beta', rpc: 'RunReport' },
   input: z.object({
-    metrics: z.array(z.string().min(1)).min(1).describe('Metrics to include in the report'),
-    dimensions: z.array(z.string().min(1)).optional().describe('Dimensions to include in the report'),
-    startDate: z.string().default('7daysAgo').describe('Start date for the report'),
-    endDate: z.string().default('today').describe('End date for the report'),
+    metrics: nameList({ min: 1 }).describe('Metrics to include in the report'),
+    dimensions: nameList().optional().describe('Dimensions to include in the report'),
+    startDate: z
+      .string()
+      .default('7daysAgo')
+      .describe('Start date: YYYY-MM-DD, today, yesterday or NdaysAgo'),
+    endDate: z.string().default('today').describe('End date: YYYY-MM-DD, today, yesterday or NdaysAgo'),
     limit: z.coerce
       .number()
       .int()

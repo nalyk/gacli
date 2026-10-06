@@ -49,6 +49,9 @@ jobs:
       - name: Test
         run: pnpm test
 
+      - name: Skill packages lint
+        run: pnpm verify:skills
+
       - name: Verify built bin executes
         run: node dist/index.js --version
 

@@ -8,15 +8,15 @@ or a path-scoped `.claude/rules/*.md` instead.
 ## <CRITICAL> The 10 rules that break things silently
 
 1. **Imports end in `.js`, never `.ts`** — `import { foo } from './bar.service.js'`. ESM + `moduleResolution: bundler` requires it. Hard build break if violated.
-2. **GA API surface = operations, not commands.** Define `defineOperation({...})` in `src/operations/<group>/*.op.ts` and add it to `OPERATIONS` in `src/operations/index.ts`; the CLI adapter (`src/core/cli-adapter.ts`) mounts it, `gacli schema` describes it. Input = zod 4 `z.object` whose keys equal commander's camelCase attribute names; copy existing flag strings verbatim into `flags` (`test/cli/help-compat.test.ts` fails if a 1.x flag disappears).
+2. **GA API surface = operations, not commands.** Define `defineOperation({...})` in `src/operations/<group>/*.op.ts` and add it to `OPERATIONS` in `src/operations/index.ts`; the CLI adapter (`src/core/cli-adapter.ts`) mounts it, `gacli schema` describes it. Input = zod 4 `z.object` whose keys equal commander's camelCase attribute names; copy existing flag strings verbatim into `flags` (`test/cli/help-compat.test.ts` fails if a 1.x flag disappears). Then run `pnpm docs` — `help.md`, the skills command catalogue and `llms.txt` are generated from the catalogue and `pnpm test` fails on drift.
 3. **Operations return typed data.** `kind: 'report'` → `ReportData`; `'reports'` → `ReportData[]`; `'resource'` → plain API objects + optional `columns` for table/csv. `ReportData` is only the tabular projection — never flatten resources into string rows by hand.
 4. **Errors: throw, don't exit.** Core/operations/services throw (`GacliError(kind, msg, {hint})` for known cases). Only `handleError` (CLI edge, `: never`), `runProgram` (commander help/version) and the interactive flows in `skills/install.ts` / `auth/login.ts` exit; exit codes come from `EXIT_CODES` in `src/core/errors.ts` (0 ok, 1 api, 2 usage, 3 auth, 4 confirmation, 5 not found, 6 quota). Never `process.exit` elsewhere.
 5. **Category drives safety.** `category: 'delete'` (also archive) ⇒ `--yes` gate (exit 4 when non-interactive); any non-`read` ⇒ `--dry-run`. Don't hand-roll confirmations or dry-runs.
 6. **API clients only via lazy factories** — `getAdminClient()` (admin) or the data service functions / `getClient()`/`getAlphaClient()`. They lazy-import the SDK and apply the auth chain; a static SDK import slows every command's startup (`test/startup/lazy-sdk.test.ts`).
-7. **Hand-written commands** (`config`, `auth`, `explore`, `mcp`, `skills`, `schema`) start with `resolveGlobalOptions(command)`, wrap in `try { … } catch (e) { handleError(e) }`, and output via `writeOutput`. `validate(schema, data)` now throws (ZodError → exit 2).
+7. **Hand-written commands** (`config`, `auth`, `explore`, `mcp`, `skills`, `schema`, `api`) start with `resolveGlobalOptions(command)`, wrap in `try { … } catch (e) { handleError(e) }`, and output via `writeOutput`. `validate(schema, data)` now throws (ZodError → exit 2).
 8. **New CLI config key = update BOTH `CLIConfig` interface AND `CONFIG_KEYS` map** in `src/types/config.ts`, or `setConfigValue` rejects them.
 9. **stderr = status (`logger`/ora). stdout = data (`writeOutput`)**. Mixing breaks `--format json | jq` piping. Output defaults to compact JSON when piped or under an AI agent (`src/core/agent.ts`).
-10. **New hand-written top-level command = `program.addCommand(createXxxCommand())` in `src/cli.ts`**; operations register via `OPERATIONS`. (`src/index.ts` is only the bootstrap: compile cache + dynamic import of `cli.js`.)
+10. **New top-level command = an entry in `LAZY_COMMANDS` (`src/command-registry.ts`)** — name, description (must equal the real command's; `test/cli/command-registry.test.ts`) and a lazy `load()`. Never import commands eagerly in `src/cli.ts`: startup is budgeted (`--help` < 150 ms, `test/startup/budget.test.ts`).
 
 ## Workflow skills — invoke, do not duplicate
 
@@ -92,7 +92,7 @@ After each non-trivial task, run a 4-question retrospective:
 - `.serena/memories/codebase_structure.md` — directory tree, layered dependency rule.
 - `.serena/memories/serena_workflow_tips.md` — symbol-tool best practices for THIS repo.
 - `.serena/memories/task_completion_checklist.md` — the full pre-merge gate (covers risk-bearing edits).
-- `.serena/memories/testing_conventions.md` — Jest+ESM patterns when adding tests.
+- `.serena/memories/testing_conventions.md` — Vitest 5 patterns when adding tests.
 - `.serena/memories/tech_stack.md` — exact dependency versions and notable absences.
 - `.serena/memories/suggested_commands.md` — full command list (dev/build/test/git/serena).
 - `.serena/memories/project_overview.md` — scope, distribution model, repo state.

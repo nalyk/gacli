@@ -52,6 +52,8 @@ export const getAccessBinding = getOp({
 export const createAccessBinding = defineOperation({
   id: 'admin.access-bindings.create',
   summary: 'Create an access binding',
+  description:
+    'Grants a user roles on an account or property. --parent is accounts/<id> or properties/<id>; --roles is variadic, e.g. --roles predefinedRoles/viewer predefinedRoles/editor.',
   category: 'create',
   kind: 'resource',
   api: adminApi('CreateAccessBinding'),

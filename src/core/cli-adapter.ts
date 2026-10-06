@@ -80,6 +80,8 @@ export interface FlagSpec {
   defaultValue?: unknown;
   injected?: boolean;
   hidden?: boolean;
+  /** Also accepted as the command's positional argument. */
+  positional?: boolean;
 }
 
 /** Single source for both commander mounting and `gacli schema`. */
@@ -99,6 +101,7 @@ export function describeFlags(op: AnyOperation): FlagSpec[] {
       key,
       // A positional alternative makes the flag optional for commander; zod still requires a value.
       required: !info.optional && info.defaultValue === undefined && key !== op.positional,
+      ...(key === op.positional ? { positional: true } : {}),
       description: info.description ?? '',
       defaultValue: negatable ? undefined : info.defaultValue,
     };

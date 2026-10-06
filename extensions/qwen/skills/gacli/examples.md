@@ -70,7 +70,7 @@ gacli admin key-events create -p <newProp> \
 ## 8. Audience export → query members
 ```bash
 gacli audience export create --audience properties/<P>/audiences/<aid>
-gacli audience export list -f json | jq '.[] | select(.state=="ACTIVE")'
+gacli audience export list -f json | jq '.data[] | select(.state=="ACTIVE")'
 gacli audience export query --name <export-resource-name> --limit 1000 -f csv > members.csv
 ```
 

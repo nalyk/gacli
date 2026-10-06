@@ -42,7 +42,7 @@ Default property:
 !`gacli config get property 2>/dev/null || echo "(no default property — see Phase 0)"`
 
 Auth status:
-!`gacli auth status 2>/dev/null || echo "(unauthenticated — run \`gacli auth login\`)"`
+!`gacli auth token >/dev/null 2>&1 && gacli -f json auth status || echo "(not authenticated — run \`gacli auth login\` or export GACLI_ACCESS_TOKEN)"`
 
 ## Phase 0 — Pre-flight (run BEFORE any property query)
 

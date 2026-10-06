@@ -6,7 +6,7 @@ import { getAdminClient } from '../../services/admin-api.service.js';
 import type { ReportData } from '../../types/common.js';
 import { withRetry } from '../../utils/retry.js';
 import { validatePropertyId } from '../../validation/validators.js';
-import { reportDataSchema } from '../shared.js';
+import { nameList, reportDataSchema } from '../shared.js';
 import { adminApi } from './_helpers.js';
 
 type IRunAccessReportRequest = protos.google.analytics.admin.v1alpha.IRunAccessReportRequest;
@@ -41,7 +41,7 @@ export const runAccessReport = defineOperation({
       .array(z.string().min(1))
       .min(1)
       .describe('Access dimensions (e.g. userEmail, epochTimeMicros, reportType, dataApiQuotaCategory)'),
-    metrics: z.array(z.string().min(1)).min(1).describe('Access metrics (e.g. accessCount)'),
+    metrics: nameList({ min: 1 }).describe('Access metrics (e.g. accessCount)'),
     startDate: z
       .string()
       .default('30daysAgo')

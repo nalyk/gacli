@@ -9,6 +9,22 @@ export const reportDataSchema = z.object({
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
+/**
+ * Metric/dimension names: `-m sessions activeUsers` and `-m sessions,activeUsers` both work (GA4 API
+ * names never contain commas). Splitting after the array check keeps the input JSON Schema string[].
+ */
+export function nameList(opts: { min?: number } = {}) {
+  const list = z.array(z.string().min(1));
+  return (opts.min ? list.min(opts.min) : list).transform((names) =>
+    names.flatMap((n) =>
+      n
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean),
+    ),
+  );
+}
+
 export const resourceName = (what: string) => z.string().min(1).describe(`${what} resource name`);
 
 /** "metric:<name>[:desc]" or "dimension:<name>[:desc]" → GA4 OrderBy. */
