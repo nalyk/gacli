@@ -14,7 +14,7 @@ for (const [name, { description }] of Object.entries(LAZY_COMMANDS)) {
   program.addCommand(new Command(name).description(description));
 }
 
-const target = targetCommand(process.argv.slice(2));
+const target = targetCommand(addGlobalOptions(new Command()), process.argv.slice(2));
 const lazy = target ? LAZY_COMMANDS[target] : undefined;
 if (lazy?.load === 'operations') {
   const [{ mountOperations }, { OPERATIONS }] = await Promise.all([
