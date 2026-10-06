@@ -35,6 +35,7 @@ permissions:
   id-token: write       # OIDC trusted publishing to npm
   issues: write         # semantic-release closes/labels related issues
   pull-requests: write  # semantic-release comments on related PRs
+  actions: write        # dispatch the (experimental) SEA binaries workflow for a new tag
 
 concurrency:
   group: auto-release-${{ github.ref }}
@@ -111,6 +112,14 @@ jobs:
           # No NPM_TOKEN — npm CLI uses the workflow's OIDC token because
           # id-token: write is granted above.
         run: pnpm exec semantic-release
+
+      # Releases created with GITHUB_TOKEN do not trigger other workflows, so dispatch it explicitly.
+      - name: Build experimental single-executable binaries for the new tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag=$(git tag --points-at HEAD | head -1)
+          if [ -n "$tag" ]; then gh workflow run sea.yml --ref "$tag" -f tag="$tag"; else echo "No new tag."; fi
 
       - name: Smoke-test the published npm version (real-world install path)
         if: success()

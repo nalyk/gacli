@@ -53,18 +53,12 @@ export const LAZY_COMMANDS: Record<string, LazyCommand> = {
   },
 };
 
-const VALUE_OPTIONS = new Set(['-p', '--property', '-f', '--format', '-o', '--output']);
-
-/** First command word in argv, skipping global options (and `help <cmd>`). */
-export function targetCommand(args: string[]): string | undefined {
-  for (let i = 0; i < args.length; i++) {
-    const a = args[i];
-    if (VALUE_OPTIONS.has(a)) {
-      i++;
-      continue;
-    }
-    if (a.startsWith('-')) continue;
-    return a === 'help' ? targetCommand(args.slice(i + 1)) : a;
-  }
-  return undefined;
+/**
+ * First command word in argv. commander parses the global options (clusters like `-vp 123`,
+ * `--format=json`, `-p123`), so a flag's value is never mistaken for the command; `help <cmd>`
+ * resolves to <cmd>. `parser` must carry the global options and no subcommands.
+ */
+export function targetCommand(parser: Command, args: string[]): string | undefined {
+  const { operands } = parser.parseOptions(args);
+  return operands[0] === 'help' ? operands[1] : operands[0];
 }

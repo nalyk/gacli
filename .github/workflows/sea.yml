@@ -3,10 +3,14 @@ name: sea
 # EXPERIMENTAL single-executable binaries (Node 26 `--build-sea`, everything bundled).
 # Never blocks a release: the npm package is the supported distribution.
 
+# Dispatched by release.yml for each new tag (a release created with GITHUB_TOKEN cannot trigger
+# workflows), or run manually.
 on:
   workflow_dispatch:
-  release:
-    types: [published]
+    inputs:
+      tag:
+        description: Release tag to attach the binaries to (empty = artifacts only)
+        required: false
 
 permissions:
   contents: write
@@ -35,12 +39,20 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: ./scripts/build-sea.sh
+      - name: Smoke-test the binary outside the repo (no node_modules to fall back on)
+        run: |
+          bin=$(ls dist-sea/gacli-*)
+          dir=$(mktemp -d); cp "$bin" "$dir/"; cd "$dir"; export HOME="$dir"
+          ./gacli-* --version
+          ./gacli-* -f table config list
+          set +e; ./gacli-* admin accounts list -f json; code=$?; set -e
+          test "$code" = 3   # credentials missing → AUTH, proves the auth library is bundled
       - uses: actions/upload-artifact@v5
         with:
           name: gacli-${{ matrix.os }}
           path: dist-sea/gacli-*
       - name: Attach to release
-        if: github.event_name == 'release'
+        if: inputs.tag != ''
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" dist-sea/gacli-* --clobber
+        run: gh release upload "${{ inputs.tag }}" dist-sea/gacli-* --clobber

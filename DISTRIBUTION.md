@@ -13,7 +13,8 @@ ordinary npm dependency. Startup budget (enforced in CI): `--version` / `--help`
 ## 2. Single-executable binaries (experimental)
 
 `.github/workflows/sea.yml` builds standalone binaries (no Node install needed) for Linux, macOS and
-Windows on Node 26 (`node --build-sea`, ESM main) and attaches them to GitHub releases. The job is
+Windows on Node 26 (`node --build-sea`, ESM main), smoke-tests each one outside the repo, and attaches
+them to the GitHub release. `release.yml` dispatches it for every new tag. The job is
 `continue-on-error`: a failed SEA build never blocks an npm release.
 
 ```bash
@@ -28,7 +29,9 @@ Known limits:
   `GACLI_EXTENSIONS_DIR` at a checkout's `extensions/`.
 - macOS binaries are ad-hoc signed only (`codesign --sign -`); Gatekeeper may require
   `xattr -d com.apple.quarantine gacli-darwin-arm64`.
-- Verified on Linux (version, schema, MCP, auth error paths). macOS/Windows are built by CI only.
+- Verified locally on Linux from a directory without `node_modules` (version, tables, schema, MCP,
+  credential errors). macOS/Windows are built and smoke-tested by CI only; no live API call has been
+  made from a binary.
 
 ## 3. MCP
 
