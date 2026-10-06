@@ -61,7 +61,7 @@ For everything else (read operations, single-item creates/updates), proceed.
 
 - `gacli` on PATH: `npm install -g @nalyk/gacli`. Verify with
   `gacli --version`.
-- Authenticated to GA4: run `gacli auth status`. If unauthenticated:
+- Authenticated to GA4: `gacli auth token >/dev/null` exits 0 (exit 3 = not authenticated). If not:
   - OAuth: `gacli auth login --client-secret-file <path>`
   - Service account: `gacli config set credentials <path-to-sa.json>`
 - A default GA4 property: `gacli config set property <numeric-id>` OR

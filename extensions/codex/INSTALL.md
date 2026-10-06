@@ -78,7 +78,7 @@ rm -rf ~/.agents/skills/gacli
 - **`$gacli` not in selector**: confirm the install path with
   `gacli skills path --agent codex` and that `~/.agents/skills/gacli/SKILL.md`
   exists. Restart Codex to refresh the catalog.
-- **Skill activates but commands fail**: run `gacli auth status` and
+- **Skill activates but commands fail**: run `gacli auth token >/dev/null` (exit 3 = not authenticated) and `gacli auth status` and
   `gacli --version` outside Codex to verify setup. The
   `dependencies.tools` block should surface this; if not, your Codex
   version may not support `type: "binary"` yet — that's a docs issue, not

@@ -53,7 +53,7 @@ Use this map to pick the right command on the first try.
 
 | User question | Command |
 |---|---|
-| "Am I authenticated?" | `gacli auth status` |
+| "Am I authenticated?" | `gacli auth token >/dev/null` (exit 0 = yes, 3 = no); `gacli auth status -f json` shows the source |
 | "How do I log in?" | `gacli auth login [--client-secret-file <path>]` |
 | "What config values are set?" | `gacli config list` |
 | "Set my default property" | `gacli config set property <id>` |
@@ -75,7 +75,7 @@ After picking the command, pick `-f`:
 |---|---|---|
 | Exit 2 / "Property ID is required" | No `-p` and no default | Property-resolution pre-flight above. |
 | Exit 2 / "Invalid argument" or validation message | Bad flag value, bad dim/metric name, scope mismatch, malformed JSON | `gacli schema <command>` for flags; `gacli metadata get` + `gacli metadata check-compatibility`. |
-| Exit 3 / "Unauthenticated" | Token issue / no credentials | `gacli auth status` then `gacli auth login` if needed. |
+| Exit 3 / "Unauthenticated" | Token issue / no credentials | `gacli auth status -f json` (which credential is used), then `gacli auth login` / refresh `GACLI_ACCESS_TOKEN`. |
 | Exit 3 / "Permission denied" | Principal lacks access | Confirm the OAuth user / SA email is added to the property. |
 | Exit 4 / "Refusing to run … without --yes" | Destructive op (delete/archive) run non-interactively | Confirm with the user, then re-run with `--yes` (the hint prints the exact command). |
 | Exit 5 / "Not found" | Wrong resource name or property | List the parent collection first. |

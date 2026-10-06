@@ -159,7 +159,7 @@ shorthand — see `filter-grammar.md`), `--metric-filter` (variadic shorthand),
 
 | Command | Purpose |
 |---|---|
-| `gacli explore` | Interactive REPL for ad-hoc GA4 queries. Honors `-p`. |
+| `gacli explore` | Interactive REPL to browse the property's metric and dimension catalog (`list`, `search`, `show`, `custom`). Honors `-p`. |
 
 ## mcp
 

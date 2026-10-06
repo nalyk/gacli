@@ -23,7 +23,8 @@ else
   prop_json="\"$prop\""
 fi
 
-if status="$(gacli auth status -f json 2>/dev/null)"; then
+# `auth status` succeeds even with nothing configured (ADC fallback); `auth token` proves credentials work.
+if gacli auth token >/dev/null 2>&1 && status="$(gacli auth status -f json 2>/dev/null)"; then
   auth_json='"ok"'
   # gacli 2.x: {"source":"oauth|access-token|env-credentials|config-credentials|adc", ...}
   source="$(printf '%s' "$status" | jq -r '.source // empty' 2>/dev/null || true)"

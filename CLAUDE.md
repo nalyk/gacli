@@ -92,7 +92,7 @@ After each non-trivial task, run a 4-question retrospective:
 - `.serena/memories/codebase_structure.md` — directory tree, layered dependency rule.
 - `.serena/memories/serena_workflow_tips.md` — symbol-tool best practices for THIS repo.
 - `.serena/memories/task_completion_checklist.md` — the full pre-merge gate (covers risk-bearing edits).
-- `.serena/memories/testing_conventions.md` — Jest+ESM patterns when adding tests.
+- `.serena/memories/testing_conventions.md` — Vitest 5 patterns when adding tests.
 - `.serena/memories/tech_stack.md` — exact dependency versions and notable absences.
 - `.serena/memories/suggested_commands.md` — full command list (dev/build/test/git/serena).
 - `.serena/memories/project_overview.md` — scope, distribution model, repo state.

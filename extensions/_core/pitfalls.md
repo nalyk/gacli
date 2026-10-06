@@ -7,17 +7,16 @@ The non-obvious failure modes a fresh AI agent will hit. Read once.
 1. **stderr ≠ stdout.** Status messages, spinners, and warnings go to stderr;
    only the data payload goes to stdout. Pipe `gacli ... -f json | jq` works
    correctly. `gacli ... 2>&1 | jq` will fail because spinner ANSI bytes mix in.
-2. **Default `--format` is `table`**, which is human-readable and NOT
-   parseable. Use `-f json` whenever you intend to pipe or parse.
-3. **`-f ndjson` is for `report batch`** — one report per line. For single
-   reports use `-f json`.
+2. **Default `--format` depends on the context**: `table` on an interactive terminal, compact
+   `json` when piped, in CI or under an AI agent. Pass `-f json` explicitly when you parse.
+3. **`-f ndjson` is one row/item per line** (batch reports tag each row with `"report": <n>`).
+   Use `-f json` for one parseable document.
 4. **`-f chart`** renders a sparkline. Visual only; do NOT pipe it.
 
 ## CLI arg syntax
 
-5. **Variadic flags repeat the flag**: `-m sessions -m activeUsers` works.
-   `-m sessions activeUsers` does NOT — Commander interprets the second value
-   as a positional argument.
+5. **Metric/dimension lists**: `-m sessions activeUsers`, `-m sessions,activeUsers` and
+   `-m sessions -m activeUsers` all work. Put list flags after the subcommand.
 6. **JSON-string options need single-quoting in shell**: `--pivots '[{...}]'`.
    Double-quotes require escaping every inner quote.
 7. **Date keywords are case-sensitive**: `7daysAgo` ✓, `7DaysAgo` ✗,

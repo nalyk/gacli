@@ -43,6 +43,7 @@ gacli auth login [options]
 | Option | Required | Description |
 |--------|----------|-------------|
 | `--client-secret-file <path>` | no | Path to OAuth client secret JSON file (downloaded from GCP Console). Falls back to `oauthClientSecretFile` config key. |
+| `--scopes <preset>` | no | `readonly`, `edit` (default: read + write) or `chat` (adds `analytics.chatbot.read`, needed by `report chat`) |
 
 Starts a loopback HTTP server, prints an auth URL, waits for the browser callback (120s timeout), exchanges the code for tokens, and saves them to `~/.gacli/oauth-tokens.json`.
 
@@ -66,7 +67,18 @@ Show the active authentication method and details.
 gacli auth status
 ```
 
-Displays whether OAuth or service account is active, token file path, expiry, and scopes.
+Displays the credential source the resolution chain will use (`access-token`, `oauth`, `env-credentials`, `config-credentials` or `adc`), token file path, expiry and scopes. `-f json` for scripts. It does not contact Google: use `auth token` to prove the credentials work.
+
+## auth token
+
+Print an access token for the active credentials (stdout only; exit 3 when there are none).
+
+```
+gacli auth token
+curl -H "Authorization: Bearer $(gacli auth token)" https://analyticsadmin.googleapis.com/v1beta/accountSummaries
+```
+
+Credential resolution order: `GACLI_ACCESS_TOKEN` env (agents/CI; wins over everything) → OAuth tokens (`auth login`) → `GOOGLE_APPLICATION_CREDENTIALS` → config `credentials` → Application Default Credentials. Service accounts get the chat scope with `GACLI_SCOPES=chat`.
 
 ---
 
@@ -85,8 +97,8 @@ gacli report run [options]
 |---|---|---|---|
 | `-m, --metrics <metrics...>` | yes |  | Metrics to include in the report |
 | `-d, --dimensions <dimensions...>` |  |  | Dimensions to include in the report |
-| `--start-date <date>` |  | `"7daysAgo"` | Start date for the report |
-| `--end-date <date>` |  | `"today"` | End date for the report |
+| `--start-date <date>` |  | `"7daysAgo"` | Start date: YYYY-MM-DD, today, yesterday or NdaysAgo |
+| `--end-date <date>` |  | `"today"` | End date: YYYY-MM-DD, today, yesterday or NdaysAgo |
 | `--limit <number>` |  |  | Maximum number of rows to return |
 | `--offset <number>` |  |  | Row offset for pagination |
 | `--order-by <orderBys...>` |  |  | Order by specifications (e.g. "metric:sessions:desc") |
@@ -113,9 +125,9 @@ gacli report pivot [options]
 |---|---|---|---|
 | `-m, --metrics <metrics...>` | yes |  | Metrics to include in the report |
 | `-d, --dimensions <dimensions...>` | yes |  | Dimensions to include in the report |
-| `--pivots <json>` | yes |  | Pivot definitions as a JSON string |
-| `--start-date <date>` |  | `"7daysAgo"` | Start date for the report |
-| `--end-date <date>` |  | `"today"` | End date for the report |
+| `--pivots <json>` | yes |  | Pivot definitions as JSON (inline, @file or @-), e.g. [{"fieldNames":["browser"],"limit":5}] |
+| `--start-date <date>` |  | `"7daysAgo"` | Start date: YYYY-MM-DD, today, yesterday or NdaysAgo |
+| `--end-date <date>` |  | `"today"` | End date: YYYY-MM-DD, today, yesterday or NdaysAgo |
 | `--dimension-filter <filters...>` |  |  | Dimension filters |
 | `--metric-filter <filters...>` |  |  | Metric filters |
 | `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
@@ -174,7 +186,7 @@ gacli report realtime [options]
 |---|---|---|---|
 | `-m, --metrics <metrics...>` | yes |  | Metrics to include in the report |
 | `-d, --dimensions <dimensions...>` |  |  | Dimensions to include in the report |
-| `--minute-ranges <json>` |  |  | Minute ranges as a JSON string (e.g. '[{"startMinutesAgo":10,"endMinutesAgo":0}]') |
+| `--minute-ranges <json>` |  |  | Minute ranges as JSON, e.g. [{"startMinutesAgo":10,"endMinutesAgo":0}] (up to 29 minutes ago; 59 on Analytics 360) |
 | `--dimension-filter <filters...>` |  |  | Dimension filters |
 | `--metric-filter <filters...>` |  |  | Metric filters |
 | `--limit <number>` |  |  | Maximum number of rows to return |
@@ -195,7 +207,7 @@ gacli report cohort [options]
 | Flag | Required | Default | Description |
 |---|---|---|---|
 | `-m, --metrics <metrics...>` | yes |  | Metrics to include in the report |
-| `--cohorts <json>` | yes |  | Cohort definitions as a JSON string |
+| `--cohorts <json>` | yes |  | Cohort definitions as JSON (inline, @file or @-), e.g. [{"name":"c1","dimension":"firstSessionDate","dateRange":{"startDate":"2026-01-01","endDate":"2026-01-07"}}] |
 | `--cohort-granularity <granularity>` |  |  | Cohort granularity: DAILY, WEEKLY, or MONTHLY |
 | `--end-offset <number>` |  |  | End offset for the cohort report |
 | `--start-offset <number>` |  |  | Start offset for the cohort report |
@@ -217,11 +229,11 @@ gacli report funnel [options]
 
 | Flag | Required | Default | Description |
 |---|---|---|---|
-| `--steps <json>` | yes |  | Funnel steps as a JSON string of FunnelStep[] |
+| `--steps <json>` | yes |  | Funnel steps as JSON (inline, @file or @-), e.g. [{"name":"View","filterExpression":{...}},{"name":"Buy","filterExpression":{...},"withinDurationFromPriorStep":"600s"}] |
 | `--open-funnel` |  |  | Use an open funnel (users can enter at any step) |
 | `--funnel-breakdown <dimension>` |  |  | Dimension name to break down the funnel by |
-| `--start-date <date>` |  | `"7daysAgo"` | Start date for the report |
-| `--end-date <date>` |  | `"today"` | End date for the report |
+| `--start-date <date>` |  | `"7daysAgo"` | Start date: YYYY-MM-DD, today, yesterday or NdaysAgo |
+| `--end-date <date>` |  | `"today"` | End date: YYYY-MM-DD, today, yesterday or NdaysAgo |
 | `--fields <paths>` |  |  | Comma-separated fields to output (dot paths for nested values) |
 
 Needs `-p <property>`.
@@ -258,8 +270,8 @@ gacli report tasks create [options]
 |---|---|---|---|
 | `-m, --metrics <metrics...>` | yes |  | Metrics to include in the report |
 | `-d, --dimensions <dimensions...>` |  |  | Dimensions to include in the report |
-| `--start-date <date>` |  | `"7daysAgo"` | Start date for the report |
-| `--end-date <date>` |  | `"today"` | End date for the report |
+| `--start-date <date>` |  | `"7daysAgo"` | Start date: YYYY-MM-DD, today, yesterday or NdaysAgo |
+| `--end-date <date>` |  | `"today"` | End date: YYYY-MM-DD, today, yesterday or NdaysAgo |
 | `--limit <number>` |  |  | Maximum number of rows the task produces (API default 10,000) |
 | `--dimension-filter <filters...>` |  |  | Dimension filters (e.g. "country==Romania") |
 | `--metric-filter <filters...>` |  |  | Metric filters (e.g. "sessions>100") |
@@ -1665,13 +1677,53 @@ gacli via shell. Full guide and per-CLI install paths in
 
 ---
 
+## schema
+
+Describe operations as JSON for scripts and AI agents: flags, category, input JSON Schema and the
+`-f json` output envelope. `--llms` prints a compact Markdown reference (the same content as `llms.txt`).
+
+```
+gacli schema                         # every operation
+gacli schema admin custom-dimensions # one group (prefix match)
+gacli schema report run --llms
+```
+
+## api
+
+Call any GA4 Admin/Data RPC by name — the escape hatch for methods without a dedicated command.
+
+```
+gacli api <admin|admin.v1beta|data|data.v1alpha> <Method> [--body <json|@file|@->] [--dry-run] [-y] [--fields a,b]
+gacli api admin ListAccountSummaries
+gacli api data.v1alpha GetPropertyQuotasSnapshot --body '{"name":"properties/1/propertyQuotasSnapshot"}'
+```
+
+The body is proto JSON (enum names, string int64s) validated against the SDK's request type; unknown
+fields and typos (with suggestions) exit 2. `Delete*`/`Archive*`/`BatchDelete*`/`SubmitUserDeletion`
+need `--yes`. Long-running methods return only the operation snapshot.
+
+## mcp serve
+
+Serve every operation as an MCP tool (`ga_<command>`, e.g. `ga_report_run`). See `MCP.md`.
+
+```
+gacli mcp serve [--allow-write] [--allow-delete] [--http <port>]
+```
+
+Read-only by default; `--allow-write` adds create/update tools; `--allow-delete` adds delete/archive
+tools (which need `confirm: true` and an explicit `propertyId`). `--http` serves
+`http://127.0.0.1:<port>/mcp` (local only, no auth).
+
+---
+
 ## Notes for AI usage
 
-- Auth priority: OAuth tokens > `GOOGLE_APPLICATION_CREDENTIALS` env var > `credentials` config. Use `gacli auth status` to check which method is active.
-- Property ID is always numeric (e.g. `371981488`), never with `properties/` prefix on CLI.
+- Auth priority: `GACLI_ACCESS_TOKEN` > OAuth tokens > `GOOGLE_APPLICATION_CREDENTIALS` > `credentials` config > Application Default Credentials. `gacli auth token >/dev/null` proves auth works (exit 3 = no); `gacli auth status` shows which source is used.
+- Property ID is numeric (e.g. `371981488`); a `properties/` prefix is accepted and stripped.
 - Resource names in admin commands use full path: `properties/123/dataStreams/456`.
 - `--name` in admin get/update/delete always expects the full resource name.
-- Variadic options accept multiple values: `-m sessions -m activeUsers` or `-m sessions activeUsers`.
+- Metric/dimension lists: `-m sessions activeUsers`, `-m sessions,activeUsers` or `-m sessions -m activeUsers`.
 - Date formats: `YYYY-MM-DD`, `today`, `yesterday`, `NdaysAgo` (e.g. `7daysAgo`, `30daysAgo`).
-- JSON string options must be valid JSON. Quote carefully in shell: `--pivots '[{"fieldNames":["browser"],"limit":5}]'`.
-- `# uses -p` means the command reads property ID from the global `-p` option.
+- JSON options take inline JSON, `@file` or `@-` (stdin). Quote carefully in shell: `--pivots '[{"fieldNames":["browser"],"limit":5}]'`.
+- Each operation section says "Needs `-p <property>`" when it reads the global property.
+- Exit codes: 0 ok, 1 API, 2 usage, 3 auth, 4 needs `--yes`, 5 not found, 6 quota. With JSON output, errors are one JSON line on stderr.

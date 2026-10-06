@@ -116,7 +116,7 @@ gacli admin key-events create -p <newPropertyId> \
 # Trigger export
 gacli audience export create -p <P> --audience properties/<P>/audiences/<aid>
 # Returns: operation name. Wait, then list:
-gacli audience export list -p <P> -f json | jq '.[] | select(.state=="ACTIVE")'
+gacli audience export list -p <P> -f json | jq '.data[] | select(.state=="ACTIVE")'
 # Once active, fetch the rows:
 gacli audience export query -p <P> --name <export-resource-name> --limit 1000 -f csv > members.csv
 ```

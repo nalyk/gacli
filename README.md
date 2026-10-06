@@ -65,7 +65,7 @@ Or build from source:
 pnpm install && pnpm build && pnpm link --global
 ```
 
-Requires Node.js >= 22.
+Requires Node.js >= 22.12.
 
 ### Updating an existing install
 
@@ -129,7 +129,8 @@ Set credentials via one of:
 
 ### Auth priority
 
-OAuth tokens (if present) > `GOOGLE_APPLICATION_CREDENTIALS` environment variable > `config set credentials` file.
+`GACLI_ACCESS_TOKEN` (agents/CI) > OAuth tokens > `GOOGLE_APPLICATION_CREDENTIALS` > `config set credentials`
+file > Application Default Credentials. `gacli auth token >/dev/null` proves the credentials work (exit 3 if not).
 
 ### Managing auth
 
@@ -214,12 +215,13 @@ gacli config list
 
 ```
 gacli
-  auth login|logout|status
-  report run|batch|pivot|batch-pivot|realtime|funnel|cohort
+  auth login|logout|status|token
+  report run|batch|pivot|batch-pivot|realtime|funnel|cohort|quota|chat
+  report tasks create|get|list|query
   metadata get|check-compatibility
   audience export create|get|list|query
   audience recurring create|get|list
-  admin accounts list
+  admin accounts list|summaries
   admin properties list|get|create|update|delete
   admin datastreams list|get|create|update|delete
   admin custom-dimensions list|get|create|update|archive
@@ -230,7 +232,15 @@ gacli
   admin firebase-links list|get|create|delete
   admin google-ads-links list|get|create|update|delete
   admin bigquery-links list|get|create|delete
+  admin annotations list|create|update|delete
+  admin change-history search
+  admin access-report run
+  admin measurement-secrets list|create|delete
+  admin data-retention get|update
+  api <service> <Method>          # any Admin/Data RPC by name
+  schema [command...]             # operations as JSON (flags, JSON Schema)
   config set|get|list
+  skills install|uninstall|list|path|doctor
   explore
   mcp serve
 ```
@@ -239,8 +249,8 @@ gacli
 
 | Format | Usage |
 |--------|-------|
-| `table` | Colored ASCII table (default) |
-| `json` | `{rowCount, data:[{...}]}` shape — pipe to `jq` |
+| `table` | Colored ASCII table — default on an interactive terminal |
+| `json` | Default when piped / in CI / under an AI agent (compact). Reports: `{rowCount, data:[{...}], metadata?}`; lists: `{rowCount, data}`; single resources: `{data}`. `gacli schema <cmd>` shows each shape |
 | `ndjson` | One JSON object per line, newline-separated — clean piping into `jq -c`, ClickHouse, BigQuery loads |
 | `csv` | Properly escaped CSV, import into spreadsheets |
 | `chart` | ASCII bar chart in terminal (unframed title + bars) |
@@ -312,13 +322,15 @@ Useful when you don't remember field names.
 
 ```bash
 pnpm install
-pnpm verify        # lint + type-check + test + skill-lint + build
+pnpm verify        # lint + type-check + build + test + skill-lint + docs:check
+pnpm docs          # regenerate help.md / command catalog / llms.txt after changing operations
 pnpm test:watch    # vitest watch mode
 pnpm dev <args>    # run from source (no build step)
 ```
 
-Lint/format is [Biome](https://biomejs.dev), tests are [Vitest](https://vitest.dev). The CI
-workflow runs `pnpm verify` on Node 22 and Node 24 for every push and PR.
+Lint/format is [Biome](https://biomejs.dev), tests are [Vitest](https://vitest.dev). CI runs lint,
+type-check, build and tests (including the generated-docs drift check) on Node 22, 24 and 26 for every
+push and PR to `main`/`next`, plus a startup-budget check and a packed-install smoke test on Node 24.
 
 ## Release automation
 

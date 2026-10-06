@@ -27,7 +27,9 @@ Before any property-requiring query, resolve the GA4 property:
    pick.
 4. Persist with `gacli config set property <id>` for the session.
 
-Verify auth: `gacli auth status`. If unauthenticated, instruct the user:
+Verify auth: `gacli auth token >/dev/null` (exit 3 = not authenticated; `auth status` alone
+cannot tell, because it reports the Application Default Credentials fallback). If unauthenticated,
+instruct the user:
 `gacli auth login --client-secret-file <path-to-oauth-client-secret.json>`.
 
 ## Phase 1 — Decision tree
@@ -94,17 +96,16 @@ This runs N audits in parallel instead of serially.
 
 ### Structured output enforcement
 
-When invoked via `codex exec`, attach a JSON schema matching gacli's
-`ReportData` shape:
+When invoked via `codex exec`, attach a JSON schema matching gacli's report
+envelope (`gacli schema report run` prints the exact one for any command):
 
 ```bash
 codex exec --output-schema '{
   "type": "object",
-  "required": ["headers", "rows", "rowCount"],
+  "required": ["rowCount", "data"],
   "properties": {
-    "headers": { "type": "array", "items": { "type": "string" } },
-    "rows": { "type": "array" },
-    "rowCount": { "type": "integer" }
+    "rowCount": { "type": "integer" },
+    "data": { "type": "array", "items": { "type": "object" } }
   }
 }' --json "show me last week's GA4 traffic by country"
 ```
