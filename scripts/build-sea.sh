@@ -1,46 +1,27 @@
 #!/usr/bin/env bash
-# Build a single-executable application (SEA) from the gacli bin.
-# Requires Node 22+ and platform-native build tools (codesign on macOS, no extra deps on Linux).
-#
-# This script is documentation-grade: tested only on the host where you run it.
-# For multi-platform release artifacts, run it inside a matrix build (GH Actions).
-
+# Experimental single-executable build (Node >= 25.5 for `node --build-sea` with an ESM main).
+# Bundles everything (GA SDKs included) into dist-sea/gacli.js, then embeds it into a copy of the
+# running node binary as dist-sea/gacli. `skills install` needs the npm package (or
+# GACLI_EXTENSIONS_DIR): the extensions/ tree is not embedded.
 set -euo pipefail
+cd "$(dirname "$0")/.."
 
-if [[ ! -f dist/index.js ]]; then
-  echo "==> Building TS first..."
-  pnpm build
+major=$(node -p 'process.versions.node.split(".")[0]')
+if (( major < 26 )); then
+  echo "Node >= 26 required for --build-sea with an ESM main (found $(node --version))." >&2
+  exit 1
 fi
 
-echo "==> Generating SEA blob..."
-node --experimental-sea-config sea-config.json
+pnpm exec tsdown --config tsdown.sea.config.ts
+node --build-sea sea-config.json
 
-PLATFORM=$(uname -s | tr '[:upper:]' '[:lower:]')
-ARCH=$(uname -m)
-OUT="dist/gacli-${PLATFORM}-${ARCH}"
-
-echo "==> Copying node binary to ${OUT}..."
-cp "$(command -v node)" "${OUT}"
-
-case "${PLATFORM}" in
-  darwin)
-    echo "==> Removing macOS code signature so we can re-embed the blob..."
-    codesign --remove-signature "${OUT}"
-    ;;
-esac
-
-echo "==> Injecting SEA blob..."
-pnpm dlx postject "${OUT}" NODE_SEA_BLOB dist/gacli.blob \
-  --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2 \
-  $( [[ "${PLATFORM}" == "darwin" ]] && echo --macho-segment-name NODE_SEA )
-
-case "${PLATFORM}" in
-  darwin)
-    echo "==> Re-signing macOS binary..."
-    codesign --sign - "${OUT}"
-    ;;
-esac
-
-echo "==> Verifying..."
-"${OUT}" --version
-echo "==> Done: ${OUT}"
+platform=$(node -p 'process.platform')
+arch=$(node -p 'process.arch')
+ext=$([[ "$platform" == "win32" ]] && echo ".exe" || echo "")
+out="dist-sea/gacli-${platform}-${arch}${ext}"
+mv "dist-sea/gacli${ext}" "$out" 2>/dev/null || mv dist-sea/gacli "$out"
+if [[ "$platform" == "darwin" ]]; then
+  codesign --sign - "$out"
+fi
+"./$out" --version
+echo "Built $out"

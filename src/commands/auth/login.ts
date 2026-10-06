@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto';
 import { createServer } from 'node:http';
 import { URL } from 'node:url';
 import { Command, Option } from 'commander';
-import { CodeChallengeMethod, OAuth2Client } from 'google-auth-library';
+import { GacliError } from '../../core/errors.js';
 import { resetAuth, type ScopePreset, scopesFor } from '../../services/auth.service.js';
 import { getConfig } from '../../services/config.service.js';
 import { loadClientSecrets, saveOAuthTokens } from '../../services/oauth.service.js';
@@ -47,6 +47,7 @@ async function runLogin(clientSecretFilePath: string | undefined, scopes: string
 
   const { redirectUri, closeServer } = await startLoopbackServer(state, client_id, client_secret);
 
+  const { CodeChallengeMethod, OAuth2Client } = await import('google-auth-library');
   const oauth2Client = new OAuth2Client({ clientId: client_id, clientSecret: client_secret, redirectUri });
   const { codeVerifier, codeChallenge } = await oauth2Client.generateCodeVerifierAsync();
 
@@ -67,11 +68,16 @@ async function runLogin(clientSecretFilePath: string | undefined, scopes: string
     const code = await waitForCallback(closeServer, 120_000);
 
     const { tokens } = await oauth2Client.getToken({ code, codeVerifier });
+    if (!tokens.access_token || !tokens.refresh_token) {
+      throw new GacliError('auth', 'Google did not return an access and refresh token.', {
+        hint: 'Remove gacli from https://myaccount.google.com/permissions and run `gacli auth login` again.',
+      });
+    }
 
     saveOAuthTokens({
-      access_token: tokens.access_token!,
-      refresh_token: tokens.refresh_token!,
-      expiry_date: tokens.expiry_date!,
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token,
+      expiry_date: tokens.expiry_date ?? Date.now() + 3600_000,
       token_type: tokens.token_type ?? 'Bearer',
       scope: tokens.scope ?? scopes.join(' '),
       client_id,
@@ -105,15 +111,15 @@ function startLoopbackServer(
   _clientSecret: string,
 ): Promise<LoopbackServer> {
   return new Promise((resolveStart, rejectStart) => {
-    let resolveCode: (code: string) => void;
-    let rejectCode: (err: Error) => void;
+    let resolveCode!: (code: string) => void;
+    let rejectCode!: (err: Error) => void;
     const promise = new Promise<string>((res, rej) => {
       resolveCode = res;
       rejectCode = rej;
     });
 
     const server = createServer((req, res) => {
-      const url = new URL(req.url!, `http://${req.headers.host}`);
+      const url = new URL(req.url ?? '/', `http://${req.headers.host}`);
 
       if (url.pathname !== '/callback') {
         res.writeHead(404);
@@ -168,7 +174,7 @@ function startLoopbackServer(
       const port = addr.port;
       resolveStart({
         redirectUri: `http://127.0.0.1:${port}/callback`,
-        closeServer: { promise, resolve: resolveCode!, reject: rejectCode!, server },
+        closeServer: { promise, resolve: resolveCode, reject: rejectCode, server },
       });
     });
 

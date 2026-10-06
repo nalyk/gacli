@@ -1,5 +1,5 @@
 import { CommanderError } from 'commander';
-import { ZodError, type z } from 'zod';
+import type { z } from 'zod';
 import { getGrpcCode, getGrpcMessage, isDailyQuotaError } from '../utils/grpc-error.js';
 
 export type ErrorKind = 'usage' | 'auth' | 'not_found' | 'quota' | 'confirmation' | 'api' | 'internal';
@@ -112,9 +112,16 @@ function fromGrpc(code: number, err: Error): GacliError {
   }
 }
 
+function isZodError(err: unknown): err is { issues: z.core.$ZodIssue[] } & Error {
+  return (
+    err instanceof Error && err.name === 'ZodError' && Array.isArray((err as { issues?: unknown }).issues)
+  );
+}
+
 export function toGacliError(err: unknown): GacliError {
   if (err instanceof GacliError) return err;
-  if (err instanceof ZodError) return new GacliError('usage', formatZodIssues(err.issues), { cause: err });
+  // Duck-typed so the error path never has to load zod.
+  if (isZodError(err)) return new GacliError('usage', formatZodIssues(err.issues), { cause: err });
   if (err instanceof CommanderError) {
     return new GacliError('usage', err.message.replace(/^error: /, ''), { cause: err });
   }

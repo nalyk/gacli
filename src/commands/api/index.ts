@@ -11,8 +11,12 @@ const bodySchema = jsonArg(z.record(z.string(), z.unknown()));
 export function createApiCommand(): Command {
   return new Command('api')
     .description(
-      'Call any GA4 Admin/Data RPC directly (escape hatch for methods without a dedicated command), e.g. ' +
-        'gacli api admin ListAccountSummaries, gacli api data.v1alpha GetPropertyQuotasSnapshot --body \'{"name":"properties/1/propertyQuotasSnapshot"}\'',
+      'Call any GA4 Admin/Data RPC directly (escape hatch for methods without a dedicated command)',
+    )
+    .addHelpText(
+      'after',
+      '\nExamples:\n  gacli api admin ListAccountSummaries\n' +
+        `  gacli api data.v1alpha GetPropertyQuotasSnapshot --body '{"name":"properties/1/propertyQuotasSnapshot"}'`,
     )
     .argument('<service>', 'admin (v1alpha), admin.v1beta, data (v1beta) or data.v1alpha')
     .argument('<method>', 'RPC name, e.g. ListProperties or listProperties')

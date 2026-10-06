@@ -9,3 +9,6 @@ dist/
 oauth-tokens.json
 .serena/
 .claude/
+dist-sea/
+coverage/
+

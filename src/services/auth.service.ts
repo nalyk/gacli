@@ -1,5 +1,6 @@
-import { GoogleAuth, OAuth2Client } from 'google-auth-library';
+import type { GoogleAuth, OAuth2Client } from 'google-auth-library';
 import { GacliError } from '../core/errors.js';
+import { loadAuthLibrary } from '../utils/lazy-cjs.js';
 import { getConfig } from './config.service.js';
 import { loadOAuthTokens, saveOAuthTokens } from './oauth.service.js';
 
@@ -46,8 +47,10 @@ export function resolveCredentialsPath(): string | undefined {
 
 let cachedAuthOptions: { authClient: OAuth2Client } | { auth: GoogleAuth } | null = null;
 
+// google-auth-library (+ gaxios, gcp-metadata, jws, ...) costs ~130ms to load: required on first use.
 export function getAuthClientOptions(): { authClient: OAuth2Client } | { auth: GoogleAuth } {
   if (cachedAuthOptions) return cachedAuthOptions;
+  const { GoogleAuth, OAuth2Client } = loadAuthLibrary();
 
   // Agents/CI: a pre-obtained access token, used as-is (no refresh; expiry surfaces as exit 3).
   const accessToken = process.env.GACLI_ACCESS_TOKEN;

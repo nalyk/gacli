@@ -4,7 +4,7 @@ import { getMetadata } from '../../services/data-api.service.js';
 import { resolveGlobalOptions } from '../../types/common.js';
 import { handleError } from '../../utils/error-handler.js';
 import { logger } from '../../utils/logger.js';
-import { createSpinner } from '../../utils/spinner.js';
+import { startSpinner } from '../../utils/spinner.js';
 import { validatePropertyId } from '../../validation/validators.js';
 
 interface Field {
@@ -99,8 +99,7 @@ export function createExploreCommand(): Command {
         const globalOpts = resolveGlobalOptions(command);
         const propertyId = validatePropertyId(globalOpts.property);
 
-        const spinner = createSpinner('Loading property metadata...');
-        spinner.start();
+        const spinner = await startSpinner('Loading property metadata...');
         const meta = await getMetadata(propertyId);
         spinner.stop();
 

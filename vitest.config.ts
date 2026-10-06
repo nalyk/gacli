@@ -20,6 +20,9 @@ export default defineConfig({
         functions: 50,
         branches: 50,
         statements: 50,
+        // Spec §5.10: the catalogue machinery and operations carry the contract.
+        'src/core/**': { lines: 75, functions: 75, branches: 75, statements: 75 },
+        'src/operations/**': { lines: 75, functions: 75, branches: 75, statements: 75 },
       },
     },
   },
