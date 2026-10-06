@@ -6,16 +6,15 @@
 [![License: MIT](https://img.shields.io/github/license/nalyk/gacli?color=blue)](./LICENSE)
 ![Node](https://img.shields.io/badge/node-%E2%89%A522.12-brightgreen)
 
-Full-featured CLI for Google Analytics 4 — Data API + Admin API. Reports, realtime, funnels,
-cohorts, audience exports, property management, streams, custom dimensions/metrics, key events,
-audiences, integrations (Firebase, Google Ads, BigQuery). Also ships an
-[MCP server](#model-context-protocol) so any LLM client (Claude Desktop, Cursor, Cline, Zed)
-can call it as a tool, plus an interactive [`explore`](#interactive-explore) REPL for browsing
-metric/dimension catalogs.
+A command-line client for the Google Analytics 4 Data and Admin APIs. It runs reports (standard,
+realtime, pivot, funnel, cohort), audience exports and report tasks, and manages properties, data
+streams, custom dimensions and metrics, key events, audiences and the Firebase, Google Ads and
+BigQuery links. The same commands are available to AI clients through an
+[MCP server](#model-context-protocol), and [`explore`](#interactive-explore) is a small REPL for
+browsing a property's metric and dimension catalog.
 
-**AI assistant integration.** gacli ships native skill packages for Claude Code, Codex, Qwen
-Code, and Gemini CLI. After install, deploy with one command — your agent becomes an expert
-gacli operator immediately:
+gacli also ships skill packages for Claude Code, Codex, Qwen Code and Gemini CLI. One command
+installs them, and from then on the agent knows how to drive gacli:
 
 ```bash
 gacli skills install --agent claude --scope user
@@ -26,22 +25,27 @@ Full guide: [extensions/README.md](extensions/README.md).
 
 ## What's new in 2.0
 
-gacli 2.0 is built for **humans and AI agents alike**. Every GA4 command is a typed operation, and
-one catalogue drives the CLI, `gacli schema`, the MCP server and these docs.
+In 2.0 every GA4 command became a typed operation. One catalogue now drives the CLI, `gacli schema`,
+the MCP server and the generated docs, so they can't drift apart. What that means in practice:
 
-- **Agent-friendly by default:** compact JSON when piped or run by an agent, stable exit codes
-  (`2` usage, `3` auth, `4` needs `--yes`, `5` not found, `6` quota), JSON errors on stderr,
-  `--fields` projection, and `--dry-run` / `--yes` on every write.
-- **Self-describing:** `gacli schema [command…]` returns flags plus input/output JSON Schema;
-  `llms.txt` is generated from the catalogue.
-- **MCP:** every operation is an MCP tool with `outputSchema`, read-only by default, over stdio or
-  local HTTP.
-- **Full API reach:** new quota, report tasks, chat, annotations, change history, access reports,
-  measurement secrets and data retention commands, plus `gacli api <service> <Method>` for any RPC.
-- **Auth for automation:** `GACLI_ACCESS_TOKEN`, Application Default Credentials fallback, `auth token`.
-- **Fast:** `--help` in about 70 ms (bundled; GA SDKs load only when a command needs them).
+- When stdout is piped or an AI agent runs gacli, output is compact JSON and errors are one JSON
+  line on stderr. Exit codes are stable: `2` usage, `3` auth, `4` needs `--yes`, `5` not found,
+  `6` quota.
+- Writes take `--dry-run`. Deletes and archives refuse to run without `--yes` unless someone is at
+  the terminal to confirm. Every API command takes `--fields a,b.c` to trim its output.
+- `gacli schema [command…]` prints the flags and the input/output JSON Schema of any command, and
+  `llms.txt` is generated from the same data.
+- Every operation is also an MCP tool with an `outputSchema`. The server is read-only unless you
+  start it with `--allow-write` or `--allow-delete`.
+- New commands cover the property quota, report tasks, chat, annotations, change history, access
+  reports, Measurement Protocol secrets and data retention. For anything else, `gacli api <service>
+  <Method>` calls the RPC by name.
+- For CI and agents there is `GACLI_ACCESS_TOKEN`, a fallback to Application Default Credentials,
+  and `gacli auth token`.
+- `--help` returns in about 70 ms. The Google SDKs only load when a command actually calls the API.
 
-Upgrading scripts from 1.x: see **[MIGRATION.md](./MIGRATION.md)**. Try it with `npm i -g @nalyk/gacli@next`.
+If you have scripts written against 1.x, read [MIGRATION.md](./MIGRATION.md) first. The default
+output when piped, the exit codes and the MCP tool names all changed.
 
 ## Setup
 
@@ -67,6 +71,11 @@ pnpm install && pnpm build && pnpm link --global
 
 Requires Node.js >= 22.12.
 
+No Node? Each [GitHub release](https://github.com/nalyk/gacli/releases) also has standalone
+binaries for Linux x64, macOS arm64 and Windows x64. They are experimental and about 160 MB each,
+since they bundle the Node runtime. `gacli skills install` doesn't work from them; use the npm
+package for that. See [DISTRIBUTION.md](./DISTRIBUTION.md).
+
 ### Updating an existing install
 
 ```bash
@@ -87,11 +96,8 @@ npm install -g @nalyk/gacli@next
 npm audit signatures
 ```
 
-After upgrading, **re-run `gacli skills install --agent <agent>`** so any new
-or updated skill content lands in your AI CLI's skill directory. The skill
-files are versioned with gacli — installing a fresh gacli does NOT
-auto-refresh already-deployed skills. Pass `--force` to overwrite without
-prompting:
+After upgrading, re-run `gacli skills install --agent <agent>`. Installed skills are copies, so a
+new gacli version doesn't refresh them by itself. `--force` overwrites without asking:
 
 ```bash
 gacli skills install --agent all --force
@@ -99,7 +105,8 @@ gacli skills install --agent all --force
 
 ## Authentication
 
-gacli supports two authentication methods: **OAuth 2.0** (interactive) and **service account** (JSON key file).
+You can sign in interactively with OAuth 2.0 or use a service account key. Agents and CI can pass
+an access token instead (see [Auth priority](#auth-priority)).
 
 ### OAuth 2.0 (recommended for personal use)
 
@@ -140,7 +147,9 @@ gacli auth logout              # Remove saved OAuth tokens
 gacli auth logout --revoke     # Revoke token at Google, then remove
 ```
 
-Scopes: `analytics.readonly`, `analytics.edit`.
+`gacli auth login` requests `analytics.readonly` and `analytics.edit` by default. Use `--scopes
+readonly` for read-only access, or `--scopes chat` to also get `analytics.chatbot.read`, which
+`report chat` needs.
 
 ## Global options
 
@@ -162,13 +171,13 @@ Every API operation also accepts `--fields a,b.c` (output projection); mutations
 # Set default property
 gacli config set property 371981488
 
-# Simple report — activeUsers by day, last 7 days
+# activeUsers by day for the last 7 days
 gacli report run -m activeUsers -d date
 
 # Same report as JSON
 gacli report run -m activeUsers -d date -f json
 
-# NDJSON — one row per line, ideal for jq pipelines
+# NDJSON: one row per line, easy to filter with jq
 gacli report run -m sessions -d country -f ndjson | jq 'select(.sessions | tonumber > 100)'
 
 # CSV for spreadsheets
@@ -186,7 +195,7 @@ gacli admin accounts list
 # List properties
 gacli admin properties list --account 232284173
 
-# Metadata — search dimensions
+# Search the dimension catalog
 gacli metadata get --type dims --search "page"
 
 # Dimension/metric compatibility check
@@ -204,7 +213,7 @@ gacli audience export create --audience properties/371981488/audiences/12345 --w
 # Browse the metric/dimension catalog interactively
 gacli explore
 
-# Run as an MCP server (stdio) — see MCP.md
+# Run as an MCP server over stdio (see MCP.md)
 gacli mcp serve
 
 # Current config
@@ -249,10 +258,10 @@ gacli
 
 | Format | Usage |
 |--------|-------|
-| `table` | Colored ASCII table — default on an interactive terminal |
+| `table` | Colored ASCII table, the default on an interactive terminal |
 | `json` | Default when piped / in CI / under an AI agent (compact). Reports: `{rowCount, data:[{...}], metadata?}`; lists: `{rowCount, data}`; single resources: `{data}`. `gacli schema <cmd>` shows each shape |
-| `ndjson` | One JSON object per line, newline-separated — clean piping into `jq -c`, ClickHouse, BigQuery loads |
-| `csv` | Properly escaped CSV, import into spreadsheets |
+| `ndjson` | One JSON object per line, handy for `jq -c`, ClickHouse or BigQuery loads |
+| `csv` | RFC 4180 CSV for spreadsheets |
 | `chart` | ASCII bar chart in terminal (unframed title + bars) |
 
 ## Filters
@@ -284,11 +293,11 @@ Stored in `~/.gacli/config.json`.
 
 | Variable | Default | Effect |
 |---|---|---|
-| `GA4_PROPERTY_ID` | — | Default property when neither `--property` nor `config.property` is set |
-| `GOOGLE_APPLICATION_CREDENTIALS` | — | Path to service-account JSON; used when no OAuth tokens exist, and takes precedence over `config.credentials` |
-| `GACLI_ACCESS_TOKEN` | — | Pre-obtained OAuth access token (agents/CI); wins over every other credential source |
-| `GACLI_SCOPES` | — | `chat` adds `analytics.chatbot.read` for service accounts / ADC |
-| `GACLI_FORMAT` | — | Default output format (overrides config, overridden by `-f`) |
+| `GA4_PROPERTY_ID` | | Default property when neither `--property` nor `config.property` is set |
+| `GOOGLE_APPLICATION_CREDENTIALS` | | Path to service-account JSON; used when no OAuth tokens exist, and takes precedence over `config.credentials` |
+| `GACLI_ACCESS_TOKEN` | | Pre-obtained OAuth access token (agents/CI); wins over every other credential source |
+| `GACLI_SCOPES` | | `chat` adds `analytics.chatbot.read` for service accounts / ADC |
+| `GACLI_FORMAT` | | Default output format (overrides config, overridden by `-f`) |
 | `GACLI_VERBOSE` | `0` | When `1`, error stack traces are printed alongside the human-readable error |
 | `GACLI_MAX_RETRIES` | `3` | Max retries on retriable gRPC errors (codes 8 quota, 14 unavailable). Other errors never retry |
 | `GACLI_RETRY_BASE_MS` | `500` | Base delay for exponential-backoff-with-jitter; capped at `base * 2^attempt` |
@@ -299,11 +308,12 @@ Stored in `~/.gacli/config.json`.
 gacli mcp serve
 ```
 
-Starts an MCP server (stdio, or local HTTP with `--http <port>`) that exposes **every gacli
-operation as a typed tool** (`ga_report_run`, `ga_admin_custom_dimensions_list`, …) with
-`outputSchema`/`structuredContent` and read-only/destructive annotations. Read-only by default;
-`--allow-write` adds create/update tools and `--allow-delete` adds delete/archive (which require
-`confirm: true`). The server reuses gacli's auth chain, retry policy, and property resolution.
+This starts an MCP server over stdio (or local HTTP with `--http <port>`) where every gacli
+operation is a typed tool: `ga_report_run`, `ga_admin_custom_dimensions_list` and so on. Tools
+return `structuredContent` that matches their `outputSchema` and carry read-only or destructive
+annotations. Only read tools are exposed unless you add `--allow-write` (create/update) or
+`--allow-delete` (delete/archive, which also need `confirm: true`). Auth, retries and the default
+property work the same as on the command line.
 
 Wire-up examples for Claude Desktop, Cursor, Cline, and Zed are in [MCP.md](./MCP.md), including
 how to pin different properties per client via the env block.
@@ -334,57 +344,38 @@ push and PR to `main`/`next`, plus a startup-budget check and a packed-install s
 
 ## Release automation
 
-Releases are fully automated by [semantic-release](https://github.com/semantic-release/semantic-release)
-on every push to `main`. There is no manual tag, no manual `npm publish`, no
-manual version bump anywhere — `package.json`, `CHANGELOG.md`, the git tag,
-the npm publish, and the GitHub Release all fall out of one workflow run.
-
-**Commit message → release type** ([Conventional Commits](https://www.conventionalcommits.org/)):
+[semantic-release](https://github.com/semantic-release/semantic-release) cuts every release from
+CI, based on [Conventional Commits](https://www.conventionalcommits.org/):
 
 | Commit prefix | Release |
 |---|---|
-| `feat: …` | minor (`1.1.0` → `1.2.0`) |
-| `fix: …`, `perf: …`, `refactor: …` | patch (`1.1.0` → `1.1.1`) |
+| `feat: …` | minor (`2.0.0` → `2.1.0`) |
+| `fix: …`, `perf: …`, `refactor: …` | patch (`2.0.0` → `2.0.1`) |
 | `docs(readme): …` | patch |
 | `chore:`, `docs:`, `test:`, `ci:`, `build:`, `style:` | no release |
-| Any commit with `BREAKING CHANGE:` in the body | major (`1.1.0` → `2.0.0`) |
+| `BREAKING CHANGE:` in the commit body | major (`2.0.0` → `3.0.0`) |
 
-**The flow:**
-1. You push a `feat:` or `fix:` commit to `main`.
-2. `.github/workflows/release.yml` runs the full verify gate.
-3. It packs the tarball and smoke-tests `npm install -g <tarball>` locally.
-4. It runs `semantic-release` which:
-   - Determines next semver from commits since the last tag.
-   - Bumps `package.json` and prepends `CHANGELOG.md`.
-   - Commits both back to `main` as `chore(release): vX.Y.Z [skip ci]`.
-   - Tags `vX.Y.Z` and pushes.
-   - Publishes to npm via OIDC trusted publishing (no `NPM_TOKEN`).
-   - Creates the GitHub Release with auto-generated notes + the `.tgz` asset.
-5. It smoke-tests the live npm version end-to-end.
+When commits land on `main`, `.github/workflows/release.yml` runs the verify gate, installs the
+packed tarball as a smoke test, and then semantic-release picks the version. It tags `vX.Y.Z`,
+publishes to npm with OIDC trusted publishing (no `NPM_TOKEN`), and creates the GitHub release.
+The job then installs the published version from npm to check it, and starts the workflow that
+attaches the standalone binaries.
 
-The `[skip ci]` marker on the release commit prevents the workflow from
-re-triggering itself; the workflow also short-circuits on any commit whose
-message starts with `chore(release):`.
-
-**Pre-release channels:** push to a `next` or `beta` branch instead of `main`
-to publish to the corresponding npm dist-tag (`@nalyk/gacli@next`).
-
-**Branch protection requirement.** semantic-release pushes the bump commit
-back to `main`. Configure the `main` branch protection rule (Settings →
-Branches → main) to allow GitHub Actions / repository administrators to
-bypass required PRs and required status checks. Without that, the
-`@semantic-release/git` step fails with HTTP 403.
+`main` is a protected branch, so releases from it are tag-only. The bot doesn't commit the new
+version back, which means `package.json` and `CHANGELOG.md` on `main` lag behind; the git tags,
+npm and the GitHub release notes are authoritative. Pushes to `next` publish pre-releases under the
+`@next` dist-tag (`x.y.z-next.N`), and those do get a `chore(release)` commit on `next`.
 
 ## Documentation
 
 | File | Purpose |
 |---|---|
-| [`README.md`](./README.md) | This file — user setup and quick reference |
+| [`README.md`](./README.md) | Setup and quick reference (this file) |
 | [`MIGRATION.md`](./MIGRATION.md) | Upgrading from 1.x: output, exit codes, safety, MCP tool names |
-| [`help.md`](./help.md) | Command reference — operation sections generated from the catalogue (`pnpm docs`) |
+| [`help.md`](./help.md) | Command reference; the operation sections are generated from the catalogue (`pnpm docs`) |
 | [`llms.txt`](./llms.txt) | Compact operation reference for LLMs (generated) |
 | [`MCP.md`](./MCP.md) | MCP server setup for Claude Desktop, Cursor, Cline, Zed |
-| [`PUBLISHING.md`](./PUBLISHING.md) | npm release process — OIDC trusted publishing, bootstrap, ongoing flow |
+| [`PUBLISHING.md`](./PUBLISHING.md) | npm release process: OIDC trusted publishing, first-time setup, day-to-day flow |
 | [`DISTRIBUTION.md`](./DISTRIBUTION.md) | npm channels (latest / next) and experimental single-executable binaries |
 | [`CONTRIBUTING.md`](./CONTRIBUTING.md) | How to contribute, the verify gate, architectural rules |
 | [`SECURITY.md`](./SECURITY.md) | Security policy, vulnerability disclosure, hardening notes |
