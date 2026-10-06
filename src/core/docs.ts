@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { buildCatalog, type Catalog, type CatalogEntry, toLlmsMarkdown } from './catalog.js';
+import { buildCatalog, type Catalog, type CatalogEntry, envelopeText, toLlmsMarkdown } from './catalog.js';
 import type { AnyOperation } from './operation.js';
 
 // Markdown rendered from the operation catalogue (scripts/gen-docs.ts writes it; a test checks drift).
@@ -14,13 +14,6 @@ export function replaceRegion(text: string, name: string, content: string): stri
   const b = text.indexOf(end);
   if (a === -1 || b === -1 || b < a) throw new Error(`Missing generated-region markers for "${name}"`);
   return `${text.slice(0, a + begin.length)}\n${content}\n${text.slice(b)}`;
-}
-
-function envelope(op: CatalogEntry): string {
-  if (op.kind === 'report') return '`{rowCount, data: [{<dimension|metric>: string}], metadata?}`';
-  if (op.kind === 'reports') return 'one report envelope, or an array of them for several requests';
-  const required = (op.output as { required?: string[] }).required ?? [];
-  return required.includes('rowCount') ? '`{rowCount, data}` (list)' : '`{data}` (single resource)';
 }
 
 function section(op: CatalogEntry): string {
@@ -50,7 +43,7 @@ function section(op: CatalogEntry): string {
     ...rows,
     '',
     ...(facts.length ? [facts.join(' '), ''] : []),
-    `Output: \`-f json\` → ${envelope(op)}.`,
+    `Output: \`-f json\` → ${envelopeText(op)}.`,
   ].join('\n');
 }
 

@@ -76,3 +76,19 @@ describe('toLlmsMarkdown', () => {
     expect(md.match(/^## /gm)?.length).toBe(OPERATIONS.length);
   });
 });
+
+describe('toLlmsMarkdown is self-sufficient for an agent', () => {
+  const md = toLlmsMarkdown(catalog);
+
+  it('explains auth, discovery and the escape hatch up front', () => {
+    expect(md).toContain('GACLI_ACCESS_TOKEN');
+    expect(md).toContain('gacli schema');
+    expect(md).toContain('gacli api');
+  });
+
+  it('includes descriptions, defaults and output shapes', () => {
+    expect(md).toContain('Example: gacli report run');
+    expect(md).toContain('"7daysAgo"');
+    expect(md).toMatch(/Output: .*rowCount/);
+  });
+});

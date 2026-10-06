@@ -73,9 +73,33 @@ export function buildCatalog(ops: AnyOperation[]): Catalog {
   };
 }
 
+/** One-line description of what `-f json` prints for an operation (shared with docs.ts). */
+export function envelopeText(op: CatalogEntry): string {
+  if (op.kind === 'report') return '`{rowCount, data: [{<dimension|metric>: string}], metadata?}`';
+  if (op.kind === 'reports') return 'one report envelope, or an array of them for several requests';
+  const required = (op.output as { required?: string[] }).required ?? [];
+  return required.includes('rowCount') ? '`{rowCount, data}` (list)' : '`{data}` (single resource)';
+}
+
+const LLMS_PREAMBLE = [
+  'gacli is a Google Analytics 4 CLI. Agent defaults: compact JSON on stdout when piped or under an AI agent,',
+  'one JSON error line on stderr (`{"error":{code,message,hint,exitCode}}`), never an interactive prompt.',
+  '',
+  '- Auth: `GACLI_ACCESS_TOKEN=<oauth token>` (agents/CI), or `gacli auth login [--scopes readonly|edit|chat]`,',
+  '  or a service account (`GOOGLE_APPLICATION_CREDENTIALS` / `gacli config set credentials <sa.json>`), else',
+  '  Application Default Credentials. Check with `gacli auth token >/dev/null` (exit 3 = not authenticated).',
+  '- Property: `-p <id>` or `gacli config set property <id>`; find IDs with `gacli admin accounts summaries`.',
+  '- Discovery: `gacli schema [command...]` returns flags and input/output JSON Schema for any operation.',
+  "- Anything not listed: `gacli api <admin|admin.v1beta|data|data.v1alpha> <Method> --body '<json>'`.",
+  '- Writes: `--dry-run` previews; deletes/archives need `--yes` (exit 4 without it). `--fields a,b.c` projects output.',
+  '- Lists: `-m sessions activeUsers` or `-m sessions,activeUsers`. JSON flags take inline JSON, `@file` or `@-`.',
+];
+
 export function toLlmsMarkdown(catalog: Catalog): string {
   const lines = [
     `# gacli${catalog.version ? ` ${catalog.version}` : ''} — operation reference`,
+    '',
+    ...LLMS_PREAMBLE,
     '',
     'Global: `-p <property>`, `-f table|json|ndjson|csv|chart` (json when piped), `-o <file>`.',
     `Exit codes: ${Object.entries(catalog.exitCodes)
@@ -84,17 +108,25 @@ export function toLlmsMarkdown(catalog: Catalog): string {
     '',
   ];
   for (const op of catalog.operations) {
+    const positional = op.flags.find((f) => f.positional);
     lines.push(
-      `## ${op.command}`,
+      `## ${op.command}${positional ? ` [${positional.key}]` : ''}`,
       '',
-      `${op.summary} — category \`${op.category}\`${op.needsProperty ? ', needs `-p`' : ''}.`,
+      `${op.summary} — category \`${op.category}\`${op.needsProperty ? ', needs `-p`' : ''}${
+        op.category === 'delete' ? ', needs `--yes`' : ''
+      }.`,
+      ...(op.description ? ['', op.description] : []),
       '',
+      '| Flag | Required | Default | Description |',
+      '|---|---|---|---|',
     );
-    lines.push('| Flag | Required | Description |', '|---|---|---|');
     for (const f of op.flags) {
-      lines.push(`| \`${f.flag}\` | ${f.required ? 'yes' : ''} | ${f.description.replace(/\|/g, '\\|')} |`);
+      const def = f.defaultValue === undefined ? '' : `\`${JSON.stringify(f.defaultValue)}\``;
+      lines.push(
+        `| \`${f.flag}\` | ${f.required ? 'yes' : ''} | ${def} | ${f.description.replace(/\|/g, '\\|')} |`,
+      );
     }
-    lines.push('');
+    lines.push('', `Output: ${envelopeText(op)}.`, '');
   }
   return lines.join('\n');
 }

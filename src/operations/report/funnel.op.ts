@@ -42,11 +42,16 @@ export const reportFunnel = defineOperation({
   needsProperty: true,
   api: { service: 'data', version: 'v1alpha', rpc: 'RunFunnelReport' },
   input: z.object({
-    steps: jsonArg(steps).describe('Funnel steps as a JSON string of FunnelStep[]'),
+    steps: jsonArg(steps).describe(
+      'Funnel steps as JSON (inline, @file or @-), e.g. [{"name":"View","filterExpression":{...}},{"name":"Buy","filterExpression":{...},"withinDurationFromPriorStep":"600s"}]',
+    ),
     openFunnel: z.boolean().optional().describe('Use an open funnel (users can enter at any step)'),
     funnelBreakdown: z.string().min(1).optional().describe('Dimension name to break down the funnel by'),
-    startDate: z.string().default('7daysAgo').describe('Start date for the report'),
-    endDate: z.string().default('today').describe('End date for the report'),
+    startDate: z
+      .string()
+      .default('7daysAgo')
+      .describe('Start date: YYYY-MM-DD, today, yesterday or NdaysAgo'),
+    endDate: z.string().default('today').describe('End date: YYYY-MM-DD, today, yesterday or NdaysAgo'),
   }),
   flags: {
     steps: '--steps <json>',

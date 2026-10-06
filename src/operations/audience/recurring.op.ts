@@ -6,7 +6,7 @@ import {
   listRecurringAudienceLists,
 } from '../../services/data-api.service.js';
 import { withRetry } from '../../utils/retry.js';
-import { resourceName } from '../shared.js';
+import { nameList, resourceName } from '../shared.js';
 
 const dataApi = (rpc: string) => ({ service: 'data' as const, version: 'v1alpha' as const, rpc });
 
@@ -30,7 +30,7 @@ export const recurringAudienceCreate = defineOperation({
   api: dataApi('CreateRecurringAudienceList'),
   input: z.object({
     audience: z.string().min(1).describe('Audience resource name'),
-    dimensions: z.array(z.string().min(1)).optional().describe('Dimensions to include'),
+    dimensions: nameList().optional().describe('Dimensions to include'),
   }),
   flags: { audience: '--audience <audience>', dimensions: '--dimensions <dimensions...>' },
   output: recurringList,

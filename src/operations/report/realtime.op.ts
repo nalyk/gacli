@@ -4,7 +4,7 @@ import { runRealtimeReport } from '../../services/data-api.service.js';
 import type { MinuteRange } from '../../types/data-api.js';
 import { buildFilterExpression } from '../../utils/filter-builder.js';
 import { jsonArg } from '../json-arg.js';
-import { reportDataSchema } from '../shared.js';
+import { nameList, reportDataSchema } from '../shared.js';
 
 const minuteRanges = z.array(
   z.looseObject({
@@ -23,11 +23,13 @@ export const reportRealtime = defineOperation({
   needsProperty: true,
   api: { service: 'data', version: 'v1beta', rpc: 'RunRealtimeReport' },
   input: z.object({
-    metrics: z.array(z.string().min(1)).min(1).describe('Metrics to include in the report'),
-    dimensions: z.array(z.string().min(1)).optional().describe('Dimensions to include in the report'),
+    metrics: nameList({ min: 1 }).describe('Metrics to include in the report'),
+    dimensions: nameList().optional().describe('Dimensions to include in the report'),
     minuteRanges: jsonArg(minuteRanges)
       .optional()
-      .describe('Minute ranges as a JSON string (e.g. \'[{"startMinutesAgo":10,"endMinutesAgo":0}]\')'),
+      .describe(
+        'Minute ranges as JSON, e.g. [{"startMinutesAgo":10,"endMinutesAgo":0}] (up to 29 minutes ago; 59 on Analytics 360)',
+      ),
     dimensionFilter: z.array(z.string()).optional().describe('Dimension filters'),
     metricFilter: z.array(z.string()).optional().describe('Metric filters'),
     limit: z.coerce.number().int().min(1).optional().describe('Maximum number of rows to return'),

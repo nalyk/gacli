@@ -9,7 +9,7 @@ import {
 import type { ReportData } from '../../types/common.js';
 import { logger } from '../../utils/logger.js';
 import { withRetry } from '../../utils/retry.js';
-import { reportDataSchema, resourceName } from '../shared.js';
+import { nameList, reportDataSchema, resourceName } from '../shared.js';
 
 const dataApi = (rpc: string) => ({ service: 'data' as const, version: 'v1beta' as const, rpc });
 
@@ -53,7 +53,7 @@ export const audienceExportCreate = defineOperation({
   api: dataApi('CreateAudienceExport'),
   input: z.object({
     audience: z.string().min(1).describe('Audience resource name'),
-    dimensions: z.array(z.string().min(1)).optional().describe('Dimensions to include in the export'),
+    dimensions: nameList().optional().describe('Dimensions to include in the export'),
     watch: z.boolean().default(false).describe('Wait for the export to finish (long-running operation)'),
   }),
   flags: {

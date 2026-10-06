@@ -3,7 +3,7 @@ import { defineOperation } from '../../core/operation.js';
 import { runCohortReport } from '../../services/data-api.service.js';
 import type { CohortSpec } from '../../types/data-api.js';
 import { jsonArg } from '../json-arg.js';
-import { reportDataSchema } from '../shared.js';
+import { nameList, reportDataSchema } from '../shared.js';
 
 const cohorts = z.array(
   z.looseObject({
@@ -22,15 +22,17 @@ export const reportCohort = defineOperation({
   api: { service: 'data', version: 'v1beta', rpc: 'RunReport' },
   // 1.x applied DAILY / endOffset 5 in code rather than as commander defaults; kept so help is unchanged.
   input: z.object({
-    metrics: z.array(z.string().min(1)).min(1).describe('Metrics to include in the report'),
-    cohorts: jsonArg(cohorts).describe('Cohort definitions as a JSON string'),
+    metrics: nameList({ min: 1 }).describe('Metrics to include in the report'),
+    cohorts: jsonArg(cohorts).describe(
+      'Cohort definitions as JSON (inline, @file or @-), e.g. [{"name":"c1","dimension":"firstSessionDate","dateRange":{"startDate":"2026-01-01","endDate":"2026-01-07"}}]',
+    ),
     cohortGranularity: z
       .enum(['DAILY', 'WEEKLY', 'MONTHLY'])
       .optional()
       .describe('Cohort granularity: DAILY, WEEKLY, or MONTHLY'),
     endOffset: z.coerce.number().int().min(0).optional().describe('End offset for the cohort report'),
     startOffset: z.coerce.number().int().min(0).optional().describe('Start offset for the cohort report'),
-    dimensions: z.array(z.string().min(1)).optional().describe('Dimensions to include in the report'),
+    dimensions: nameList().optional().describe('Dimensions to include in the report'),
     accumulate: z
       .boolean()
       .optional()
