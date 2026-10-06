@@ -115,22 +115,22 @@ jobs:
         run: |
           PKG_NAME=$(node -p "require('./package.json').name")
           PKG_VERSION=$(node -p "require('./package.json').version")
-          # No-release case: package.json wasn't bumped — skip the smoke test.
-          LATEST_ON_NPM=$(npm view "$PKG_NAME" version 2>/dev/null || echo "none")
-          if [ "$PKG_VERSION" != "$LATEST_ON_NPM" ]; then
-            echo "::notice::No release this run (package.json=$PKG_VERSION, npm latest=$LATEST_ON_NPM). Skipping post-publish smoke-test."
+          # A release run leaves the v<version> tag on HEAD (tag-only on main, release commit on next).
+          if [ -z "$(git tag --points-at HEAD --list "v$PKG_VERSION")" ]; then
+            echo "::notice::No release this run (no tag v$PKG_VERSION on HEAD). Skipping post-publish smoke-test."
             exit 0
           fi
           echo "Verifying $PKG_NAME@$PKG_VERSION on registry..."
-          for i in 1 2 3 4 5; do
-            if npm view "$PKG_NAME@$PKG_VERSION" version > /dev/null 2>&1; then
+          # New versions can take a couple of minutes to become visible.
+          for i in $(seq 1 18); do
+            if npm view --prefer-online "$PKG_NAME@$PKG_VERSION" version > /dev/null 2>&1; then
               echo "Found on registry."
               break
             fi
-            echo "Not visible yet (attempt $i/5), sleeping 5s..."
-            sleep 5
+            echo "Not visible yet (attempt $i/18), sleeping 10s..."
+            sleep 10
           done
           npm uninstall -g "$PKG_NAME" 2>/dev/null || true
-          npm install -g "$PKG_NAME@$PKG_VERSION"
+          npm install -g --prefer-online "$PKG_NAME@$PKG_VERSION"
           gacli --version
           gacli skills doctor > /dev/null
