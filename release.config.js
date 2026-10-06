@@ -23,6 +23,11 @@
  *   docs:/test:/ci:/build:/style: → no release
  *   BREAKING CHANGE in body → major
  */
+// main is a protected branch the release bot cannot push to: releases from main are tag-only
+// (git tag + npm publish + GitHub release, no CHANGELOG/package.json commit back). Pre-release
+// branches (next, beta) are unprotected and keep the release commit.
+const commitBack = process.env.GITHUB_REF_NAME !== 'main';
+
 export default {
   branches: [
     'main',
@@ -63,14 +68,18 @@ export default {
         },
       },
     ],
-    [
-      '@semantic-release/changelog',
-      {
-        changelogFile: 'CHANGELOG.md',
-        changelogTitle:
-          '# Changelog\n\nAll notable changes to `@nalyk/gacli` are documented here.\n\nThe format is based on [Conventional Commits](https://www.conventionalcommits.org/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Generated automatically by [semantic-release](https://github.com/semantic-release/semantic-release) on every push to `main`.',
-      },
-    ],
+    ...(commitBack
+      ? [
+        [
+          '@semantic-release/changelog',
+          {
+            changelogFile: 'CHANGELOG.md',
+            changelogTitle:
+              '# Changelog\n\nAll notable changes to `@nalyk/gacli` are documented here.\n\nThe format is based on [Conventional Commits](https://www.conventionalcommits.org/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Generated automatically by [semantic-release](https://github.com/semantic-release/semantic-release) on every push to `main`.',
+          },
+        ],
+        ]
+      : []),
     [
       '@semantic-release/npm',
       {
@@ -81,14 +90,18 @@ export default {
         tarballDir: 'dist-pack',
       },
     ],
-    [
-      '@semantic-release/git',
-      {
-        assets: ['package.json', 'CHANGELOG.md'],
-        message:
-          'chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}',
-      },
-    ],
+    ...(commitBack
+      ? [
+        [
+          '@semantic-release/git',
+          {
+            assets: ['package.json', 'CHANGELOG.md'],
+            message:
+              'chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}',
+          },
+        ],
+        ]
+      : []),
     [
       '@semantic-release/github',
       {

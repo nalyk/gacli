@@ -127,7 +127,7 @@ jobs:
         run: |
           PKG_NAME=$(node -p "require('./package.json').name")
           PKG_VERSION=$(node -p "require('./package.json').version")
-          # A release run leaves the v<version> tag on HEAD (works for latest and @next prereleases).
+          # A release run leaves the v<version> tag on HEAD (tag-only on main, release commit on next).
           if [ -z "$(git tag --points-at HEAD --list "v$PKG_VERSION")" ]; then
             echo "::notice::No release this run (no tag v$PKG_VERSION on HEAD). Skipping post-publish smoke-test."
             exit 0
