@@ -12,3 +12,6 @@ oauth-tokens.json
 dist-sea/
 coverage/
 
+
+# Local registry auth: never commit
+.npmrc
