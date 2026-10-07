@@ -1,6 +1,6 @@
 # gacli 2.0 — Modernization Design
 
-Date: 2026-10-05 · Status: **draft, awaiting review** · Path: architectural (multi-phase)
+Date: 2026-10-05 · Status: **approved, implemented in 2.0.0** (2026-10-06; see §10) · Path: architectural (multi-phase)
 
 ## 1. Intent
 
@@ -302,3 +302,22 @@ from protobuf at runtime, and Model Armor sanitization.
 - **SEA with gRPC:** best effort, with REST fallback (see 5.8).
 - **Default JSON when piped:** surprises users who pipe tables. Mitigation: a 2.0 changelog note,
   plus `GACLI_FORMAT=table` or `config set format table`.
+
+## 10. As shipped (audit 2026-10-07)
+
+All §1 success criteria are met in 2.0.0 (`--help` ≈ 90–120 ms locally; CI gates it at 2× the
+150 ms budget). Every §5.7 capability and every §3 bug fix landed. Deliberate deviations:
+
+- **Clients:** no `ctx.admin()`/`ctx.data()`; operations call the lazy factories
+  `getAdminClient()` / data service functions directly (same single-factory guarantee; CLAUDE.md rule 6).
+- **Layout:** `src/core/{cli-adapter,mcp-adapter,render,catalog,invoke,confirm}.ts` instead of
+  `adapters/` + `registry.ts`/`output.ts`/`context.ts`; tabular projection via `columns`, not `op.table()`.
+- **Build:** code-split `dist/index.js` (lazy chunks serve the startup budget), not a single `dist/gacli.mjs`.
+- **Dependencies:** Dependabot instead of Renovate.
+- **SEA:** binaries do not embed `extensions/`; `skills install` from a binary needs `GACLI_EXTENSIONS_DIR`.
+- **Tests (§5.10):** op tests `vi.mock` the service modules rather than injecting a fake client via
+  `ctx`; there is no `GACLI_TEST_FAKE` e2e matrix or `tools/list` snapshot. The exit codes, delete gate
+  and dry-run are covered in-process; help, schema, MCP (incl. protocol 2024-11-05 / 2025-06-18
+  negotiation) and startup run against the built `dist`.
+- **MCP annotations:** 2.0.0 marked update tools `destructiveHint: false`; fixed in 2.0.1 (updates
+  are destructive; updates and deletes are `idempotentHint: true`).
