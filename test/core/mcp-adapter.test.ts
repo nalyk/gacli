@@ -85,6 +85,26 @@ describe('tool metadata', () => {
     expect(toolAnnotations(createOp)).toMatchObject({ readOnlyHint: false, destructiveHint: false });
   });
 
+  // MCP: destructiveHint false means "only additive updates"; an update overwrites existing values.
+  it('marks updates destructive and idempotent, creates additive and not idempotent', () => {
+    const updateOp = defineOperation({
+      id: 'admin.things.update',
+      summary: 'Update a thing',
+      category: 'update',
+      kind: 'resource',
+      input: z.object({ name: z.string(), displayName: z.string() }),
+      output: z.looseObject({ name: z.string() }),
+      run: async ({ name }) => ({ name }),
+    });
+    expect(toolAnnotations(updateOp)).toMatchObject({
+      readOnlyHint: false,
+      destructiveHint: true,
+      idempotentHint: true,
+    });
+    expect(toolAnnotations(deleteOp)).toMatchObject({ destructiveHint: true, idempotentHint: true });
+    expect(toolAnnotations(createOp).idempotentHint).not.toBe(true);
+  });
+
   it('exposes read-only tools by default and gates writes and deletes', () => {
     const ids = (o: object) => exposedOperations(ops, o).map((op) => op.id);
     expect(ids({})).toEqual(['admin.custom-dimensions.list', 'report.run', 'admin.things.get']);

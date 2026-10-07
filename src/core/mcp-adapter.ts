@@ -24,10 +24,14 @@ export function toolAnnotations(op: AnyOperation): ToolAnnotations {
   if (op.category === 'read') {
     return { title: op.summary, readOnlyHint: true, idempotentHint: true, openWorldHint: true };
   }
+  // MCP reads destructiveHint: false as "only additive": true for anything but create. Updates are
+  // field-mask patches and deletes end in the same state, so repeating either changes nothing more.
+  const repeatable = op.category === 'update' || op.category === 'delete';
   return {
     title: op.summary,
     readOnlyHint: false,
-    destructiveHint: op.category === 'delete',
+    destructiveHint: op.category !== 'create',
+    ...(repeatable && { idempotentHint: true }),
     openWorldHint: true,
   };
 }
