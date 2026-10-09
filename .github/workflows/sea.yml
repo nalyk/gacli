@@ -28,7 +28,7 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
         with:
           run_install: false
@@ -46,7 +46,7 @@ jobs:
           ./gacli-* -f table config list
           set +e; ./gacli-* admin accounts list -f json; code=$?; set -e
           test "$code" = 3   # credentials missing → AUTH, proves the auth library is bundled
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: gacli-${{ matrix.os }}
           path: dist-sea/gacli-*
